@@ -16,7 +16,7 @@ The ALEAPP column names are not fixed here. Ingest maps whatever the real sample
 | `BASETEN_BASE_URL` | `https://inference.baseten.co/v1` | |
 | `MODAL_BASE_URL`, `MODAL_API_KEY` | | optional |
 | `TBX_PROVIDER` | `meta` \| `baseten` \| `modal` | default `meta` |
-| `TBX_MODEL` | `muse-spark-1.3` | Baseten: `meta-models/muse-spark-open-1026` |
+| `TBX_MODEL` | `muse-spark-1.3` | Baseten: `meta-models/muse-spark-open` (the `-1026` suffix 404s; spike S4) |
 | `TBX_DB` | `data/tbx.db` | default store path |
 
 - **Model choice:** never use the `-contributor` model variants, because Meta's contributor mode is a different tier.
