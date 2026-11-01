@@ -10,7 +10,6 @@ so these tests also pin down the behaviours the spikes found:
 from __future__ import annotations
 
 import json
-import re
 
 import pytest
 import tbxcase
@@ -229,16 +228,28 @@ def test_usage_errors_exit_1(run_cli, cli_env, tmp_path):
         assert proc.returncode == 1, (args, proc.returncode, proc.stderr[-1500:])
 
 
-def test_tbx_check_cli_reports_reason_codes(run_cli, cli_env, tmp_path):
-    answer = {"claims": [META_CLAIMS[0],
-                         {"text": "An outgoing call was placed.",
-                          "citations": [cite("call_0d96ca43-8907-4d91-aac2-346156bd69d6", "direction", "outgoing")]}]}
+def test_tbx_check_cli_prints_check_result_json(run_cli, cli_env, tmp_path):
+    """CONTRACTS.md v1.1 section 9 (C13): one CheckResult JSON document on stdout, exit 0 even
+    when claims are rejected."""
+    tool_call_id_claim = {"text": "An outgoing call was placed.",
+                          "citations": [cite("call_0d96ca43-8907-4d91-aac2-346156bd69d6", "direction", "outgoing")]}
     path = tmp_path / "answer.json"
-    path.write_text(json.dumps(answer))
+    path.write_text(json.dumps({"claims": [META_CLAIMS[0], tool_call_id_claim]}))
     proc = run_cli(["check", str(path), *WINDOW_ARGS, "--db", cli_env["TBX_DB"]], cli_env, timeout=60)
-    assert proc.returncode == 0, proc.stderr[-2000:]
-    assert "UNKNOWN_ARTIFACT" in proc.stdout
-    assert not re.search(r"UNKNOWN_FIELD|VALUE_MISMATCH|OUTSIDE_WINDOW", proc.stdout), proc.stdout[-2000:]
+    out = parse_json_out(proc)
+    assert {"verified", "rejected"} <= set(out), sorted(out)
+    assert [c["text"] for c in out["verified"]] == [META_CLAIMS[0]["text"]]
+    assert len(out["rejected"]) == 1 and out["rejected"][0]["claim"]["text"] == tool_call_id_claim["text"]
+    reasons = out["rejected"][0]["reasons"]
+    assert [(r["code"], r["citation_index"]) for r in reasons] == [("UNKNOWN_ARTIFACT", 0)], reasons
+
+
+def test_tbx_check_invalid_answer_file_exit_1(run_cli, cli_env, tmp_path):
+    for name, content in (("not_json.json", "{claims: oops"), ("not_an_answer.json", json.dumps({"claims": [{"citations": []}]}))):
+        path = tmp_path / name
+        path.write_text(content)
+        proc = run_cli(["check", str(path), "--db", cli_env["TBX_DB"]], cli_env, timeout=60)
+        assert proc.returncode == 1, (name, proc.returncode, proc.stderr[-1500:])
 
 
 # ------------------------------------------------------------------------------- P1: repair pass

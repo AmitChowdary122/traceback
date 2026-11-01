@@ -1,10 +1,9 @@
 """Shared helpers for tests/redteam and tests/acceptance (owned by the testing session).
 
 Two jobs:
-1. Find the contract API (CONTRACTS.md sections 4, 6, 7) in the installed `tbx` package without
-   guessing in each test. The contract names `tbx.store.Store` and `tbx.checker.check`, but not
-   the module that defines Answer/Claim/Citation or Window, so a short list of candidate modules
-   is searched. Until `tbx` exists every test that needs it SKIPS with a clear reason; set
+1. Load the contract API from the modules CONTRACTS.md v1.1 names: tbx.store.Store,
+   tbx.checker.check, tbx.models.{Answer, Claim, Citation} and tbx.timeutil.Window.
+   Until `tbx` exists every test that needs it SKIPS with a clear reason; set
    TBX_STRICT_TESTS=1 (gate runs) to turn those skips into failures.
 2. Build the red-team case store: one synthetic but realistic evening on a phone whose case
    timezone is America/New_York, written through the public Store API only.
@@ -16,7 +15,6 @@ import importlib
 import json
 import os
 import pathlib
-import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -28,10 +26,9 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 SPIKES = REPO / "tests" / "fixtures" / "spikes"
 STRICT = os.environ.get("TBX_STRICT_TESTS") == "1"
 
-# Where the models may live. First hit wins. Keep this list in sync with CONTRACTS.md if the
-# contract ever names the modules explicitly (proposed clarification C3 in docs/SPIKES.md).
-ANSWER_MODULES = ["tbx.checker", "tbx.models", "tbx.schema", "tbx.schemas", "tbx.answer", "tbx.agent", "tbx.types"]
-WINDOW_MODULES = ["tbx.timeutil", "tbx.checker", "tbx.models", "tbx.schema", "tbx.types"]
+# Module names fixed by CONTRACTS.md v1.1, sections 3 and 6 (clarification C3).
+ANSWER_MODULES = ["tbx.models"]
+WINDOW_MODULES = ["tbx.timeutil"]
 
 
 def unavailable(reason: str):
@@ -65,7 +62,7 @@ def load_contract() -> SimpleNamespace:
     missing = [k for k, v in vars(api).items() if v is None]
     if missing:
         unavailable(f"tbx is importable but contract names are missing: {missing} "
-                    f"(searched {ANSWER_MODULES} / {WINDOW_MODULES})")
+                    f"(CONTRACTS.md v1.1: models in {ANSWER_MODULES}, Window in {WINDOW_MODULES})")
     return api
 
 
@@ -76,17 +73,11 @@ def parse_utc(s: str) -> datetime:
 
 
 def make_window(api: SimpleNamespace, start: str, end: str):
-    """CONTRACTS.md section 3 says `Window(start_utc, end_utc)` but not the argument types.
-    Try tz-aware UTC datetimes first, then ISO strings, positional then keyword."""
-    s, e = parse_utc(start), parse_utc(end)
-    attempts = [((s, e), {}), ((), {"start_utc": s, "end_utc": e}), ((start, end), {}), ((), {"start_utc": start, "end_utc": end})]
-    errors = []
-    for args, kwargs in attempts:
-        try:
-            return api.Window(*args, **kwargs)
-        except Exception as ex:  # noqa: BLE001 - we report every failed shape below
-            errors.append(f"{args or kwargs}: {type(ex).__name__}: {ex}")
-    pytest.fail("could not construct Window(start_utc, end_utc) from datetimes or ISO strings:\n" + "\n".join(errors))
+    """CONTRACTS.md v1.1 section 3: Window(start_utc, end_utc), tz-aware UTC datetimes, positional."""
+    try:
+        return api.Window(parse_utc(start), parse_utc(end))
+    except Exception as ex:  # noqa: BLE001
+        pytest.fail(f"Window(start_utc, end_utc) rejected tz-aware UTC datetimes: {type(ex).__name__}: {ex}")
 
 
 def aid(prefix: str, source_path: str, row_key: str) -> str:
@@ -184,15 +175,11 @@ CASE_META = {"device_tz": CASE_TZ, "device_model": "synthetic red-team phone", "
 
 
 def build_case_store(api: SimpleNamespace, path: pathlib.Path):
-    """Create the schema with Store(path), write case_meta with plain SQL (the contract fixes the
-    case_meta schema but gives Store no setter, see clarification C4), then reopen and insert rows
-    through Store.insert()."""
-    api.Store(str(path))
-    con = sqlite3.connect(str(path))
-    with con:
-        con.executemany("INSERT OR REPLACE INTO case_meta(key, value) VALUES (?, ?)", list(CASE_META.items()))
-    con.close()
+    """Build the case through the public Store API only (CONTRACTS.md v1.1 section 4):
+    Store(path), Store.set_meta() for case_meta (clarification C4), Store.insert() for rows."""
     store = api.Store(str(path))
+    for key, value in CASE_META.items():
+        store.set_meta(key, value)
     for table, row in ROWS:
         store.insert(table, dict(row))
     return store

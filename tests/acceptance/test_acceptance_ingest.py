@@ -86,7 +86,7 @@ def test_ids_have_table_prefix_and_10_hex(ingested):
 
 
 def test_ids_recompute_from_provenance(ingested):
-    """sha1(source_path|row_key)[:10], assuming source_row stores the row_key (clarification C11)."""
+    """CONTRACTS.md v1.1 section 2 (C11): source_row stores the row_key, so IDs recompute from provenance."""
     for table in BASE_TABLES:
         bad = [r["artifact_id"] for r in rows(ingested[0], table)
                if r["artifact_id"] != f"{PREFIX[table]}_{hashlib.sha1(f'{r['source_path']}|{r['source_row']}'.encode()).hexdigest()[:10]}"]

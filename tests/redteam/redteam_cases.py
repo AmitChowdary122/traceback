@@ -1,4 +1,4 @@
-"""Red-team claim cases for the citation checker (CONTRACTS.md section 7).
+"""Red-team claim cases for the citation checker (CONTRACTS.md v1.1, section 7).
 
 Each case is one claim, checked alone against the case store in tests/support/tbxcase.py
 (case timezone America/New_York, evening of Mon 2023-03-13, EDT = UTC-4).
@@ -7,8 +7,8 @@ Each case is one claim, checked alone against the case store in tests/support/tb
 - expect="rejected": the checker must reject it with EXACTLY the reason codes in `codes`
   (strict rule: every reason is listed, and nothing else).
 
-`note` names the rule being pinned down. Notes tagged [Cn] rely on a reading of the contract
-that docs/SPIKES.md proposes to write into CONTRACTS.md (proposed clarification n).
+`note` names the rule being pinned down. Notes tagged [Cn] pin a rule added in CONTRACTS.md
+v1.1 (clarification n in docs/SPIKES.md; see the contract's changelog).
 Cases tagged REAL use model output recorded verbatim in tests/fixtures/spikes/.
 """
 from __future__ import annotations
@@ -127,6 +127,10 @@ ACCEPT += [
          claim("Alice placed an outgoing call.",
                cite("CALL_ALICE", "contact_name", "ALICE"), cite("CALL_ALICE", "direction", "Outgoing")),
          note="'everything else' rule: NFKC + casefold + whitespace collapse, then exact"),
+    Case("A22_measure_fields_compare_as_numbers", "verified",
+         claim("Alice's call lasted 95 seconds.", ALICE, cite("CALL_ALICE", "duration_s", "95.0"),
+               cite("LOC_SPIKE", "accuracy_m", "12.00"), cite("MED_PHOTO", "size_bytes", "12988")),
+         note="measure rule: '95.0' matches a stored 95 (models copy numbers as strings) [C6]"),
 ]
 
 # ------------------------------------------------------------------------------------------
@@ -251,6 +255,9 @@ REJECT: list[Case] = [
     Case("R36_wrong_media_path", "rejected",
          claim("A photo was taken.", cite("MED_PHOTO", "file_path", "DCIM/Camera/IMG_20230313_214501.jpg")),
          codes=frozenset({VM}), indexes={VM: {0}}),
+    Case("R37_measure_off_by_one_second", "rejected",
+         claim("A call was placed.", cite("CALL_ALICE", "duration_s", "96")),
+         codes=frozenset({VM}), indexes={VM: {0}}, note="measure rule is numeric equality, not a tolerance band [C6] (twin of A22)"),
 ]
 
 CASES: list[Case] = ACCEPT + REJECT
