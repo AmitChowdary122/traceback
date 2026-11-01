@@ -12,6 +12,7 @@ __pycache__/
 
 # local data and run output
 data/*.db
+data/*.ingest-tmp
 data/raw/
 runs/*.jsonl
 .cache/

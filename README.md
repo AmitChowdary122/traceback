@@ -11,16 +11,17 @@ verified claim opens to the raw source row and its source path.
 
 Built for the Meta Global AI Developer Hackathon, indie track ("Build for Your World").
 
-> Status: under construction (Day 1). See `docs/GAMEPLAN.md` and `docs/CONTRACTS.md`.
+> Status: Day 1 core loop works end to end (ingest, tools, checker, agent, CLI). See `docs/GAMEPLAN.md` and `docs/CONTRACTS.md`.
 
 ## Quick start
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e .
-cp .env.example .env   # then fill in keys locally; never commit .env
+cp .env.example .env   # fill in keys locally; never commit .env
+set -a; . ./.env; set +a   # tbx reads the environment, not the file
 tbx ingest data/sample/aleapp --media-root data/sample/media --db data/tbx.db
-tbx ask "Where was this phone between 9 and 11 pm, and who did it talk to?" --from "2024-07-27 21:00" --to "2024-07-27 23:00"
+tbx ask "Where was this phone between 9 and 11 pm, and who did it talk to?" --from "2024-06-27 21:00" --to "2024-06-27 23:00"
 ```
 
 ## Layout
