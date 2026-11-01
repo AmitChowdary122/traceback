@@ -1,4 +1,4 @@
-# Traceback contracts (v1.1)
+# Traceback contracts (v1.2)
 
 These are the interfaces that the build session implements and the testing session tests against. Change them only by editing this file in a commit of its own, with a reason, so tests and code stay in sync.
 
@@ -41,7 +41,7 @@ artifact_id = f"{prefix}_{sha1(f'{source_path}|{row_key}'.encode()).hexdigest()[
 - `row_key`:
   - the source's own natural key when ALEAPP exposes it (e.g. the source DB `_id` / rowid)
   - otherwise the 1-based data row number in the TSV/table
-  - for derived tables, `transcripts` uses `"{media_id}|{model}"` and `image_tags` uses `"{media_id}|{model}|{label}|{n}"`
+  - for derived tables, `transcripts` uses `"{media_id}|{model}"` and `image_tags` uses `"{media_id}|{model}|{label}|{n}"`. `n` is the 0-based position of the box among that media's boxes for that label, ordered by `score` descending, then `x0`, then `y0`. Derived rows use the media's `source_path`.
 - **`source_row` stores the `row_key`** used in the formula, as a string. Any ID can then be recomputed from its own row's `source_path` and `source_row`.
 - **Determinism:** ingesting the same input twice must produce identical ID sets. Ingest fails loudly on a collision.
 
@@ -52,6 +52,7 @@ artifact_id = f"{prefix}_{sha1(f'{source_path}|{row_key}'.encode()).hexdigest()[
 - **`tz_basis`** is one of:
   - `utc_epoch_s` / `utc_epoch_ms`
   - `utc_string`
+  - `offset_string`: a string with an explicit UTC offset, converted with that offset (e.g. EXIF `DateTimeOriginal` + `OffsetTimeOriginal`)
   - `local_converted:<IANA tz>`
   - `unknown`
 - **Case timezone:** `case_meta.device_tz` (IANA, e.g. `America/New_York`), read from the extraction. All local⇄UTC conversion goes through one module, `tbx/timeutil.py`.
@@ -71,7 +72,7 @@ Each table adds its own columns. These are also the **citable fields**:
 | Table | Columns |
 |---|---|
 | `messages` | `app`, `thread_id`, `direction` (`incoming`\|`outgoing`\|`unknown`), `sender`, `sender_number`, `recipient`, `recipient_number`, `body`, `attachment_media_id` |
-| `calls` | `app`, `direction` (`incoming`\|`outgoing`\|`missed`\|`rejected`\|`unknown`), `number`, `contact_name`, `duration_s` |
+| `calls` | `app`, `direction` (`incoming`\|`outgoing`\|`missed`\|`rejected`\|`voicemail`\|`unknown`), `number`, `contact_name`, `duration_s`, `transcript` (the carrier's voicemail transcription text; `NULL` when there is none, and placeholders such as "Transcript not available" are stored as `NULL`) |
 | `locations` | `source` (e.g. `google_location_history`, `photo_exif`, `wifi`), `lat`, `lon`, `accuracy_m` |
 | `media` | `app`, `kind` (`image`\|`audio`\|`video`\|`other`), `file_path`, `mime_type`, `sha256`, `size_bytes`, `lat`, `lon` |
 | `transcripts` | `media_id`, `model`, `language`, `text`, `duration_s` (`ts_utc` = the media's `ts_utc`) |
@@ -104,7 +105,7 @@ All time parameters are ISO strings, either UTC (`Z`) or with an offset. Every t
 | Tool | Parameters (all optional unless noted) |
 |---|---|
 | `search_messages` | `query`, `contact`, `number`, `app`, `start`, `end`, `limit=50` |
-| `get_calls` | `number`, `contact`, `direction`, `start`, `end`, `limit=50` |
+| `get_calls` | `query` (case-insensitive substring of `transcript`), `number`, `contact`, `direction`, `start`, `end`, `limit=50` |
 | `get_locations` | `start`, `end`, `source`, `limit=50` |
 | `find_media` | `kind`, `tag`, `start`, `end`, `limit=50` |
 | `get_transcripts` | `query`, `media_id`, `start`, `end`, `limit=50` |
@@ -112,7 +113,7 @@ All time parameters are ISO strings, either UTC (`Z`) or with an offset. Every t
 
 - **Row order:** rows are ordered by `ts_utc` ascending, with `artifact_id` as the tie-break. The order is deterministic.
 - **`limit`:** capped at 200.
-- **Long fields:** `body`/`text` longer than 300 characters are cut to 300, and the row gets `"<field>_truncated": true`. `get_artifact` returns the full text.
+- **Long fields:** `body`/`text`/`transcript` longer than 300 characters are cut to 300, and the row gets `"<field>_truncated": true`. `get_artifact` returns the full text.
 - **Phone matching:** number filters use the normalization in §7.
 
 ## 6. Agent output (the `submit_answer` tool call)
@@ -160,7 +161,7 @@ result = check(answer: Answer, store: Store, window: Window | None) -> CheckResu
 |---|---|---|
 | timestamp | `ts_utc`, `ts_local` | Parse ISO (`Z`/offset) and convert to UTC. A value with no offset is read in the case timezone. Compare at second precision, or minute precision if the cited value has no seconds. |
 | phone | `*_number`, `number` | Digits only. If both sides have ≥10 digits, compare the last 10; otherwise compare all digits exactly. |
-| text | `body`, `text` | NFKC, casefold, whitespace collapsed and stripped. Match if equal, **or** the cited value is a substring of the stored value with ≥8 characters. |
+| text | `body`, `text`, `transcript` | NFKC, casefold, whitespace collapsed and stripped. Match if equal, **or** the cited value is a substring of the stored value with ≥8 characters. |
 | coordinate | `lat`, `lon` | abs diff ≤ 1e-4 |
 | number | `score` | abs diff ≤ 1e-3 |
 | measure | `duration_s`, `accuracy_m`, `size_bytes` | Parse both sides as numbers; match if abs diff ≤ 1e-6. So `"95"`, `"95.0"` and a stored `95` all match. |
@@ -220,12 +221,17 @@ The web UI streams these same events over SSE.
 
 ```
 tbx ingest <aleapp_report_dir> [--media-root DIR] [--db PATH]
-tbx enrich [--voice] [--images] [--db PATH]          # cached by sha256 + model + prompt_set
+tbx enrich [--voice] [--images] [--offline] [--db PATH]   # cached by sha256 + model (+ prompt_set + label)
 tbx ask "<question>" [--from T] [--to T] [--provider P] [--model M] [--repair 0|1] [--json] [--db PATH]
 tbx check <answer.json> [--from T] [--to T] [--db PATH]   # run the checker on a saved Answer (used by red-team tests)
 ```
 
 - **Times:** `T` is `"YYYY-MM-DD HH:MM"` in the case timezone, or ISO with `Z`/an offset.
+- **`tbx enrich`:**
+  - **`--voice`:** every `media` row of kind `audio`, or `video` with an audio track, is transcoded to 24 kHz mono s16le WAV (ffmpeg from `imageio-ffmpeg`) and sent to Muse Voice Transcribe (`POST /asr/transcribe`, mode `ENDPOINTING`, **no `keywords`**). That gives one `transcripts` row per media: `model` = `muse-voice-transcribe-1.0`, `language` = `NULL`, `text` = `transcript`, `duration_s` = `audioDurationMs / 1000`, and `raw_json` holding `sessionId` and `turns`. Media with an empty transcript get no row.
+  - **`--images`:** every `media` row of kind `image` that is JPEG or PNG is sent to SAM 3.1 (`POST /responses`, not streamed, `include_confidence: "true"`), one request per label of prompt set `v1` = `person`, `cell phone`, `laptop`, `car`, `license plate`, `sign`. Each box with `score` ≥ 0.5 becomes an `image_tags` row: `model` = `sam-3.1`, `prompt_set` = `v1`, and `box` = `[x0,y0,x1,y1]` in the pixels of the stored file after EXIF orientation is applied.
+  - **Cache:** `data/sample/derived/enrich_cache.jsonl` is committed, so anyone can rebuild the store offline. It has one JSON object per line: `{"key": "<sha256>|<model>[|<prompt_set>|<label>]", "result": {...}}`. Voice results hold `transcript`, `audioDurationMs`, `turns` and `sessionId`; SAM results hold `boxes: [{x0,y0,x1,y1,score}]` and the image size. A cache hit makes no API call. `--offline` uses only the cache: misses are skipped and counted on stderr, and the exit code is 0.
+  - Enriching the same store twice gives identical `trn_`/`tag_` ID sets.
 - **Exit codes:**
 
 | Code | Meaning |
@@ -240,15 +246,18 @@ tbx check <answer.json> [--from T] [--to T] [--db PATH]   # run the checker on a
 
 ## 10. Web API (FastAPI)
 
+The app lives in **`tbx.web`**. It exposes `create_app(db_path: str | None = None)`, which defaults to `TBX_DB`, and a module-level `app = create_app()`. Run it with `uvicorn tbx.web:app`.
+
 | Method + path | Body / result |
 |---|---|
 | `GET /` | the single HTML page |
-| `POST /api/ask` | Body `{question, from?, to?, provider?, model?, repair?}`; returns `{run_id}` |
-| `GET /api/runs/{run_id}/events` | SSE stream of trace events |
-| `GET /api/runs/{run_id}` | `{status, verified, rejected, usage}` |
+| `POST /api/ask` | Body `{question, from?, to?, provider?, model?, repair?}`; returns `{run_id}` at once and runs the agent in the background |
+| `GET /api/runs` | the recorded runs, newest first: `[{run_id, question, status, started}]`. Read from `runs/*.jsonl`, so a recorded run can be replayed with no model call. |
+| `GET /api/runs/{run_id}` | `{status, verified, rejected, usage, events}`, where `status` is `running`\|`ok`\|`error` and `events` holds the trace lines so far |
+| `GET /api/runs/{run_id}/events` | optional (P2): an SSE stream of the same trace events |
 | `GET /api/artifacts/{artifact_id}` | the full row, including `raw_json`, `source_path`, `source_row` |
 | `GET /api/media/{artifact_id}` | the file bytes (images and audio) |
-| `GET /api/media/{artifact_id}/tags` | `image_tags` rows for that media |
+| `GET /api/media/{artifact_id}/tags` | `{"rows": [...]}`: that media's `image_tags` rows, with `box` as a JSON array |
 
 ## 11. Eval
 
@@ -263,9 +272,9 @@ tbx check <answer.json> [--from T] [--to T] [--db PATH]   # run the checker on a
   tags: [calls, locations]          # negative questions get tag "negative" and empty expectations
 ```
 
-`eval/run.py --provider X --model Y [--repair 0|1]` writes `eval/results/<provider>-<model>[-repair].json` with:
+`eval/run.py --provider X --model Y [--repair 0|1] [--questions eval/questions.yaml] [--db PATH]` runs each question through the same agent code path as `tbx ask`, keeps every run's trace, and writes `eval/results/<provider>-<model>[-repair].json` (`/` in the model ID becomes `_`) with:
 
-- **Per question:** `verified`, `rejected`, `fact_recall`, `artifact_recall`, `citation_precision`, `latency_s`, `tokens`, `est_cost_usd`.
+- **Per question:** `id`, `run_id`, `verified`, `rejected`, `fact_recall`, `artifact_recall`, `citation_precision`, `latency_s`, `tokens`, `est_cost_usd`.
 - **Totals:**
   - **`fact_recall`:** the share of expected entities found (normalized as in §7) in the verified claims' text or cited values.
   - **`artifact_recall`:** the share of expected artifact IDs that appear among the verified citations.
@@ -279,6 +288,14 @@ tbx check <answer.json> [--from T] [--to T] [--db PATH]   # run the checker on a
 
 ## Changelog
 
+- **v1.2 (Nov 1, 2026):** additions for Day 2, from the G0/G1 gate run (`docs/GATES.md`).
+  - §2: the order of `n` in `image_tags` row keys.
+  - §3: new `tz_basis` value `offset_string` (EXIF times carry an explicit offset).
+  - §4, §5, §7: `calls.direction` gains `voicemail`. 2,154 voicemail records had been stored as `missed`.
+  - §4, §5, §7: new citable `calls.transcript` (49 real carrier voicemail transcriptions) under the text rule, and `get_calls(query=…)`.
+  - §9: `tbx enrich` behavior, prompt set `v1`, the committed cache and `--offline`.
+  - §10: the app lives in `tbx.web`; runs are replayable from `runs/*.jsonl`; `GET /api/runs`; SSE becomes optional; the shape of the tags response.
+  - §11: `eval/run.py` flags and result fields.
 - **v1.1 (Nov 1, 2026):** clarifications from the Day-0 spikes and the red-team suite. The IDs C1–C13 refer to `docs/SPIKES.md`.
   - §1: the Baseten model ID is `meta-models/muse-spark-open` (C10).
   - §2: `source_row` stores the `row_key` (C11).
