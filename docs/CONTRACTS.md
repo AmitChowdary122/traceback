@@ -1,4 +1,4 @@
-# Traceback contracts (v1)
+# Traceback contracts (v1.1)
 
 These are the interfaces that the build session implements and the testing session tests against. Change them only by editing this file in a commit of its own, with a reason, so tests and code stay in sync.
 
@@ -42,6 +42,7 @@ artifact_id = f"{prefix}_{sha1(f'{source_path}|{row_key}'.encode()).hexdigest()[
   - the source's own natural key when ALEAPP exposes it (e.g. the source DB `_id` / rowid)
   - otherwise the 1-based data row number in the TSV/table
   - for derived tables, `transcripts` uses `"{media_id}|{model}"` and `image_tags` uses `"{media_id}|{model}|{label}|{n}"`
+- **`source_row` stores the `row_key`** used in the formula, as a string. Any ID can then be recomputed from its own row's `source_path` and `source_row`.
 - **Determinism:** ingesting the same input twice must produce identical ID sets. Ingest fails loudly on a collision.
 
 ## 3. Time
@@ -54,7 +55,7 @@ artifact_id = f"{prefix}_{sha1(f'{source_path}|{row_key}'.encode()).hexdigest()[
   - `local_converted:<IANA tz>`
   - `unknown`
 - **Case timezone:** `case_meta.device_tz` (IANA, e.g. `America/New_York`), read from the extraction. All local⇄UTC conversion goes through one module, `tbx/timeutil.py`.
-- **Question window:** `Window(start_utc, end_utc)`, with both ends inclusive. CLI/UI inputs without an offset are interpreted in the case timezone; inputs with `Z` or an offset are used as given.
+- **Question window:** `tbx.timeutil.Window(start_utc, end_utc)`. Both arguments are timezone-aware `datetime`s in UTC, passed positionally, and both ends are inclusive. CLI/UI inputs without an offset are interpreted in the case timezone; inputs with `Z` or an offset are used as given.
 
 ## 4. Store (SQLite)
 
@@ -87,7 +88,8 @@ from tbx.store import Store
 s = Store("path.db")            # creates the schema if missing
 s.insert(table: str, row: dict) # row includes artifact_id + provenance; used by ingest and tests
 s.get(artifact_id) -> dict | None   # full row incl. raw_json, plus "table": "<table>"
-s.case_tz -> str                # case_meta.device_tz (default "UTC" if missing)
+s.set_meta(key: str, value: str) # insert or replace a case_meta row; used by ingest and tests
+s.case_tz -> str                # case_meta.device_tz (default "UTC" if missing); reflects the latest set_meta
 s.known_contacts() -> set[str]  # distinct non-empty sender/recipient/contact_name values
 ```
 
@@ -115,7 +117,7 @@ All time parameters are ISO strings, either UTC (`Z`) or with an offset. Every t
 
 ## 6. Agent output (the `submit_answer` tool call)
 
-The final answer is the arguments of a `submit_answer` tool call, validated with pydantic:
+The final answer is the arguments of a `submit_answer` tool call, validated with pydantic. `Citation`, `Claim`, `Answer` and the checker's `CheckResult` live in **`tbx.models`**:
 
 ```python
 class Citation(BaseModel):
@@ -161,34 +163,37 @@ result = check(answer: Answer, store: Store, window: Window | None) -> CheckResu
 | text | `body`, `text` | NFKC, casefold, whitespace collapsed and stripped. Match if equal, **or** the cited value is a substring of the stored value with ≥8 characters. |
 | coordinate | `lat`, `lon` | abs diff ≤ 1e-4 |
 | number | `score` | abs diff ≤ 1e-3 |
+| measure | `duration_s`, `accuracy_m`, `size_bytes` | Parse both sides as numbers; match if abs diff ≤ 1e-6. So `"95"`, `"95.0"` and a stored `95` all match. |
 | everything else | all other fields | NFKC, casefold, whitespace collapsed; exact match |
 
 **Rules (codes are a stable API):**
 
 | # | Code | Rule |
 |---|---|---|
-| R1 | `UNKNOWN_ARTIFACT` | The cited `artifact_id` is not in the store. |
+| R1 | `UNKNOWN_ARTIFACT` | The cited `artifact_id` is not in the store. That citation then gets no R2 or R3 reason. |
 | R2 | `UNKNOWN_FIELD` | The field is not citable for that artifact's table. |
 | R2 | `VALUE_MISMATCH` | The value does not match the stored value after normalization. |
 | R3 | `OUTSIDE_WINDOW` | A window is set and a cited artifact's `ts_utc` is outside it, or is `NULL` (detail `"no timestamp"`). |
-| R4 | `UNGROUNDED_ENTITY:<type>` | An entity found in the claim text does not appear in that claim's cited values (normalized). |
-| R5 | `TIME_RANGE_UNSUPPORTED` | `time_start` > `time_end`, or either one falls outside the claim's support range: from 60 s before the earliest cited artifact `ts_utc` to 60 s after the latest one. For calls, "the latest one" also counts `ts_utc + duration_s`. |
+| R4 | `UNGROUNDED_ENTITY:<type>` | An entity found in the claim text is not grounded in that claim's cited values (see the entity table). |
+| R5 | `TIME_RANGE_UNSUPPORTED` | `time_start` > `time_end`, or either one falls outside the claim's support range: from 60 s before the earliest cited artifact `ts_utc` to 60 s after the latest one, both ends inclusive. For calls, "the latest one" also counts `ts_utc + duration_s`. |
 | R6 | `NO_CITATIONS` | The claim has no citations. |
 
 R4 entity types:
 
 | Type | What counts | Grounded when |
 |---|---|---|
-| `phone` | ≥7 digits with `+ ( ) - . space` | |
+| `phone` | ≥7 digits with `+ ( ) - . space` | its digits match a cited value under the phone rule above (last 10 digits when both sides have ≥10), not by raw substring |
 | `email` | | |
 | `url` | | |
 | `timestamp` | ISO date-time | |
 | `date` | `YYYY-MM-DD`, or "Mar 14" / "March 14" | it matches a cited timestamp's date in the case timezone |
 | `clock_time` | `9:42 PM`, `21:42` | it matches a cited timestamp's hour:minute in the case timezone |
 | `coordinate` | a decimal pair with ≥3 decimals | it is within 1e-4 of a cited lat/lon |
-| `contact` | any `store.known_contacts()` name of length ≥3 appearing as a whole word in the text (case-insensitive) | |
+| `contact` | any `store.known_contacts()` name of length ≥3 appearing as a whole word in the text (case-insensitive) | it appears as a whole word in a cited value, after text normalization |
 
-Types with no "Grounded when" entry follow the general R4 rule: the entity must appear in the claim's cited values after normalization.
+Types with no "Grounded when" entry follow the general R4 rule. After text normalization (NFKC, casefold, whitespace collapsed), the entity must be **contained in** at least one of the claim's cited values; it does not have to equal one. For example, "Alice" is grounded by a cited transcript quote "it's Alice, meet me…".
+
+**Extraction order:** entities are extracted in this order: `url`, `email`, `timestamp`, `date`, `clock_time`, `coordinate`, `phone`. A span matched by an earlier type is removed before the later types scan the text. So `2023-03-14T01:42:07Z` is one `timestamp` entity, not also a `date`, a `clock_time` and a `phone`; a `YYYY-MM-DD` date is never a phone; and a coordinate pair is never a phone. `contact` names are matched against the original text.
 
 **Known limitation:** free-text place names and other prose are not checked. Verified claims still need an examiner's review.
 
@@ -231,6 +236,7 @@ tbx check <answer.json> [--from T] [--to T] [--db PATH]   # run the checker on a
 | 3 | provider/network error |
 
 - **`--json` output:** `{"run_id", "verified": [...], "rejected": [...], "usage": {...}}`.
+- **`tbx check` output:** the `CheckResult` as one JSON document on stdout, `{"verified": [...], "rejected": [...]}`, with the same shapes as `ask --json`. It exits 0 whenever the check ran, even if claims were rejected, and 1 for a missing or invalid answer file or bad arguments.
 
 ## 10. Web API (FastAPI)
 
@@ -270,3 +276,14 @@ tbx check <answer.json> [--from T] [--to T] [--db PATH]   # run the checker on a
   - **`latency_p50_s`**, **`latency_p95_s`**, **`tokens`**, **`est_cost_usd`.**
 
 `eval/report.py` renders the README results table from every file in `eval/results/`.
+
+## Changelog
+
+- **v1.1 (Nov 1, 2026):** clarifications from the Day-0 spikes and the red-team suite. The IDs C1–C13 refer to `docs/SPIKES.md`.
+  - §1: the Baseten model ID is `meta-models/muse-spark-open` (C10).
+  - §2: `source_row` stores the `row_key` (C11).
+  - §3, §6: `Window` lives in `tbx.timeutil` and takes UTC datetimes; the models live in `tbx.models` (C3).
+  - §4: new `Store.set_meta()` (C4).
+  - §7: entity extraction order (C1); an unknown artifact gets only `UNKNOWN_ARTIFACT` (C2); the R5 slack is inclusive (C5); new `measure` rule for `duration_s`/`accuracy_m`/`size_bytes` (C6); phone entities ground through the phone rule (C7); the general R4 rule means containment (C8).
+  - §9: `tbx check` output and exit code (C13).
+  - Still open: C9 (clock times quoted inside message text) and C12 (country codes under the last-10-digit phone rule).
