@@ -1,4 +1,4 @@
-"""SQLite store with provenance on every row (CONTRACTS.md v1.1 sections 2 and 4)."""
+"""SQLite store with provenance on every row (CONTRACTS.md v1.2 sections 2 and 4)."""
 from __future__ import annotations
 
 import hashlib
@@ -12,7 +12,8 @@ PROVENANCE = ("artifact_id", "source_path", "source_row", "ts_utc", "ts_original
 FAMILY: dict[str, dict[str, str]] = {
     "messages": {"app": "TEXT", "thread_id": "TEXT", "direction": "TEXT", "sender": "TEXT", "sender_number": "TEXT",
                  "recipient": "TEXT", "recipient_number": "TEXT", "body": "TEXT", "attachment_media_id": "TEXT"},
-    "calls": {"app": "TEXT", "direction": "TEXT", "number": "TEXT", "contact_name": "TEXT", "duration_s": "REAL"},
+    "calls": {"app": "TEXT", "direction": "TEXT", "number": "TEXT", "contact_name": "TEXT", "duration_s": "REAL",
+              "transcript": "TEXT"},
     "locations": {"source": "TEXT", "lat": "REAL", "lon": "REAL", "accuracy_m": "REAL"},
     "media": {"app": "TEXT", "kind": "TEXT", "file_path": "TEXT", "mime_type": "TEXT", "sha256": "TEXT",
               "size_bytes": "INTEGER", "lat": "REAL", "lon": "REAL"},

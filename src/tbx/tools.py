@@ -12,7 +12,7 @@ from tbx.checker import fold, phones_match
 from tbx.store import FAMILY, Store
 
 DEFAULT_LIMIT, MAX_LIMIT, LONG_FIELD = 50, 200, 300
-LONG_FIELDS = ("body", "text")
+LONG_FIELDS = ("body", "text", "transcript")
 MEASURE = {"duration_s", "accuracy_m", "size_bytes"}
 HIDDEN = {"raw_json", "tz_basis", "ts_original", "source_row"}  # not citable; kept out of list results
 
@@ -113,8 +113,10 @@ def search_messages(store: Store, query=None, contact=None, number=None, app=Non
     return q.run(store, limit)
 
 
-def get_calls(store: Store, number=None, contact=None, direction=None, start=None, end=None, limit=None):
+def get_calls(store: Store, query=None, number=None, contact=None, direction=None, start=None, end=None, limit=None):
     q = _Q("calls", store.case_tz)
+    if query not in (None, ""):
+        q.add("tbx_has(transcript, ?)", str(query))  # v1.2: one case-insensitive substring of the transcript
     if number:
         q.add("tbx_phone(number, ?)", number)
     if contact:
@@ -195,9 +197,12 @@ TOOL_SPECS: list[dict] = [
           {"query": _S, "contact": {"type": "string", "description": "name; matches sender or recipient"},
            "number": {"type": "string", "description": "phone number in any format"},
            "app": _S, "start": _TIME, "end": _TIME, "limit": _LIMIT}),
-    _spec("get_calls", "Call log entries (phone and app calls).",
-          {"number": {"type": "string", "description": "phone number in any format"}, "contact": _S,
-           "direction": {"type": "string", "enum": ["incoming", "outgoing", "missed", "rejected", "unknown"]},
+    _spec("get_calls", "Call log entries (phone and app calls). Voicemails are their own direction, not missed "
+          "calls; a voicemail row may carry the carrier's transcription in `transcript`.",
+          {"query": {"type": "string", "description": "case-insensitive substring of the voicemail transcript"},
+           "number": {"type": "string", "description": "phone number in any format"}, "contact": _S,
+           "direction": {"type": "string",
+                         "enum": ["incoming", "outgoing", "missed", "rejected", "voicemail", "unknown"]},
            "start": _TIME, "end": _TIME, "limit": _LIMIT}),
     _spec("get_locations", "Device location fixes (lat/lon) from any source.",
           {"start": _TIME, "end": _TIME, "source": _S, "limit": _LIMIT}),

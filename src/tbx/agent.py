@@ -37,6 +37,13 @@ How to work:
 Use the question window for start/end unless the question says otherwise.
 2. When you are done, call submit_answer exactly once. Never answer in plain text.
 
+How to read the evidence:
+- A call row with direction "voicemail" is a voicemail, not a missed call. Never describe a voicemail as a missed \
+call. Its transcript field, when present, is the carrier's machine transcription; quote it, do not paraphrase it \
+as fact.
+- Message rows with the same thread_id and the same ts_utc are parts of ONE MMS (e.g. its text and its \
+attachment). Describe them as one message, citing each part; never count them as separate messages.
+
 Rules for submit_answer (a deterministic checker verifies every citation and rejects any claim it cannot back up):
 - Each claim is one short factual statement, supported by its own citations.
 - Copy artifact_id, field and value EXACTLY from a tool row. value is always a string; copy numbers as strings \
@@ -47,8 +54,10 @@ tool call id.
 ts_original or source_row.
 - Every name, phone number, email, URL, date, clock time and coordinate written in a claim's text must appear in \
 that claim's own cited values. When the text mentions a date or time, cite that artifact's ts_local.
-- Write times as case-local clock times, e.g. "9:42 PM on July 27". Do not write UTC ISO timestamps in the text, \
-and do not restate the question window. Write durations in seconds or minutes ("121 seconds"), never as m:ss.
+- Write times as case-local clock times, e.g. "9:42 PM on July 27". Do not write UTC ISO timestamps in the text. \
+Write durations in seconds or minutes ("121 seconds"), never as m:ss.
+- Never restate the question window in claim text (no "between 9 and 11 PM", no window start or end times): the \
+window is not evidence, and only times of the cited artifacts may appear in a claim.
 - When citing body or text, quote it exactly (at least 8 characters).
 - Leave time_start and time_end empty unless the claim describes a span; if set, they must lie within the cited \
 artifacts' times.

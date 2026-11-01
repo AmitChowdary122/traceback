@@ -123,3 +123,18 @@ def test_result_json_is_byte_identical(store):
     b = run(store, "Liz Dehner called 919-555-1234 at 12:05 AM.", (CALL, "number", "919 555 1234"), window=w)
     assert a.model_dump_json() == b.model_dump_json()
     json.loads(a.model_dump_json())
+
+
+def test_transcript_follows_the_text_rule(tmp_path):
+    s = Store(str(tmp_path / "vm.db"))
+    s.set_meta("device_tz", NY)
+    vm = artifact_id("calls", "calls.tsv", "9")
+    s.insert("calls", {"artifact_id": vm, "source_path": "calls.tsv", "source_row": "9",
+                       "ts_utc": "2024-02-01T15:00:00Z", "ts_original": "x", "tz_basis": "utc_string", "raw_json": "{}",
+                       "app": "Phone", "direction": "voicemail", "number": "+18005551212",
+                       "transcript": "Hi,  your U-Haul\nreservation is ready."})
+    ok = run(s, "A voicemail mentioned a reservation.", (vm, "transcript", "u-haul reservation IS READY"))
+    assert ok.verified and not ok.rejected                     # casefold + whitespace collapse + substring
+    short = run(s, "A voicemail mentioned a reservation.", (vm, "transcript", "U-Haul"))
+    assert codes(short) == ["VALUE_MISMATCH"]                  # substrings need >= 8 characters
+    assert codes(run(s, "A call was missed.", (vm, "direction", "missed"))) == ["VALUE_MISMATCH"]

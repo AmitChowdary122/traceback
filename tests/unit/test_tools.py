@@ -30,14 +30,15 @@ def store(tmp_path):
                    sender_number=num, recipient=None if sender else "Liz Dehner", recipient_number=None,
                    body=body, attachment_media_id=None)
         s.insert("messages", row)
-    for i, (ts, d, num, name, dur) in enumerate([
-        ("2024-07-27T21:40:00Z", "outgoing", "919-579-4674", "Josh", 121.0),
-        ("2024-07-27T21:45:00Z", "incoming", "(919) 579-4674", "Josh", 105.0),
-        ("2024-02-01T20:07:00Z", "outgoing", "828-705-8820", None, 13.0),
+    for i, (ts, d, num, name, dur, trn) in enumerate([
+        ("2024-07-27T21:40:00Z", "outgoing", "919-579-4674", "Josh", 121.0, None),
+        ("2024-07-27T21:45:00Z", "incoming", "(919) 579-4674", "Josh", 105.0, None),
+        ("2024-02-01T20:07:00Z", "outgoing", "828-705-8820", None, 13.0, None),
+        ("2024-02-03T15:00:00Z", "voicemail", "+18005551212", None, 31.0, "Your U-Haul reservation is READY. " + "y" * 400),
     ], 1):
         row = _prov("Call Logs/calls.tsv", str(i), ts)
         row.update(artifact_id=artifact_id("calls", "Call Logs/calls.tsv", str(i)), app="Phone", direction=d,
-                   number=num, contact_name=name, duration_s=dur)
+                   number=num, contact_name=name, duration_s=dur, transcript=trn)
         s.insert("calls", row)
     med = artifact_id("media", "DCIM/Camera/a.jpg", "1")
     row = _prov("DCIM/Camera/a.jpg", "1", "2024-07-27T16:00:00Z")
@@ -133,3 +134,22 @@ def test_tool_specs_cover_contract():
     assert names == {"search_messages", "get_calls", "get_locations", "find_media", "get_transcripts", "get_artifact"}
     ga = next(t for t in tools.TOOL_SPECS if t["function"]["name"] == "get_artifact")
     assert ga["function"]["parameters"]["required"] == ["artifact_id"]
+
+
+def test_get_calls_query_matches_transcript_substring(store):
+    out = call(store, "get_calls", query="u-haul RESERVATION")
+    assert out["total"] == 1
+    row = out["rows"][0]
+    assert row["direction"] == "voicemail" and len(row["transcript"]) == 300 and row["transcript_truncated"] is True
+    assert call(store, "get_calls", query="reservation cancelled")["total"] == 0
+    full = call(store, "get_artifact", artifact_id=row["artifact_id"])["rows"][0]
+    assert len(full["transcript"]) > 300 and "transcript_truncated" not in full
+
+
+def test_get_calls_rows_include_transcript_and_voicemail_direction(store):
+    rows = call(store, "get_calls")["rows"]
+    assert all("transcript" in r for r in rows) and not any("transcript_truncated" in r for r in rows
+                                                              if r["direction"] != "voicemail")
+    assert [r["direction"] for r in call(store, "get_calls", direction="voicemail")["rows"]] == ["voicemail"]
+    spec = next(t for t in tools.TOOL_SPECS if t["function"]["name"] == "get_calls")["function"]["parameters"]
+    assert "query" in spec["properties"] and "voicemail" in spec["properties"]["direction"]["enum"]

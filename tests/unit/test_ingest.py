@@ -40,7 +40,11 @@ def report(tmp_path):
               [["2024-07-27 21:40:04.825000+00:00", "19199282177", "x", "com.android.phone", "9195794674", "2",
                 'Outgoing <i data-feather="phone-outgoing"></i>', "121", "North Carolina", "US", " ", " ", " ", "0"],
                ["2024-01-27 16:50:18+00:00", " ", "x", "com.android.phone", "+14722000026", "4", "Voicemail", "58",
-                "", "US", "/data/x", " ", "Transcript not available", "0"]])
+                "", "US", "/data/x", " ", "Transcript not available", "0"],
+               ["2024-02-01 15:00:00+00:00", " ", "x", "com.android.phone", "+18005551212", "4", "Voicemail", "31",
+                "", "US", "/data/y", " ", "  Hi, your U-Haul reservation is ready.  ", "0"],
+               ["2024-02-02 15:00:00+00:00", " ", "x", "com.android.phone", "+18005550000", "3", "Missed", "0",
+                "", "US", " ", " ", "", "0"]])
     write_tsv(root, "Contacts.tsv", ["Mimetype", "Data 1", "Display Name", "Phone Number", "Email Address", "Source File"],
               [["vnd.android.cursor.item/phone_v2", "+1 919-579-4674", "Josh Hickman", "+1 919-579-4674", "", "c.db"]])
     write_tsv(root, "Google Voice - Messages.tsv",
@@ -99,7 +103,7 @@ def rows(db, table):
 def test_ingest_maps_families_with_provenance(report, tmp_path):
     db = tmp_path / "t.db"
     summary = ingest.ingest_report(str(report), str(db))
-    assert summary["counts"]["messages"] == 4 and summary["counts"]["calls"] == 2 and summary["counts"]["locations"] == 1
+    assert summary["counts"]["messages"] == 4 and summary["counts"]["calls"] == 4 and summary["counts"]["locations"] == 1
     msgs = {r["body"]: r for r in rows(db, "messages")}
     m = msgs["Are you here yet?"]
     assert m["source_path"] == f"{TSV}/GoogleMessages.tsv" and m["source_row"] == "1"
@@ -125,8 +129,19 @@ def test_calls_direction_duration_and_contact_lookup(report, tmp_path):
     assert out["direction"] == "outgoing" and out["duration_s"] == 121 and out["contact_name"] == "Josh Hickman"
     raw = json.loads(out["raw_json"])
     assert "Contacts.tsv" in raw["_tbx"]["contact_name_from"]
+    assert out["transcript"] is None                                     # " " is not a transcript
     vm = calls["+14722000026"]
-    assert vm["direction"] == "missed" and vm["contact_name"] is None   # raw type 4 = voicemail
+    assert vm["direction"] == "voicemail" and vm["contact_name"] is None  # raw type 4 (v1.2)
+    assert vm["transcript"] is None                                      # placeholder -> NULL
+    vm2 = calls["+18005551212"]
+    assert vm2["direction"] == "voicemail" and vm2["transcript"] == "Hi, your U-Haul reservation is ready."
+    assert calls["+18005550000"]["direction"] == "missed" and calls["+18005550000"]["transcript"] is None
+
+
+@pytest.mark.parametrize("raw, want", [("Transcript not available", None), ("transcript not available.", None),
+                                       ("", None), ("   ", None), (None, None), (" Call me back. ", "Call me back.")])
+def test_voicemail_transcript_placeholders(raw, want):
+    assert ingest.voicemail_transcript(raw) == want
 
 
 def test_locations_and_case_meta(report, media, tmp_path):
@@ -157,6 +172,7 @@ def test_media_exif_time_gps_and_photo_location(report, media, tmp_path):
     assert m["source_path"] == rel and m["file_path"] == rel and m["source_row"] == "1"
     assert m["kind"] == "image" and m["mime_type"] == "image/jpeg" and m["app"] == "Camera"
     assert m["ts_utc"] == "2024-07-16T23:59:52Z" and m["ts_original"] == "2024:07:16 19:59:52 -04:00"
+    assert m["tz_basis"] == "offset_string"                               # v1.2
     assert m["lat"] == pytest.approx(38.9024, abs=1e-4) and m["lon"] == pytest.approx(-77.03406, abs=1e-4)
     assert len(m["sha256"]) == 64 and m["size_bytes"] > 0
     loc = [r for r in rows(db, "locations") if r["source"] == "photo_exif"]
@@ -191,6 +207,10 @@ def test_missing_report_dir_is_an_error(tmp_path):
 ])
 def test_parse_aleapp_ts(raw, utc):
     assert ingest.parse_aleapp_ts(raw) == (utc, "utc_string")
+
+
+def test_parse_aleapp_ts_with_a_real_offset_is_offset_string():
+    assert ingest.parse_aleapp_ts("2024-07-27 17:40:04-04:00") == ("2024-07-27T21:40:04Z", "offset_string")
 
 
 @pytest.mark.parametrize("raw", ["", " ", "N/A", "0", "garbage"])

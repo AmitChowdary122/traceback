@@ -86,7 +86,8 @@ def test_store_reopens_existing_db(tmp_path):
 
 
 def test_citable_fields_follow_contract():
-    assert CITABLE["calls"] == {"ts_utc", "ts_local", "source_path", "app", "direction", "number", "contact_name", "duration_s"}
+    assert CITABLE["calls"] == {"ts_utc", "ts_local", "source_path", "app", "direction", "number", "contact_name", "duration_s",
+                                "transcript"}  # v1.2
     assert "raw_json" not in CITABLE["messages"] and "tz_basis" not in CITABLE["messages"]
     assert "ts_original" not in CITABLE["media"]
 

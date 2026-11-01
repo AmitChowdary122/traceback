@@ -1,4 +1,4 @@
-"""The deterministic citation checker (CONTRACTS.md v1.1 section 7).
+"""The deterministic citation checker (CONTRACTS.md v1.2 section 7).
 
 Pure: no network, no LLM, no clock. Same inputs give byte-identical model_dump_json().
 Strict: a claim with any reason is rejected, and every reason is listed.
@@ -24,7 +24,7 @@ SLACK = timedelta(seconds=60)
 
 TIMESTAMP_FIELDS = {"ts_utc", "ts_local"}
 PHONE_FIELDS = {"number", "sender_number", "recipient_number"}
-TEXT_FIELDS = {"body", "text"}
+TEXT_FIELDS = {"body", "text", "transcript"}
 COORD_FIELDS = {"lat", "lon"}
 MEASURE_FIELDS = {"duration_s", "accuracy_m", "size_bytes"}
 MIN_QUOTE = 8

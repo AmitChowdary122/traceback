@@ -82,6 +82,10 @@ def test_system_prompt_and_window_in_messages(store, tmp_path):
     msgs = c.requests[0]["messages"]
     assert msgs[0]["role"] == "system" and "submit_answer" in msgs[0]["content"]
     assert "121 seconds" in msgs[0]["content"]  # durations as m:ss would read as clock times (R4)
+    sp = msgs[0]["content"]
+    assert "voicemail" in sp and "not a missed call" in sp                    # v1.2
+    assert "same thread_id and the same ts_utc" in sp and "ONE MMS" in sp    # one MMS, several rows
+    assert "Never restate the question window in claim text" in sp
     assert "2024-07-27T21:00:00-04:00" in msgs[1]["content"] and "America/New_York" in msgs[1]["content"]
 
 

@@ -6,6 +6,7 @@
   the 1-based data row number. raw_json is the TSV row exactly as ALEAPP wrote it, plus a
   "_tbx" note for anything ingest derived (e.g. a contact name looked up in Contacts.tsv).
 - ALEAPP writes timestamps in UTC; a value without an offset is read as UTC (tz_basis utc_string).
+  EXIF DateTimeOriginal + OffsetTimeOriginal is converted with that offset (tz_basis offset_string).
 """
 from __future__ import annotations
 
@@ -46,13 +47,16 @@ def parse_aleapp_ts(raw: str | None) -> tuple[str | None, str]:
     except ValueError:
         return None, "unknown"
     off = m.group(8)
+    basis = "utc_string"
     if off and off.upper() != "Z":
         sign = 1 if off[0] == "+" else -1
         hh, mm = int(off[1:3]), int(off[-2:])
-        dt = dt.replace(tzinfo=timezone(sign * timedelta(hours=hh, minutes=mm)))
+        if hh or mm:  # "+00:00" is still a UTC string; any other offset is converted with it
+            dt = dt.replace(tzinfo=timezone(sign * timedelta(hours=hh, minutes=mm)))
+            basis = "offset_string"
     if dt.year < 1990:
         return None, "unknown"
-    return tu.fmt_utc(dt), "utc_string"
+    return tu.fmt_utc(dt), basis
 
 
 def parse_duration(raw: str | None) -> float | None:
@@ -109,7 +113,7 @@ def _direction(raw: str | None, allowed: tuple[str, ...]) -> str:
 
 
 MSG_DIR = ("incoming", "outgoing")
-CALL_DIR = ("incoming", "outgoing", "missed", "rejected")
+CALL_DIR = ("incoming", "outgoing", "missed", "rejected", "voicemail")
 
 
 # ------------------------------------------------------------------------------ adapters
@@ -209,13 +213,25 @@ def _with_contact(row: dict, ctx: Ctx, raw_note: dict) -> dict:
     return row
 
 
-CALL_TYPES = {"1": "incoming", "2": "outgoing", "3": "missed", "4": "missed", "5": "rejected", "6": "rejected",
-              "7": "incoming"}  # 4 = voicemail, 6 = blocked, 7 = answered on another device
+# Android CallLog.Calls.TYPE. 4 is a voicemail (CONTRACTS v1.2), not a missed call; 6 = blocked,
+# 7 = answered on another device.
+CALL_TYPES = {"1": "incoming", "2": "outgoing", "3": "missed", "4": "voicemail", "5": "rejected", "6": "rejected",
+              "7": "incoming"}
+TRANSCRIPT_PLACEHOLDERS = {"transcript not available", "transcription not available", "no transcription"}
+
+
+def voicemail_transcript(raw: str | None) -> str | None:
+    """The carrier's voicemail transcription, or None for empty values and placeholders."""
+    v = (raw or "").strip()
+    if not v or v.casefold().rstrip(".") in TRANSCRIPT_PLACEHOLDERS:
+        return None
+    return v
 
 
 def m_call_log(r: dict, ctx: Ctx) -> dict:
     return {"direction": CALL_TYPES.get((r.get("Raw Call Type (as stored)") or "").strip(), "unknown"),
-            "number": _clean(r.get("Partner")), "duration_s": parse_duration(r.get("Duration in Secs"))}
+            "number": _clean(r.get("Partner")), "duration_s": parse_duration(r.get("Duration in Secs")),
+            "transcript": voicemail_transcript(r.get("Transcription"))}
 
 
 def m_whatsapp_calls(r: dict, ctx: Ctx) -> dict:
@@ -425,7 +441,7 @@ def _exif_ts(info: dict, case_tz: str) -> tuple[str | None, str | None, str]:
     off = info.get("OffsetTimeOriginal")
     if off and re.fullmatch(r"[+-]\d{2}:\d{2}", off):
         dt = datetime.fromisoformat(naive.isoformat() + off)
-        return tu.fmt_utc(dt), f"{dto} {off}", "utc_string"
+        return tu.fmt_utc(dt), f"{dto} {off}", "offset_string"
     return tu.fmt_utc(tu.local_to_utc(naive, case_tz)), dto, f"local_converted:{case_tz}"
 
 
