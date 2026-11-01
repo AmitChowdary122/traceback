@@ -1,0 +1,5 @@
+﻿Timestamp	Account Number	Direction	Caller	Recipient	Call Status (existing parser classification)	Raw Field 13 JSON	Field 22 Present	Raw Field 22 JSON	Voicemail Left	Duration	Call Recording
+2024/02/27 16:06:11	1	Outgoing	+19104773625	+19105576476		"{""type"":""int"",""decimal"":""2""}"	No			00:01:35	
+2024/02/27 16:11:07	1	Incoming	+19105576476	+19104773625	Answered	"{""type"":""int"",""decimal"":""1""}"	No			00:01:35	
+2024/05/23 18:39:58	1	Incoming	+13148882893	+19104773625	Not Answered	"{""type"":""int"",""decimal"":""0""}"	Yes	"{""type"":""dict"",""entries"":[[{""type"":""str"",""value"":""3""},{""type"":""int"",""decimal"":""1""}]]}"	No	00:00:00	
+2024/03/11 17:03:41	1	Incoming	+19188008238	+19104773625	Not Answered	"{""type"":""int"",""decimal"":""0""}"	No		No	00:00:00	

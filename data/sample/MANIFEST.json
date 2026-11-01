@@ -1,0 +1,606 @@
+{
+ "media": {
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_104_message_1082_part_968_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1719542513,
+   "original_sha256": "c672c7d4c92816b6b964def15c7cd195f6aac9934b265d7fe2c1b93c477d3327",
+   "original_size": 151932,
+   "sha256": "c672c7d4c92816b6b964def15c7cd195f6aac9934b265d7fe2c1b93c477d3327",
+   "size": 151932
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_104_message_1228_part_1103_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1721691072,
+   "original_sha256": "7192b1e5313c5a8c4aad252fd69d61be9a56258e75ee3039d6d30ddc2f5ed9aa",
+   "original_size": 407145,
+   "sha256": "7192b1e5313c5a8c4aad252fd69d61be9a56258e75ee3039d6d30ddc2f5ed9aa",
+   "size": 407145
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_104_message_751_part_668_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1714407480,
+   "original_sha256": "d6079c3017e92d0e42ab9c0cb11f216e3373752cabacb6f906e6d5b8923bfa5f",
+   "original_size": 26633,
+   "sha256": "d6079c3017e92d0e42ab9c0cb11f216e3373752cabacb6f906e6d5b8923bfa5f",
+   "size": 26633
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_140_message_963_part_856_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1716927536,
+   "original_sha256": "291dc28181c1fcf9b472fa615626f1385280b4908009789ff925fdbb1d61ffbe",
+   "original_size": 42576,
+   "sha256": "291dc28181c1fcf9b472fa615626f1385280b4908009789ff925fdbb1d61ffbe",
+   "size": 42576
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_146_message_1033_part_922_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1718560954,
+   "original_sha256": "9432337df9ebd5085d3718c79f65c3370d2d4a147d932e3e631cef5f22b7e8a5",
+   "original_size": 68806,
+   "sha256": "9432337df9ebd5085d3718c79f65c3370d2d4a147d932e3e631cef5f22b7e8a5",
+   "size": 68806
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_15_message_580_part_505_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1712360934,
+   "original_sha256": "be702e35757fd1741b5042224adf95e95ca7a3f6839f544f5dceb1128c769541",
+   "original_size": 238597,
+   "sha256": "be702e35757fd1741b5042224adf95e95ca7a3f6839f544f5dceb1128c769541",
+   "size": 238597
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_15_message_777_part_692_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1714771326,
+   "original_sha256": "9393d9e6544e0553ebb39af6a22130e05a1e1026bc6ce0b96505553902c486eb",
+   "original_size": 226762,
+   "sha256": "9393d9e6544e0553ebb39af6a22130e05a1e1026bc6ce0b96505553902c486eb",
+   "size": 226762
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_174_message_1270_part_1143_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1722022726,
+   "original_sha256": "a66e06174e7a7d80c2ae49a45d2c8d92c87c760d1eccef0062859fe1ef167ff5",
+   "original_size": 153377,
+   "sha256": "a66e06174e7a7d80c2ae49a45d2c8d92c87c760d1eccef0062859fe1ef167ff5",
+   "size": 153377
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_174_message_1272_part_1145_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1722022878,
+   "original_sha256": "2dd827e8932738cbd2f75330c0aee2eeb1b8283789c8695397c4e3255b02fd88",
+   "original_size": 146992,
+   "sha256": "2dd827e8932738cbd2f75330c0aee2eeb1b8283789c8695397c4e3255b02fd88",
+   "size": 146992
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_175_message_1275_part_1148_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1722023244,
+   "original_sha256": "e233bed265c1e070b499b329a13013bc41a5ca41358e048fd6282636e8ca0ba3",
+   "original_size": 265742,
+   "sha256": "e233bed265c1e070b499b329a13013bc41a5ca41358e048fd6282636e8ca0ba3",
+   "size": 265742
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_175_message_1275_part_1149_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1722023244,
+   "original_sha256": "8f1002e2b924e5f34ece1cb038a87c3097ae701dc0b6e7b6a73fe44288901386",
+   "original_size": 350981,
+   "sha256": "8f1002e2b924e5f34ece1cb038a87c3097ae701dc0b6e7b6a73fe44288901386",
+   "size": 350981
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_175_message_1275_part_1150_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1722023244,
+   "original_sha256": "a1f6be9c039107372e31456e237f9b78f7fe632884df2ac86a1fca9330e3de7b",
+   "original_size": 248940,
+   "sha256": "a1f6be9c039107372e31456e237f9b78f7fe632884df2ac86a1fca9330e3de7b",
+   "size": 248940
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_27_message_100_part_66_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1707513876,
+   "original_sha256": "dd3918ce130e4aa32e4583675b28db053f56fd45a223290f4e5f004144d14541",
+   "original_size": 1046050,
+   "sha256": "dd3918ce130e4aa32e4583675b28db053f56fd45a223290f4e5f004144d14541",
+   "size": 1046050
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_27_message_124_part_88_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1707849144,
+   "original_sha256": "11258ffb2f44468faa4b5112bb2e2710268f77fd1c344b28a36d203493495257",
+   "original_size": 512506,
+   "sha256": "11258ffb2f44468faa4b5112bb2e2710268f77fd1c344b28a36d203493495257",
+   "size": 512506
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_40_message_157_part_116_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1708117613,
+   "original_sha256": "f8f54bc6db15082aaaacd081ced3b23bc0d22a9f7ec316d1209373371619baa6",
+   "original_size": 139901,
+   "sha256": "f8f54bc6db15082aaaacd081ced3b23bc0d22a9f7ec316d1209373371619baa6",
+   "size": 139901
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_44_message_167_part_128_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1708268880,
+   "original_sha256": "e158d37821ee42e4aa703ec04aec932c4cfd1b9de19e5845bc56ac225bfdab8a",
+   "original_size": 51401,
+   "sha256": "e158d37821ee42e4aa703ec04aec932c4cfd1b9de19e5845bc56ac225bfdab8a",
+   "size": 51401
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_46_message_179_part_136_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1708303456,
+   "original_sha256": "a47666bbcfcba5e75121136a88f4661d1e8d08107277448c4caba23e96909381",
+   "original_size": 110707,
+   "sha256": "a47666bbcfcba5e75121136a88f4661d1e8d08107277448c4caba23e96909381",
+   "size": 110707
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_56_message_1075_part_960_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1719500002,
+   "original_sha256": "7edf8f5cb051d20624a337bb46b009d31b345a86694b04726c813e24e53a4283",
+   "original_size": 414506,
+   "sha256": "7edf8f5cb051d20624a337bb46b009d31b345a86694b04726c813e24e53a4283",
+   "size": 414506
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_56_message_240_part_188_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1709064297,
+   "original_sha256": "f59b36c5148256dd8a53a6b8b8e56ff4f44f0ac2e2a93c14ad625208bccf3428",
+   "original_size": 355421,
+   "sha256": "f59b36c5148256dd8a53a6b8b8e56ff4f44f0ac2e2a93c14ad625208bccf3428",
+   "size": 355421
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_56_message_348_part_285_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1710434366,
+   "original_sha256": "a332d5edfb9f403cf0b2ac78ca6b5869dc1bae9437b4d4ba2b9834b5d11ccdd4",
+   "original_size": 377512,
+   "sha256": "a332d5edfb9f403cf0b2ac78ca6b5869dc1bae9437b4d4ba2b9834b5d11ccdd4",
+   "size": 377512
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_56_message_365_part_304_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1710605039,
+   "original_sha256": "6624520adf55f1a6a75e27545876d46c27aba86f8caae20064205aaf64e74d8d",
+   "original_size": 378392,
+   "sha256": "6624520adf55f1a6a75e27545876d46c27aba86f8caae20064205aaf64e74d8d",
+   "size": 378392
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_56_message_442_part_373_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1711299444,
+   "original_sha256": "275114056754b2057ad177a3d28378f3b3749c05368c444822d13645e80612ff",
+   "original_size": 377259,
+   "sha256": "275114056754b2057ad177a3d28378f3b3749c05368c444822d13645e80612ff",
+   "size": 377259
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_56_message_562_part_486_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1712247506,
+   "original_sha256": "95f8d89bef10ebdd3a5c5615ddc95344caa08e43b1ce96af391e09ed3c6a4e0b",
+   "original_size": 363679,
+   "sha256": "95f8d89bef10ebdd3a5c5615ddc95344caa08e43b1ce96af391e09ed3c6a4e0b",
+   "size": 363679
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_56_message_944_part_837_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1716649914,
+   "original_sha256": "f6bd8ad47b554a19516284e8c1c17fc3727680ef3361196d61fc6f50d58f8aaa",
+   "original_size": 164467,
+   "sha256": "f6bd8ad47b554a19516284e8c1c17fc3727680ef3361196d61fc6f50d58f8aaa",
+   "size": 164467
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_58_message_839_part_745_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1715369484,
+   "original_sha256": "577a6fbfc309afbc7f76674be859e6373a2042eca053f57098fb5a9c2670c97b",
+   "original_size": 200007,
+   "sha256": "577a6fbfc309afbc7f76674be859e6373a2042eca053f57098fb5a9c2670c97b",
+   "size": 200007
+  },
+  "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_85_message_508_part_435_.bin": {
+   "derivation": "verbatim",
+   "original_mtime": 1711895195,
+   "original_sha256": "b3719b6d567963754f57988691c26f9270831de0432865e9bda5f346bcc5bbd0",
+   "original_size": 31422,
+   "sha256": "b3719b6d567963754f57988691c26f9270831de0432865e9bda5f346bcc5bbd0",
+   "size": 31422
+  },
+  "data/media/0/DCIM/Camera/PXL_20240615_235358003.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718495641,
+   "original_sha256": "7e4a70fb46b4f406f3ca5742de9ef8e7472a8fb892d1fd379ed889141a2d92df",
+   "original_size": 2751056,
+   "sha256": "5bd872655e92c48feb5b64dcfb065977eb48b998e819a4ceb4bf8e4e098b6ffb",
+   "size": 357320
+  },
+  "data/media/0/DCIM/Camera/PXL_20240615_235425066.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718495668,
+   "original_sha256": "bec7084dc30bd5cc4d8048d0fd624bbb9180d0e0d276f6ce775c7cf013782e60",
+   "original_size": 3582673,
+   "sha256": "ea50e6df96f79c85676cc67468367a7b731f5679331b67ff84f14f3e6bdf2cbb",
+   "size": 355118
+  },
+  "data/media/0/DCIM/Camera/PXL_20240617_133851934.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718631535,
+   "original_sha256": "18a51c46f89c4dd08095159aefb8252fb893d38d491f261af7fbe6e04d62a187",
+   "original_size": 3632964,
+   "sha256": "49ef56b0efbc46a03c4aedf0ab216256ba7f515fcc2c0212943fb3465e057f37",
+   "size": 238484
+  },
+  "data/media/0/DCIM/Camera/PXL_20240617_135748329.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718632671,
+   "original_sha256": "78700b8895800d8f80c8b6690fedda18489fd7d22caa16a3af2ff9730f7ded0e",
+   "original_size": 2733926,
+   "sha256": "10a46bb1ec07c0d9f213d13772d7f813a34dc14093d780f4913563e243e2d3f5",
+   "size": 280099
+  },
+  "data/media/0/DCIM/Camera/PXL_20240617_135802476.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718632684,
+   "original_sha256": "855510bada9088c63a7bcc8e9e9207c26b1367b93899afa3b4f4208ce5d527db",
+   "original_size": 3203063,
+   "sha256": "67ca469763ff0c8224a7c4133ede0d59a1b2e86784859b8dc495ce42394a14c0",
+   "size": 51621
+  },
+  "data/media/0/DCIM/Camera/PXL_20240617_145600498.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718636163,
+   "original_sha256": "a135b23b808a334bc31110eed0c77ac1df3e3c07f367c3028ca15065c6eb73c1",
+   "original_size": 8153119,
+   "sha256": "a1a40e3415343b71ecc38999e2ba336f78133ec1eb1ca21c60c0c68ace6b8acb",
+   "size": 710926
+  },
+  "data/media/0/DCIM/Camera/PXL_20240617_150747706.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718636870,
+   "original_sha256": "78db7040e1844732cc49f54023fcc411518a3a137e0bcdd889eb39b942c90bae",
+   "original_size": 5818528,
+   "sha256": "d74e02c32febc18411589ee9a23ee0aef40ca097ea313882dc8e6549f9bf6379",
+   "size": 479376
+  },
+  "data/media/0/DCIM/Camera/PXL_20240617_155446831.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718639689,
+   "original_sha256": "b96e69b0dec51f49e57bd7d636a8c279e048b8c5506e2fcc00a0786b1fe4ae90",
+   "original_size": 2946545,
+   "sha256": "0d53c9469cb0a79178866ca6bf6a0df9f9764cf2a0c100d0e6263837a90ffdda",
+   "size": 375946
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_163736778.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718987862,
+   "original_sha256": "b721ff1f14568080533981e5d95a14b2447dd67a86b91015caae9ad8d09c3915",
+   "original_size": 6520275,
+   "sha256": "e3470f4296f8c60a0e80892a5d4129ddc9bbd2d958599d9812610126f3c62a8e",
+   "size": 570747
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_164330757.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718988213,
+   "original_sha256": "ec2a4bc5624b24e6283a22e36a72f04e994667da8222482191cfa96ec985c5c0",
+   "original_size": 4908226,
+   "sha256": "c2a509e38f357c1747feb9bb095aca0f98f60cdcbbcb9bb22be72b74f780e78a",
+   "size": 610904
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_164746758.MP.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718988468,
+   "original_sha256": "dd170f075e071ec3ff6cabdc992a5ab933af4a14748e888a6d54e36e05c6666a",
+   "original_size": 5813265,
+   "sha256": "45308314856980385109f714f33e205f898287303acb5a2d5dd506dc1a3cecc8",
+   "size": 410154
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_165347444.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718988830,
+   "original_sha256": "13847bbab999941812112b9fd2fb4f53da83108909e24e396580e2721d7f4450",
+   "original_size": 3642847,
+   "sha256": "f804c4cc59cc2f7ac5b614af92b3ad918859cc971b9375d8273dc0f5b8665aa5",
+   "size": 585664
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_170152085.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718989316,
+   "original_sha256": "32b7ac3937eeaf8556c21bbfe2579db702e9c6e704d3d91292e54ac44dfa6d16",
+   "original_size": 2989886,
+   "sha256": "4343c82de2ff96b32ea05a31355ae36c13cf2afadca0747ac7240f1dcbf0701d",
+   "size": 347207
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_171016095.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718989818,
+   "original_sha256": "7749d481db7495c6ca7dc9be7a55505df2d640b6ce6bb768934de3694a9be1c3",
+   "original_size": 4096392,
+   "sha256": "cd8097246de69d2685c8a6e42d69e5d7adb975cd8e88d20e77b2fbc7769c4634",
+   "size": 290781
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_172535419.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718990738,
+   "original_sha256": "ef02df6ec31121d51074658db300f285cf92de107de625b3b92045f07bbc0bd7",
+   "original_size": 2915537,
+   "sha256": "2de7d58c469e8e464a8c8cfa1efea221a008814504fbf6ad8a1b6255a84f0f9b",
+   "size": 325498
+  },
+  "data/media/0/DCIM/Camera/PXL_20240621_180121395.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1718992883,
+   "original_sha256": "95dfd4fc891d4b7ddc080c396ba89415999e894d276c1bac8bf70e7d4a9c95c5",
+   "original_size": 3291795,
+   "sha256": "ea7ea321facee054d280071758b70b3e825231238e6ef0a35d7de115d701fca5",
+   "size": 433078
+  },
+  "data/media/0/DCIM/Camera/PXL_20240622_020900128.NIGHT.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1719022145,
+   "original_sha256": "b1b990b150be8e0cf23427f8b72a805f8adb787cdb1be14f5ca6a8f16b6e899e",
+   "original_size": 2030597,
+   "sha256": "d7d9eb4530847618b6653f021993e0622e404ef3e8991abbf83896163572447e",
+   "size": 189915
+  },
+  "data/media/0/DCIM/Camera/PXL_20240629_144918211.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1719672562,
+   "original_sha256": "e306d68a29a1f9277dad1cf6c736e68b81c79a395ebe0991a501ae3ec9cb9750",
+   "original_size": 4261195,
+   "sha256": "aa38d34789d6dc05540cd354b20db5d8ed901b40e7af92963d2affbab2ac4d38",
+   "size": 347758
+  },
+  "data/media/0/DCIM/Camera/PXL_20240629_145648693.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1719673011,
+   "original_sha256": "637dc78a39d63d11d3776b6b39150d7dc95ed33dfba21064fe5ea0d69a1ec094",
+   "original_size": 4850498,
+   "sha256": "2e9b4e9e33f6e64c73d5acd88325dd923806dfaa67e34bb683513a594872be00",
+   "size": 432692
+  },
+  "data/media/0/DCIM/Camera/PXL_20240629_145923287.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1719673165,
+   "original_sha256": "1b1f2ff390e23c75f65b46a8300e7d45bdf04bed25c08c53d3aab2abf5f56300",
+   "original_size": 5444038,
+   "sha256": "5d1ebea5733484e4ce23450a2c6ed6e7c8fc5671067038be9a98015e99aa5abc",
+   "size": 438196
+  },
+  "data/media/0/DCIM/Camera/PXL_20240629_151251276.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1719673974,
+   "original_sha256": "3016fa9c53ffd534b5cf68292c24f2047f6c6c7f1242537eb6fd32beb1430992",
+   "original_size": 2126439,
+   "sha256": "3bf8c8720f7c5e2b00242c47f24454891a7d2786eb7a272e8eeef89085ade037",
+   "size": 228185
+  },
+  "data/media/0/DCIM/Camera/PXL_20240629_165926709.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1719680369,
+   "original_sha256": "296397153b6c1990205062f07a6a8af776dfc061a23e3549986fe242ac9c08ab",
+   "original_size": 5018531,
+   "sha256": "b1c341097ede91c22e155742d3bd99a623b32e3628eb50ad99c7c829bf2577f3",
+   "size": 477940
+  },
+  "data/media/0/DCIM/Camera/PXL_20240715_183346245.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721068430,
+   "original_sha256": "adb6b88ec4eb579c8db356d850d94bcd888fb97632a3dd1cb059b72793242185",
+   "original_size": 4836418,
+   "sha256": "53c9e676ea274e1a56e58b1d3632ed9023b77590b4fe36ca7daf9982c21aa88a",
+   "size": 633603
+  },
+  "data/media/0/DCIM/Camera/PXL_20240715_223711167.MP.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721083035,
+   "original_sha256": "049556cd34aa330d85e412fd625bcfeaf8ddd0b72369663a0e305a6a929d1c92",
+   "original_size": 8309832,
+   "sha256": "dbfa464676ed26d6c17fbcf5f3754a255bca3eed9027e5f0f34340aed0d15a81",
+   "size": 440173
+  },
+  "data/media/0/DCIM/Camera/PXL_20240715_225229429.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721083954,
+   "original_sha256": "933ebae59a1425e07f0e7bac47a464d27f466264b8e3b0ece0bcceda547066c1",
+   "original_size": 4165254,
+   "sha256": "a7e2d2a40b68248101e483811dac89528d244a3f2348f4ab51a04ec6afc4fd41",
+   "size": 395185
+  },
+  "data/media/0/DCIM/Camera/PXL_20240716_115149743.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721130713,
+   "original_sha256": "56550403e69ca5df6dfa3ca9cc5447841e2ab1d7df6e2e70b3a196cd7c66fafd",
+   "original_size": 7746568,
+   "sha256": "bd21a0aa9f14352db9d6ee5c1d6a369d6aa58be0d84b3f764af6c963bf581361",
+   "size": 796284
+  },
+  "data/media/0/DCIM/Camera/PXL_20240716_141755428.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721139478,
+   "original_sha256": "968862c98a91e2123aa3343c64212f8a8ce30f71b8241bdd47a4526fb36b4c0a",
+   "original_size": 3844421,
+   "sha256": "88d5230af507529e23679300c0febec5669840cd9504c2e4f11b4f984ea9075f",
+   "size": 245025
+  },
+  "data/media/0/DCIM/Camera/PXL_20240716_151634465.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721142998,
+   "original_sha256": "f11c3134c066be86d84e67324f9f07c3d6422bccaff35aaab7c303c9fad8961d",
+   "original_size": 4680404,
+   "sha256": "2c37c6916c3caad48fd3a43ddb63beb056e63b500a2aad89ee92618875c54287",
+   "size": 633399
+  },
+  "data/media/0/DCIM/Camera/PXL_20240716_235952437.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721174396,
+   "original_sha256": "0ee1a55c2a049b6918472f961b63e138423079b9a76546c7c07da3933e960fbe",
+   "original_size": 3873173,
+   "sha256": "c0dc39c9b9d0f483f941ae901dbde4355ba0a91cea2da4d67d5c97823f7c6942",
+   "size": 411067
+  },
+  "data/media/0/DCIM/Camera/PXL_20240717_023250505.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721183574,
+   "original_sha256": "5d57d405c1c58be44c07acd08e38df2c9ea1f4299e4d145cd5e532a48c3b8bbf",
+   "original_size": 3304182,
+   "sha256": "8f4dbd75fa55aafa129a63c951b1fe62b99291e7dee310b17c68dca7710f84e1",
+   "size": 402292
+  },
+  "data/media/0/DCIM/Camera/PXL_20240717_023710170.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721183834,
+   "original_sha256": "cb942a4e5cbc337c4c1b26018042a99540d6ca146335e846a1ea4cf1c2964d8d",
+   "original_size": 2880931,
+   "sha256": "faa4aad44521e12a184cba1d2a6892bf025a67bddbc8bc7a2ef4c2a722bc1227",
+   "size": 351045
+  },
+  "data/media/0/DCIM/Camera/PXL_20240717_175030483.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721238633,
+   "original_sha256": "7e562851f995c38d2ec3d3452dea387cd56a90e8dce4f6a52bd142b5800200cc",
+   "original_size": 2831443,
+   "sha256": "31b17889a9d64b10c87ed0a8c41147a17011ba585105ade83a7eaf97155a2347",
+   "size": 256529
+  },
+  "data/media/0/DCIM/Camera/PXL_20240717_202039173.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721247642,
+   "original_sha256": "51faf6d2a3d1fc001d550a8b8d28b4ff15d8d668cf1bc6f818665f532b2e0ab8",
+   "original_size": 6822078,
+   "sha256": "c130bbef87003fa75df590594837bd76facab7b07d9056fbfd434a931171bc7a",
+   "size": 600721
+  },
+  "data/media/0/DCIM/Camera/PXL_20240719_152152281.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721402515,
+   "original_sha256": "2eb89c7e82da49e486fdf188a0a0b41ba6c1182da108ff1c18f816debecb303a",
+   "original_size": 3994702,
+   "sha256": "2e3277e203780f561d44d8622b372ce893f6c430a088f646f0ebb2184e2ad8e3",
+   "size": 566283
+  },
+  "data/media/0/DCIM/Camera/PXL_20240724_160530146.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721837134,
+   "original_sha256": "4a67dfffe8a7b2961d2f6bf52e05908efe34da1f553bd0e2b0077ad5459bb1e9",
+   "original_size": 3586779,
+   "sha256": "d722d821ca033237f9045a6d6a618d82f93154f1efa90db00d15fdfa70f87d6f",
+   "size": 263157
+  },
+  "data/media/0/DCIM/Camera/PXL_20240724_163225774.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721838748,
+   "original_sha256": "92b6b582a1f095f2758309195c89e4d94460c05c5943636d012c45b46eaa5e72",
+   "original_size": 4827002,
+   "sha256": "13b082647daacc2035a0c288bbba216739f07c3d98877ca0bde3f6b4d357bd6c",
+   "size": 351357
+  },
+  "data/media/0/DCIM/Camera/PXL_20240724_195734810.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1721851059,
+   "original_sha256": "7b2aa072e6f721e2cfbeb84e5fd3de0daf2d5d4a01f51afbc6020658ce83802d",
+   "original_size": 3258906,
+   "sha256": "b14d33728678b6685b8150906d8176fac8272cd0d4a153741d88e3cdee2ee86c",
+   "size": 357856
+  },
+  "data/media/0/DCIM/Camera/PXL_20240727_145320709.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1722092004,
+   "original_sha256": "48e36c6b0f4fd5976bcc5855ae309de3e490008114ebeb34dc7b322be91485ad",
+   "original_size": 4632242,
+   "sha256": "408a4daff1be1f3b4a580ccfc73c6160e1ee21dba27365d1e261f16358b0949f",
+   "size": 725743
+  },
+  "data/media/0/DCIM/Camera/PXL_20240727_150212171.MP.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1722092535,
+   "original_sha256": "1f42d8be2f2d9d8591c724a73bce519c44cb14627a5d7bb83a57fd265717e85b",
+   "original_size": 7293299,
+   "sha256": "4f292c5ae33b384ed114277d49de6753ce247ad21044a49683d8b62d5003d28a",
+   "size": 711568
+  },
+  "data/media/0/DCIM/Camera/PXL_20240727_150719991.jpg": {
+   "derivation": "downscaled to max 1600 px, JPEG q85, EXIF kept",
+   "original_mtime": 1722092843,
+   "original_sha256": "2af33bcad7395b5662d6698b215ce2e31d9a4f0d8acc2ad7dcc279423a6758dd",
+   "original_size": 9361678,
+   "sha256": "98270b92cd7b46b3b881ec8657be670cf23487022030f8ea8b89f81c035c7914",
+   "size": 897298
+  },
+  "data/property/persistent_properties": {
+   "derivation": "verbatim",
+   "original_mtime": 1722166007,
+   "original_sha256": "0f9f8d71a4306942bc00f61a13326e962caef2f62735317c39f38f49bb053d8a",
+   "original_size": 12699,
+   "sha256": "0f9f8d71a4306942bc00f61a13326e962caef2f62735317c39f38f49bb053d8a",
+   "size": 12699
+  }
+ },
+ "tsv": {
+  "_TSV Exports/Build.tsv": {
+   "sha256": "eaa49a8ff73a13d96b05585337a327b3488ab82056226dd7ffd202aa24575966",
+   "size": 128
+  },
+  "_TSV Exports/Call logs .tsv": {
+   "sha256": "9645d2a3dfd527e63262615b3cf6b3452e241ff86da5336eaa8b669170204697",
+   "size": 720232
+  },
+  "_TSV Exports/Contacts.tsv": {
+   "sha256": "6b6a84af49a6e85a8fddf3454e86ca32c7134bf63c4d0733eee7edbd39073d43",
+   "size": 2330
+  },
+  "_TSV Exports/Facebook Messenger - Calls (msys_database).tsv": {
+   "sha256": "a827bfd229ea796db435ae3f5ce50e4af3d26e0e70170dc978ad225287d56196",
+   "size": 1243
+  },
+  "_TSV Exports/Facebook Messenger - Chats (msys_database).tsv": {
+   "sha256": "71d5f464060f0aea3077c902ac8e7fe70103107eddd006169b6545baff5bb8fe",
+   "size": 6924
+  },
+  "_TSV Exports/Fitbit - Exercise GPS.tsv": {
+   "sha256": "1a42b3dce279e4bb67d0e62863a23c3e76731666a1e04f316893b9af2878798b",
+   "size": 785610
+  },
+  "_TSV Exports/Google Voice - Calls.tsv": {
+   "sha256": "44ae90c97456804aec67aba865fb8365095aa211ddbfa5b06cebf62592d83bb5",
+   "size": 791
+  },
+  "_TSV Exports/Google Voice - Messages.tsv": {
+   "sha256": "c00224f88c07c01686e3ae1b509558f40b2691af207000d68b96ae2f444248ad",
+   "size": 1628
+  },
+  "_TSV Exports/GoogleMessages.tsv": {
+   "sha256": "e207376aec5bd552566eb48fcf08285a0ab28eef6665429b4134a0b473374376",
+   "size": 256020
+  },
+  "_TSV Exports/Life360 - Locations.tsv": {
+   "sha256": "175c5e9457a89d98cb0c7b074fc086407e4573cbf24fd94607ddfe0ab5e5bd24",
+   "size": 3649894
+  },
+  "_TSV Exports/ODLH Path Points.tsv": {
+   "sha256": "2d45e43b03c8ff58f0e2ec551271df00f6e42b910be418abcb70f5530bef4c8e",
+   "size": 2192904
+  },
+  "_TSV Exports/Telegram - Messages.tsv": {
+   "sha256": "54f99b3d6b3110f2415411867a368a081a34ef9320984f8aacb375201576d703",
+   "size": 6235
+  },
+  "_TSV Exports/WhatsApp - Call Logs.tsv": {
+   "sha256": "121853a8f05ec8d3840be5efe3f661fcbc4c37ca3378087683ea11b76baaba79",
+   "size": 516
+  },
+  "_TSV Exports/WhatsApp - Group Messages.tsv": {
+   "sha256": "7fb84ae60bf2f1f42fa267a0f67e1d1b8bc18c1337ae83b2f0b0f0c195f26432",
+   "size": 35847
+  },
+  "_TSV Exports/WhatsApp - One To One Messages.tsv": {
+   "sha256": "1278cf52440b1404941979b29011ec8c961dfe7c71afecc15fb822f05bb83591",
+   "size": 10134
+  },
+  "_lava_data.lava": {
+   "sha256": "8766b75167c85ec328ffde8c21546417e2803e8735adac7ae5f4b8841204c9e5",
+   "size": 2293524
+  }
+ }
+}

@@ -1,0 +1,74 @@
+﻿Message Timestamp	Received Timestamp	Final Location Timestamp	Message Direction	Other Participant WA User Name	Message	Media	Sending Party JID	Message Type	Local Path To Media	Media File Size	Shared Latitude/Starting Latitude (Live Location)	Shared Longitude/Starting Longitude (Live Location)	Duration Live Location Shared (Seconds)	Final Live Latitude	Final Live Longitude	Other Participant JID
+2024-01-30 18:36:44+00:00			Outgoing	This Is DFIR				System Message								19195794674@s.whatsapp.net
+2024-01-30 18:37:04+00:00			Outgoing	This Is DFIR	Hi there!  How are you?			Text								19195794674@s.whatsapp.net
+2024-01-30 19:10:56+00:00	2024-01-30 19:10:57+00:00		Incoming	This Is DFIR	I’m good. Just busy. How are you?		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-01-30 19:13:42+00:00			Outgoing	This Is DFIR	About the same. I'm generating data on two devices at the same time.			Text								19195794674@s.whatsapp.net
+2024-01-30 19:15:24+00:00	2024-01-30 19:15:24+00:00		Incoming	This Is DFIR	Sheesh. How?		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-01-30 19:21:47+00:00			Outgoing	This Is DFIR	Each screen has the document and I've got the phones under the respective screen.			Text								19195794674@s.whatsapp.net
+2024-01-30 19:23:32+00:00	2024-01-30 19:23:33+00:00		Incoming	This Is DFIR	Nice.  Don’t cross the streams. lol.		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-01-30 19:26:22+00:00			Outgoing	This Is DFIR	Nice Ghostbusters reference. Excited about the new movie?			Text								19195794674@s.whatsapp.net
+2024-01-30 19:27:50+00:00	2024-01-30 19:27:50+00:00		Incoming	This Is DFIR	You know it. 😀 Send me a picture please.		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-01-30 19:29:22+00:00	2024-01-30 19:29:22+00:00		Outgoing	This Is DFIR		media/60e802b243d0e9881a73e4430cc0bc97d1d5d3ad.jpg		Picture	Media/WhatsApp Images/Sent/IMG-20240130-WA0000.jpg	56522						19195794674@s.whatsapp.net
+2024-01-30 19:31:31+00:00	2024-01-30 19:31:32+00:00		Incoming	This Is DFIR	Outstanding. I’ll send one. Just a moment.		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-01-30 19:33:16+00:00	2024-01-30 19:33:17+00:00		Incoming	This Is DFIR		media/65f3e32f297e48a93b86e4e77075dda629a49ed4.jpg	19195794674@s.whatsapp.net	Picture	Media/WhatsApp Images/IMG-20240130-WA0001.jpg	79601						19195794674@s.whatsapp.net
+2024-01-30 19:36:04+00:00			Outgoing	This Is DFIR	I will audio call you in a minute.			Text								19195794674@s.whatsapp.net
+2024-01-30 19:38:29+00:00			Outgoing	This Is DFIR				90								19195794674@s.whatsapp.net
+2024-01-30 19:57:01+00:00	2024-01-30 19:57:02+00:00		Incoming	This Is DFIR	My turn to audio call you.		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-01-30 19:58:35+00:00			Incoming	This Is DFIR			19195794674@s.whatsapp.net	90								19195794674@s.whatsapp.net
+2024-01-30 20:01:52+00:00			Outgoing	This Is DFIR	Here comes a video call.			Text								19195794674@s.whatsapp.net
+2024-01-30 20:02:28+00:00			Outgoing	This Is DFIR				90								19195794674@s.whatsapp.net
+2024-01-30 20:04:23+00:00	2024-01-30 20:04:24+00:00		Incoming	This Is DFIR	I’ll video call you now.		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-01-30 20:06:02+00:00			Incoming	This Is DFIR			19195794674@s.whatsapp.net	90								19195794674@s.whatsapp.net
+2024-01-30 20:11:13+00:00			Outgoing	This Is DFIR	It's gone.			Text								19195794674@s.whatsapp.net
+2024-01-30 20:13:03+00:00			Outgoing	This Is DFIR	Now here is your bad message. Let me know when you delete it.			Text								19195794674@s.whatsapp.net
+2024-01-30 20:18:12+00:00	2024-01-30 20:18:13+00:00		Incoming	This Is DFIR	I deleted.		19195794674@s.whatsapp.net	Text								19195794674@s.whatsapp.net
+2024-02-09 14:09:57+00:00	2024-02-09 14:09:58+00:00		Incoming	16084476123@s.whatsapp.net			16084476123@s.whatsapp.net	27								16084476123@s.whatsapp.net
+2024-02-09 14:09:58+00:00			Outgoing	16084476123@s.whatsapp.net				System Message								16084476123@s.whatsapp.net
+2024-03-21 13:11:37+00:00			Outgoing	6283879936644@s.whatsapp.net				System Message								6283879936644@s.whatsapp.net
+2024-03-22 21:45:41+00:00			Outgoing	17868270779@s.whatsapp.net				System Message								17868270779@s.whatsapp.net
+2024-03-23 13:10:01+00:00			Outgoing	12032096607@s.whatsapp.net				System Message								12032096607@s.whatsapp.net
+2024-03-24 07:44:33+00:00			Outgoing	12368340355@s.whatsapp.net				System Message								12368340355@s.whatsapp.net
+2024-03-25 11:44:53+00:00			Outgoing	13212347190@s.whatsapp.net				System Message								13212347190@s.whatsapp.net
+2024-03-25 11:44:53+00:00			Outgoing	13057978257@s.whatsapp.net				System Message								13057978257@s.whatsapp.net
+2024-03-26 15:36:44+00:00	2024-03-26 15:36:50+00:00		Incoming	62857122710022@s.whatsapp.net	Hello, can I talk to you about a job?		62857122710022@s.whatsapp.net	Text								62857122710022@s.whatsapp.net
+2024-03-26 15:36:50+00:00			Outgoing	62857122710022@s.whatsapp.net				System Message								62857122710022@s.whatsapp.net
+2024-03-26 15:36:50+00:00			Outgoing	62857122710022@s.whatsapp.net				System Message								62857122710022@s.whatsapp.net
+2024-03-27 03:27:23+00:00			Outgoing	12368340673@s.whatsapp.net				System Message								12368340673@s.whatsapp.net
+2024-03-30 05:00:06+00:00			Outgoing	12027037640@s.whatsapp.net				System Message								12027037640@s.whatsapp.net
+2024-03-30 17:51:33+00:00			Outgoing	19154402472@s.whatsapp.net				System Message								19154402472@s.whatsapp.net
+2024-04-03 04:02:54+00:00			Outgoing	19379774151@s.whatsapp.net				System Message								19379774151@s.whatsapp.net
+2024-04-04 23:26:13+00:00			Outgoing	14158155880@s.whatsapp.net				System Message								14158155880@s.whatsapp.net
+2024-04-07 21:09:09+00:00			Outgoing	18453242628@s.whatsapp.net				System Message								18453242628@s.whatsapp.net
+2024-07-26 15:33:08+00:00	2024-07-26 15:33:09+00:00		Outgoing	This Is DFIR				Static Location			38.7705168	-77.2265756				19195794674@s.whatsapp.net
+2024-07-26 15:34:27+00:00	2024-07-26 15:34:28+00:00		Incoming	This Is DFIR			19195794674@s.whatsapp.net	Static Location			38.771141052246094	-77.229248046875				19195794674@s.whatsapp.net
+2024-07-26 15:38:09+00:00	2024-07-26 15:40:36+00:00		Outgoing	This Is DFIR				Live Location			38.7807486	-77.2293511	146			19195794674@s.whatsapp.net
+2024-07-26 15:42:15+00:00	2024-07-26 15:42:16+00:00	2024-07-26 15:42:15+00:00	Incoming	This Is DFIR			19195794674@s.whatsapp.net	Live Location			38.78515625	-77.22591400146484	165	38.78515625	-77.22591400146484	19195794674@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550005@s.whatsapp.net				System Message								13135550005@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550027@s.whatsapp.net				System Message								13135550027@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550048@s.whatsapp.net				System Message								13135550048@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550049@s.whatsapp.net				System Message								13135550049@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550009@s.whatsapp.net				System Message								13135550009@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550065@s.whatsapp.net				System Message								13135550065@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550042@s.whatsapp.net				System Message								13135550042@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550043@s.whatsapp.net				System Message								13135550043@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550062@s.whatsapp.net				System Message								13135550062@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550023@s.whatsapp.net				System Message								13135550023@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550046@s.whatsapp.net				System Message								13135550046@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550022@s.whatsapp.net				System Message								13135550022@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550047@s.whatsapp.net				System Message								13135550047@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550002@s.whatsapp.net				System Message								13135550002@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550067@s.whatsapp.net				System Message								13135550067@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550070@s.whatsapp.net				System Message								13135550070@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550039@s.whatsapp.net				System Message								13135550039@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550015@s.whatsapp.net				System Message								13135550015@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550019@s.whatsapp.net				System Message								13135550019@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550031@s.whatsapp.net				System Message								13135550031@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550054@s.whatsapp.net				System Message								13135550054@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550053@s.whatsapp.net				System Message								13135550053@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550030@s.whatsapp.net				System Message								13135550030@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550035@s.whatsapp.net				System Message								13135550035@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550012@s.whatsapp.net				System Message								13135550012@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550033@s.whatsapp.net				System Message								13135550033@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550014@s.whatsapp.net				System Message								13135550014@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550055@s.whatsapp.net				System Message								13135550055@s.whatsapp.net
+2024-07-27 23:04:57+00:00			Outgoing	13135550013@s.whatsapp.net				System Message								13135550013@s.whatsapp.net

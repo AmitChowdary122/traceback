@@ -1,0 +1,15 @@
+﻿Timestamp	Direction	Sender	Message	Image	Account Number	Conversation ID	Recipient(s)	Read Status
+2024/02/26 15:59:13	Outgoing	+19104773625	Are you there?		1	t.+19105576476	+19105576476	
+2024/02/27 15:47:05	Incoming	+19105576476	{'9': 7214873393859748128, '12': 3346849023614787705}		1	t.+19105576476	+19104773625	Read
+2024/02/27 15:48:17	Outgoing	+19104773625	I wouldn't sweat it. We are in no rush. 😀		1	t.+19105576476	+19105576476	
+2024/02/27 15:51:30	Outgoing	+19104773625	It is. I need to add your number to the contacts.		1	t.+19105576476	+19105576476	
+2024/02/27 15:50:33	Incoming	+19105576476	Good point.  This one is super basic.		1	t.+19105576476	+19104773625	Read
+2024/02/27 15:53:16	Incoming	+19105576476	Good idea. I’ll do the same.		1	t.+19105576476	+19104773625	Read
+2024/02/27 15:55:09	Outgoing	+19104773625	I'll send you my contact photo so you can add that, too.		1	t.+19105576476	+19105576476	
+2024/02/27 15:56:01	Outgoing	+19104773625	MMS Sent		1	t.+19105576476	+19105576476	
+2024/02/27 15:59:40	Incoming	+19105576476	Got it. Thanks. I’ll send a picture to you.		1	t.+19105576476	+19104773625	Read
+2024/02/27 16:02:04	Incoming	+19105576476	MMS Received		1	t.+19105576476	+19104773625	Read
+2024/02/27 16:05:09	Outgoing	+19104773625	I'll call you.		1	t.+19105576476	+19105576476	
+2024/02/27 16:14:37	Outgoing	+19104773625	Here is your bad message. Take care to delete it.		1	t.+19105576476	+19105576476	
+2024/02/27 16:10:10	Incoming	+19105576476	My turn.		1	t.+19105576476	+19104773625	Read
+2024/02/27 16:17:52	Incoming	+19105576476	I got rid of it.		1	t.+19105576476	+19104773625	Read

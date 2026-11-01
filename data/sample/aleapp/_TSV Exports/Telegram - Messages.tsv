@@ -1,0 +1,35 @@
+﻿Timestamp	Dialog ID	Chat	Direction	Sender ID	Sender	Message	Record Origin	Recorded Media Path	Media File	Read State	Message ID	Recovery Method	Recovery Location	Source File
+2024-01-27 15:15:12+00:00	5469601014	carolyn bowling	Incoming	5469601014	carolyn bowling		Live			3	1			data/data/org.telegram.messenger/files/cache4.db
+2024-01-27 15:15:30+00:00	5469601014	carolyn bowling	Incoming	5469601014	carolyn bowling		Live			3	2			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 16:00:06+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	Hi there. I moved.	Live			3	3			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 16:48:41+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	I totally missed this. Hey, what's up!	Live			3	4			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 16:50:08+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	Not much. I’m trying to diagnose a battery issue at the moment.	Live			3	5			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 16:53:32+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	What's wrong with it?	Live			3	6			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 16:56:04+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	It dropped from 100 to about 20 percent in a couple of hours. I have no idea why.	Live			3	7			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 16:59:45+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	What were you doing?	Live			3	8			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:01:05+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	Nothing unusual.  I was only using Signal.	Live			3	9			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:03:30+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	That is odd. You were on WiFi, right?	Live			3	10			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:05:56+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	Yes. I’m completely stumped.	Live			3	11			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:09:02+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	Interesting. I'll send a picturen let me find one.	Live			3	12			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:11:17+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner		Live	/storage/emulated/0/Android/data/org.telegram.messenger/cache/-2147483648_-210005.jpg		3	13			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:14:03+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	lol. That’s great. 😃	Live			3	14			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:15:16+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	I’ll send a picture.	Live			3	15			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:20:22+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir		Live			3	16			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:34:47+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	Accurate. I'll audio call you shortly.	Live			3	17			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:38:12+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	[Phone call (call id 1873875638318552256, outcome hung up, duration seconds 96)]	Live			3	18			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:39:11+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	Here comes my call.	Live			3	19			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:40:47+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	[Phone call (call id 6381608536058416468, outcome missed)]	Live			3	20			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:42:07+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	[Phone call (call id 6381608536057886568, outcome busy)]	Live			3	21			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:46:41+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	I can’t seem to call you at all.	Live			3	22			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:48:03+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	[Phone call (call id 6381608536059727719, outcome busy)]	Live			3	23			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:49:08+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	This app is garbage right now nill try to video call you.	Live			3	24			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:51:27+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	Nevermind. That feature isn't working, apparently.	Live			3	25			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:56:02+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	It's gone now.	Live			3	27			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 17:58:17+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner	Here is your message so you can delete it.	Live			3	28			data/data/org.telegram.messenger/files/cache4.db
+2024-01-31 18:02:36+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir	I canned it.	Live			3	29			data/data/org.telegram.messenger/files/cache4.db
+2024-03-06 14:38:35+00:00	6745600714	sharon	Incoming	6745600714	sharon	Excuse me,can I talk with you?	Live			2	30			data/data/org.telegram.messenger/files/cache4.db
+2024-06-18 20:54:16+00:00	7210426517	russell philby	Incoming	7210426517	russell philby	[Contact joined Telegram]	Live			2	31			data/data/org.telegram.messenger/files/cache4.db
+2024-07-26 15:21:23+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir		Live			3	32			data/data/org.telegram.messenger/files/cache4.db
+2024-07-26 15:23:06+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner		Live			3	33			data/data/org.telegram.messenger/files/cache4.db
+2024-07-26 15:25:08+00:00	5780801318	thisis dfir	Incoming	5780801318	thisis dfir		Live			3	34			data/data/org.telegram.messenger/files/cache4.db
+2024-07-26 15:29:12+00:00	5780801318	thisis dfir	Outgoing	6878746614	liz dehner		Live			3	35			data/data/org.telegram.messenger/files/cache4.db

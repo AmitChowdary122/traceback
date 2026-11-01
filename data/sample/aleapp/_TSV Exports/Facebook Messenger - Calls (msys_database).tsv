@@ -1,0 +1,9 @@
+﻿Call Timestamp	Call Duration	Party Name	Call Direction	Video Call	Has Been Seen (as stored)	Thread Key	Source File
+2024-01-31 18:45:43+00:00	00:01:56	ThisIs Dfir	Incoming		1	100049597093148	data/data/com.facebook.orca/databases/msys_database_100083016626357
+2024-01-31 18:48:46+00:00	00:01:36	ThisIs Dfir	Outgoing		1	100049597093148	data/data/com.facebook.orca/databases/msys_database_100083016626357
+2024-01-31 18:53:22+00:00	00:01:36	ThisIs Dfir	Incoming	Yes	1	100049597093148	data/data/com.facebook.orca/databases/msys_database_100083016626357
+2024-01-31 18:57:41+00:00	00:01:35	ThisIs Dfir	Outgoing	Yes	1	100049597093148	data/data/com.facebook.orca/databases/msys_database_100083016626357
+2024-02-04 16:40:01+00:00	00:01:51		Incoming		1	6277624115607348	data/data/com.facebook.orca/databases/msys_database_100083016626357
+2024-02-04 16:44:01+00:00	00:01:58		Outgoing		1	6277624115607348	data/data/com.facebook.orca/databases/msys_database_100083016626357
+2024-02-04 16:53:49+00:00	00:01:48		Incoming	Yes	1	6277624115607348	data/data/com.facebook.orca/databases/msys_database_100083016626357
+2024-02-04 16:56:48+00:00	00:01:40		Outgoing	Yes	0	6277624115607348	data/data/com.facebook.orca/databases/msys_database_100083016626357
