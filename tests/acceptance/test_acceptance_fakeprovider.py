@@ -39,7 +39,10 @@ def test_scripted_turns_and_recording():
         s, b = post(f"{fp.base_url}/chat/completions", {"model": "m", "messages": [{"role": "tool", "tool_call_id": "x", "content": "{}"}]})
         assert json.loads(json.loads(b)["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]) == {"claims": []}
         assert len(fp.chat_requests) == 2
-        assert fp.requests[0]["headers"]["Authorization"] == "Bearer canary"
+        assert fp.requests[0]["headers"]["authorization"] == "Bearer canary"  # names stored lowercase
+        req = urllib.request.Request(f"{fp.base_url}/models", headers={"authorization": "Bearer lower"})
+        OPENER.open(req, timeout=10).read()
+        assert fp.requests[-1]["headers"]["authorization"] == "Bearer lower"
 
 
 def test_tool_choice_other_than_auto_is_400_like_meta():

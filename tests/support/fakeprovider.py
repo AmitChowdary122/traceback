@@ -2,12 +2,13 @@
 
 The shapes it returns are copied from the real responses recorded in tests/fixtures/spikes/
 (muse-spark-1.3 on Meta and muse-spark-open on Baseten), so `tbx ask` can be driven end to end
-with no network and no credits. Every request is recorded for assertions.
+with no network and no credits. Every request is recorded for assertions; header names are
+recorded in lowercase, since HTTP header names are case-insensitive (httpx sends `authorization`).
 
     with FakeProvider(responder) as fp:
         env["META_BASE_URL"] = fp.base_url      # http://127.0.0.1:<port>/v1
         ...
-        fp.requests  # [{"path", "headers", "json"}]
+        fp.requests  # [{"path", "headers" (lowercase names), "json"}]
 
 `responder(request_json, n)` returns either a chat.completion body (dict) or (status, body).
 """
@@ -100,7 +101,7 @@ class FakeProvider:
 
             def do_GET(self):
                 with fp._lock:
-                    fp.requests.append({"path": self.path, "method": "GET", "headers": dict(self.headers), "json": None})
+                    fp.requests.append({"path": self.path, "method": "GET", "headers": {k.lower(): v for k, v in self.headers.items()}, "json": None})
                 if self.path.rstrip("/").endswith("/models"):
                     self._send(200, {"object": "list", "data": [{"id": m, "object": "model", "owned_by": "meta"} for m in fp.models]})
                 else:
@@ -113,7 +114,7 @@ class FakeProvider:
                 except ValueError:
                     req = {"_unparseable": raw.decode("utf-8", "replace")}
                 with fp._lock:
-                    fp.requests.append({"path": self.path, "method": "POST", "headers": dict(self.headers), "json": req})
+                    fp.requests.append({"path": self.path, "method": "POST", "headers": {k.lower(): v for k, v in self.headers.items()}, "json": req})
                     n = sum(1 for r in fp.requests if r["path"].endswith("/chat/completions"))
                 if not self.path.rstrip("/").endswith("/chat/completions"):
                     return self._send(404, {"error": {"message": f"fake provider only serves /chat/completions, got {self.path}"}})

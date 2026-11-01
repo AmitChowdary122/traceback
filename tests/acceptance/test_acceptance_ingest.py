@@ -85,11 +85,15 @@ def test_ids_have_table_prefix_and_10_hex(ingested):
         assert not bad, f"{table}: {bad[:5]}"
 
 
+def expected_id(table: str, row: dict) -> str:
+    key = row["source_path"] + "|" + row["source_row"]
+    return PREFIX[table] + "_" + hashlib.sha1(key.encode()).hexdigest()[:10]
+
+
 def test_ids_recompute_from_provenance(ingested):
     """CONTRACTS.md v1.1 section 2 (C11): source_row stores the row_key, so IDs recompute from provenance."""
     for table in BASE_TABLES:
-        bad = [r["artifact_id"] for r in rows(ingested[0], table)
-               if r["artifact_id"] != f"{PREFIX[table]}_{hashlib.sha1(f'{r['source_path']}|{r['source_row']}'.encode()).hexdigest()[:10]}"]
+        bad = [r["artifact_id"] for r in rows(ingested[0], table) if r["artifact_id"] != expected_id(table, r)]
         assert not bad, f"{table}: {len(bad)} IDs do not recompute from source_path|source_row, e.g. {bad[:3]}"
 
 

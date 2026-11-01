@@ -89,7 +89,7 @@ def test_model_requests_follow_contract_and_spike_findings(happy):
         names = {t["function"]["name"] for t in r.get("tools", [])}
         assert CONTRACT_TOOLS | {"submit_answer"} <= names, f"missing tools: {CONTRACT_TOOLS | {'submit_answer'} - names}"
     for rec in fp.requests:
-        assert rec["headers"].get("Authorization") == f"Bearer {env['META_API_KEY']}"
+        assert rec["headers"].get("authorization") == f"Bearer {env['META_API_KEY']}"
 
 
 def test_tool_results_follow_contract_shape(happy):
@@ -213,7 +213,7 @@ def test_baseten_provider_routing(run_cli, cli_env):
         out = parse_json_out(ask(run_cli, cli_env, "--provider", "baseten", "--model", model))
     assert meta.chat_requests == [], "meta endpoint must not be called with --provider baseten"
     assert all(r["model"] == model for r in bt.chat_requests)
-    assert all(rec["headers"].get("Authorization") == f"Bearer {cli_env['BASETEN_API_KEY']}" for rec in bt.requests)
+    assert all(rec["headers"].get("authorization") == f"Bearer {cli_env['BASETEN_API_KEY']}" for rec in bt.requests)
     assert len(out["verified"]) == 2
 
 
