@@ -142,7 +142,22 @@ def find_media(store: Store, kind=None, tag=None, start=None, end=None, limit=No
     if tag:
         q.add("artifact_id IN (SELECT media_id FROM image_tags WHERE tbx_has(label, ?))", tag)
     q.window(start, end)
-    return q.run(store, limit)
+    out = q.run(store, limit)
+    _attach_tags(store, out["rows"])
+    return out
+
+
+def _attach_tags(store: Store, rows: list[dict]) -> None:
+    """Each media row lists its image_tags rows ({artifact_id, label, score}), so they can be cited (v1.2 enrich)."""
+    ids = [r["artifact_id"] for r in rows]
+    if not ids:
+        return
+    tags: dict[str, list[dict]] = {i: [] for i in ids}
+    for t in store.query(f"SELECT artifact_id, media_id, label, score FROM image_tags WHERE media_id IN "
+                         f"({', '.join('?' * len(ids))}) ORDER BY media_id, label, score DESC, artifact_id", ids):
+        tags[t["media_id"]].append({"artifact_id": t["artifact_id"], "label": t["label"], "score": t["score"]})
+    for r in rows:
+        r["tags"] = tags[r["artifact_id"]]
 
 
 def get_transcripts(store: Store, query=None, media_id=None, start=None, end=None, limit=None):
@@ -206,7 +221,9 @@ TOOL_SPECS: list[dict] = [
            "start": _TIME, "end": _TIME, "limit": _LIMIT}),
     _spec("get_locations", "Device location fixes (lat/lon) from any source.",
           {"start": _TIME, "end": _TIME, "source": _S, "limit": _LIMIT}),
-    _spec("find_media", "Photos, audio and video files. `tag` filters by an image tag label (e.g. 'car').",
+    _spec("find_media", "Photos, audio and video files. `tag` filters by an image tag label (e.g. 'car'). Each row "
+          "lists its image tags (SAM 3.1 detections: artifact_id, label, score); cite a tag's own artifact_id for "
+          "what a photo shows. Spoken audio in videos is in get_transcripts.",
           {"kind": {"type": "string", "enum": ["image", "audio", "video", "other"]}, "tag": _S,
            "start": _TIME, "end": _TIME, "limit": _LIMIT}),
     _spec("get_transcripts", "Transcripts of voice notes and other audio.",

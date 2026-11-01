@@ -112,6 +112,8 @@ def test_locations_media_and_tags(store):
     assert call(store, "get_locations", source="google_maps", start="2024-07-27T21:30:00Z")["total"] == 1
     assert call(store, "find_media", kind="image")["total"] == 1
     assert call(store, "find_media", tag="car")["total"] == 1
+    tags = call(store, "find_media", tag="car")["rows"][0]["tags"]
+    assert [(t["label"], t["score"]) for t in tags] == [("car", 0.9)] and tags[0]["artifact_id"].startswith("tag_")
     assert call(store, "find_media", tag="dog")["total"] == 0
     assert call(store, "get_transcripts")["total"] == 0
 

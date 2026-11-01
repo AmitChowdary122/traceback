@@ -4,6 +4,7 @@ Keys come from the environment and are never logged, traced or echoed in errors.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import time
@@ -42,6 +43,37 @@ class ChatResponse:
     tool_calls: list[ToolCall] = field(default_factory=list)
     usage: dict = field(default_factory=dict)
     latency_ms: int = 0
+
+
+_NS = r"(?:[\w.-]+:)?"
+_TEXT_CALLS = re.compile(rf"<{_NS}function_calls>(.*?)(?:</{_NS}function_calls>|$)", re.S)
+_INVOKE = re.compile(rf'<{_NS}invoke\s+name="([^"]+)"\s*>(.*?)</{_NS}invoke>', re.S)
+_PARAM = re.compile(rf'<{_NS}parameter\s+name="([^"]+)"\s*>(.*?)</{_NS}parameter>', re.S)
+
+
+def parse_text_tool_calls(text: str | None, known: set[str]) -> list[ToolCall]:
+    """Tool calls the model wrote as text instead of as tool_calls.
+
+    Seen on Baseten muse-spark-open (Nov 1 smoke run): `<atem:function_calls><atem:invoke name="submit_answer">
+    <atem:parameter name="claims">[...]</atem:parameter>...` in `content`, finish_reason "stop", no tool_calls.
+    Only invokes of known tool names are recovered; each parameter is JSON when it parses, else a string.
+    """
+    out: list[ToolCall] = []
+    for block in _TEXT_CALLS.findall(text or ""):
+        for name, body in _INVOKE.findall(block):
+            if name not in known:
+                continue
+            args = {}
+            for key, raw in _PARAM.findall(body):
+                raw = raw.strip()
+                if raw == "":
+                    continue
+                try:
+                    args[key] = json.loads(raw)
+                except ValueError:
+                    args[key] = raw
+            out.append(ToolCall(id=f"text_call_{len(out)}", name=name, arguments=json.dumps(args, ensure_ascii=False)))
+    return out
 
 
 def strip_reasoning(text: str | None) -> str | None:

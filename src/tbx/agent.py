@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 from tbx import timeutil as tu
 from tbx.checker import check
-from tbx.llm import ChatResponse, strip_reasoning
+from tbx.llm import ChatResponse, parse_text_tool_calls, strip_reasoning
 from tbx.models import Answer, CheckResult
 from tbx.store import Store
 from tbx.tools import TOOL_SPECS, run_tool
@@ -175,12 +175,18 @@ class _Run:
                                                      "tools": [t["function"]["name"] for t in ALL_TOOLS]})
         resp = self.client.chat(self.messages, ALL_TOOLS)
         resp.content, resp.reasoning = strip_reasoning(resp.content), None  # never parsed, sent back or traced
+        from_text = False
+        if not resp.tool_calls and resp.content:
+            recovered = parse_text_tool_calls(resp.content, {t["function"]["name"] for t in ALL_TOOLS})
+            if recovered:  # the provider did not parse a tool call the model wrote as text
+                resp.tool_calls, resp.content, from_text = recovered, None, True
         for k in ("prompt_tokens", "completion_tokens", "cached_tokens"):
             self.usage[k] += int(resp.usage.get(k, 0) or 0)
         self.usage["latency_ms"] += resp.latency_ms
         self.trace.emit("model_response", self.step, {
             "content": resp.content, "finish_reason": resp.finish_reason, "latency_ms": resp.latency_ms,
             "tool_calls": [{"id": tc.id, "name": tc.name, "arguments": tc.arguments} for tc in resp.tool_calls],
+            **({"tool_calls_from_text": True} if from_text else {}),
             "usage": {"prompt_tokens": resp.usage.get("prompt_tokens", 0),
                       "completion_tokens": resp.usage.get("completion_tokens", 0)}})
         self.messages.append(_assistant_message(resp))

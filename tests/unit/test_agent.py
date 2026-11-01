@@ -168,3 +168,29 @@ def test_estimate_cost():
         == pytest.approx(1.25 + 4.25)
     assert agent.estimate_cost({"prompt_tokens": 1_000_000, "completion_tokens": 0, "cached_tokens": 1_000_000}) \
         == pytest.approx(0.15)
+
+
+TEXT_CALL = (__import__("pathlib").Path(__file__).parent / "fixtures" / "baseten_text_tool_call.txt").read_text()
+
+
+def test_parse_text_tool_calls_from_a_real_baseten_reply():
+    from tbx.llm import parse_text_tool_calls
+    calls = parse_text_tool_calls(TEXT_CALL, {"submit_answer"})
+    assert [c.name for c in calls] == ["submit_answer"]
+    args = json.loads(calls[0].arguments)
+    assert set(args) == {"claims"} and len(args["claims"]) >= 2           # the empty note is dropped
+    assert args["claims"][0]["citations"][2] == {"artifact_id": "tag_735fb27cd7", "field": "label", "value": "cell phone"}
+    assert parse_text_tool_calls(TEXT_CALL, {"get_calls"}) == []           # unknown names are never invented
+    assert parse_text_tool_calls("plain words", {"submit_answer"}) == []
+
+
+def test_text_tool_call_is_recovered_not_counted_as_a_failure(store, tmp_path):
+    reply = ('<x:function_calls>\n<x:invoke name="submit_answer">\n<x:parameter name="claims">'
+             + json.dumps(GOOD["claims"]) + '</x:parameter>\n</x:invoke>\n</x:function_calls>')
+    c = FakeClient([tools_turn(("get_calls", {})), text_turn(reply)])
+    res = run(store, c, tmp_path)
+    assert len(res.check.verified) == 1 and len(c.requests) == 2
+    evs = events(tmp_path, res.run_id)
+    assert not [e for e in evs if e["type"] == "validation_error"]
+    resp = [e for e in evs if e["type"] == "model_response"][-1]["payload"]
+    assert resp["tool_calls_from_text"] is True and resp["tool_calls"][0]["name"] == "submit_answer"
