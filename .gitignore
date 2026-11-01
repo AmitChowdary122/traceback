@@ -1,0 +1,17 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# local data and run output
+data/*.db
+data/raw/
+runs/*.jsonl
+.cache/
