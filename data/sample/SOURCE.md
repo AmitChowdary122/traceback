@@ -12,7 +12,7 @@ been added or edited, and no file has been synthesized.
 | Distributed by | Digital Corpora (sponsored by the AWS Open Data Sponsorship Program) |
 | Download | `https://digitalcorpora.s3.amazonaws.com/corpora/mobile/android_14/Android_14_Public_Image.tar.gz` |
 | Archive size | 18,411,199,735 bytes. S3 `Last-Modified` Sat, 14 Sep 2024 18:55:54 GMT; S3 ETag `f70914841a4bc9ff050f6f17dae4c7ce-2195` (multipart, not a content hash) |
-| Archive SHA-256 | `SHA256_PENDING` (computed by streaming the whole archive on Nov 1, 2026; Digital Corpora publishes no hash for this image) |
+| Archive SHA-256 | `4e1698460550e20f3b334ae9df96ee1cd78314bdc0fe5de5183fd5d7e1c8967e` (computed by streaming the whole archive on Nov 1, 2026; 18,411,199,735 bytes read, equal to the S3 Content-Length. Digital Corpora publishes no hash for this image) |
 | Documentation | `https://digitalcorpora.s3.amazonaws.com/corpora/mobile/android_14/Android14-ImageCreation.pdf` (SHA-256 `49dc2cb39f8900da9b7167455183a01cbf07e3db8b211798fd1922ab01a2283a`) |
 | Device | Google Pixel 7a (`lynx`), Android 14, build UQ1A.240105.004, Google Fi |
 | Extraction | Cellebrite UFED full file system, `UFED Google Pixel 7a 2024_07_28 (001)/EXTRACTION_FFS 01/EXTRACTION_FFS.zip` (34,341,538,452 bytes) inside the archive |
