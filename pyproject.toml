@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tbx"
+version = "0.1.0"
+description = "Traceback: a forensic agent with typed tools and a deterministic citation checker"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.40",
+    "httpx>=0.27",
+    "pydantic>=2.6",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "pyyaml>=6.0",
+    "imageio-ffmpeg>=0.5",
+    "pytest>=8.0",
+]
+
+[project.scripts]
+tbx = "tbx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+tbx = ["web/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "p1: P1 feature (repair pass, web UI, eval); deselect with -m 'not p1' before Day 2",
+]
