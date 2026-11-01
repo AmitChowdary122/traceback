@@ -631,7 +631,9 @@ $("#ask").addEventListener("submit", async (e) => {
   await loadCase();
   const runs = await loadRuns();
   const m = /#run=([^&]+)/.exec(location.hash);
-  const pick = m ? decodeURIComponent(m[1]) : (runs.find((r) => r.status === "ok") || runs[0] || {}).run_id;
+  const featured = state.case && state.case.featured_run;
+  const pick = m ? decodeURIComponent(m[1])
+    : (featured || (runs.find((r) => r.status === "ok") || runs[0] || {}).run_id);
   if (pick) openRun(pick);
 })();
 </script>

@@ -147,3 +147,14 @@ def test_rate_limit_zero_turns_asking_off():
     assert rl.take()[0] is False
     rl = web.RateLimit(1)
     assert rl.take()[0] is True and rl.take()[0] is False and rl.remaining() == 0
+
+
+def test_featured_run_is_offered_only_when_it_exists(setup, monkeypatch):
+    client, tmp = setup
+    monkeypatch.setenv("TBX_FEATURED_RUN", "demo-1")
+    assert client.get("/api/case").json()["featured_run"] is None
+    (tmp / "runs").mkdir(exist_ok=True)
+    (tmp / "runs" / "demo-1.jsonl").write_text("")
+    assert client.get("/api/case").json()["featured_run"] == "demo-1"
+    monkeypatch.setenv("TBX_FEATURED_RUN", "../c")
+    assert client.get("/api/case").json()["featured_run"] is None

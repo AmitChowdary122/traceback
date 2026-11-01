@@ -5,8 +5,9 @@
 - The page (index.html, next to this file) needs no build step.
 
 Environment: TBX_DB (store), TBX_RUNS_DIR (default ./runs), TBX_MEDIA_ROOT (default: the media root
-recorded by `tbx ingest`), TBX_ASK_LIMIT_PER_HOUR (default 30; 0 turns asking off), plus the provider
-keys used by `tbx ask`. Keys are never returned, logged or traced.
+recorded by `tbx ingest`), TBX_ASK_LIMIT_PER_HOUR (default 30; 0 turns asking off), TBX_FEATURED_RUN (the
+recorded run the page replays by default), plus the provider keys used by `tbx ask`. Keys are never returned,
+logged or traced.
 """
 from __future__ import annotations
 
@@ -194,8 +195,12 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             meta = s.meta()
             counts = {t: s.count(t) for t in ("messages", "calls", "locations", "media", "transcripts", "image_tags")}
         providers = {p: bool(os.environ.get(k)) for p, k in (("meta", "META_API_KEY"), ("baseten", "BASETEN_API_KEY"))}
+        featured = os.environ.get("TBX_FEATURED_RUN") or None
+        if featured and not (RUN_ID.fullmatch(featured) and (runs / f"{featured}.jsonl").is_file()):
+            featured = None
         return {"meta": {k: meta.get(k) for k in META_KEYS}, "counts": counts, "providers": providers,
-                "ask_limit_per_hour": limiter.per_hour, "asks_remaining": limiter.remaining()}
+                "ask_limit_per_hour": limiter.per_hour, "asks_remaining": limiter.remaining(),
+                "featured_run": featured}
 
     # -- asking ---------------------------------------------------------------------------------
     @app.post("/api/ask")
