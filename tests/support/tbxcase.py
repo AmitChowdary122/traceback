@@ -104,6 +104,7 @@ VOICE_PATH = "WhatsApp/Media/WhatsApp Voice Notes/PTT-20230313-WA0003.opus"
 IDS: dict[str, str] = {
     "CALL_ALICE": "call_3f9a1c2b7d",
     "CALL_BOB": aid("call", CALLS_SRC, "2"),
+    "CALL_VM": aid("call", CALLS_SRC, "3"),
     "MSG_ALICE": aid("msg", SMS_SRC, "101"),
     "MSG_BOB": aid("msg", SMS_SRC, "102"),
     "MSG_CAROL": aid("msg", SMS_SRC, "95"),
@@ -134,9 +135,13 @@ def _row(table: str, key: str, source_path: str, source_row: str, ts_utc: str | 
 
 ROWS: list[tuple[str, dict]] = [
     _row("calls", "CALL_ALICE", CALLS_SRC, "1", "2023-03-14T01:42:07Z", app="Phone", direction="outgoing",
-         number="+1 (555) 010-1234", contact_name="Alice", duration_s=95),
+         number="+1 (555) 010-1234", contact_name="Alice", duration_s=95, transcript=None),
     _row("calls", "CALL_BOB", CALLS_SRC, "2", "2023-03-14T02:30:00Z", app="Phone", direction="missed",
-         number="555-020-9876", contact_name="Bob", duration_s=0),
+         number="555-020-9876", contact_name="Bob", duration_s=0, transcript=None),
+    # v1.2: a voicemail with a carrier transcription (synthetic text, real shape)
+    _row("calls", "CALL_VM", CALLS_SRC, "3", "2023-03-14T02:15:00Z", app="Phone", direction="voicemail",
+         number="+1 (555) 030-4455", contact_name=None, duration_s=41,
+         transcript="Hi, this is the storage office. Your reservation is ready for pickup tomorrow morning."),
     _row("messages", "MSG_ALICE", SMS_SRC, "101", "2023-03-14T01:30:12Z", app="SMS", thread_id="7", direction="incoming",
          sender="Alice", sender_number="+1 555 010 1234", recipient=None, recipient_number=None,
          body="Meet me at the Riverside garage at 9:45, bring the blue bag.", attachment_media_id=None),

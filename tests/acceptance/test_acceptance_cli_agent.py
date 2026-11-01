@@ -110,6 +110,8 @@ def test_tool_results_follow_contract_shape(happy):
     call = rows_by_id[IDS["CALL_ALICE"]]
     assert call["ts_local"] == "2023-03-13T21:42:07-04:00"
     assert {IDS["CALL_BOB"], IDS["LOC_SPIKE"], IDS["LOC_PRECISE"]} <= set(rows_by_id)
+    vm = rows_by_id[IDS["CALL_VM"]]  # v1.2
+    assert vm["direction"] == "voicemail" and "ready for pickup" in vm["transcript"]
 
 
 def test_trace_jsonl(happy, tmp_path):

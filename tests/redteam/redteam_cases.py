@@ -131,6 +131,10 @@ ACCEPT += [
          claim("Alice's call lasted 95 seconds.", ALICE, cite("CALL_ALICE", "duration_s", "95.0"),
                cite("LOC_SPIKE", "accuracy_m", "12.00"), cite("MED_PHOTO", "size_bytes", "12988")),
          note="measure rule: '95.0' matches a stored 95 (models copy numbers as strings) [C6]"),
+    Case("A23_voicemail_transcript_quote", "verified",
+         claim("A voicemail said a reservation was ready for pickup.",
+               cite("CALL_VM", "direction", "voicemail"), cite("CALL_VM", "transcript", "reservation is ready for pickup")),
+         note="v1.2: calls.direction 'voicemail'; calls.transcript is citable under the text rule"),
 ]
 
 # ------------------------------------------------------------------------------------------
@@ -258,6 +262,12 @@ REJECT: list[Case] = [
     Case("R37_measure_off_by_one_second", "rejected",
          claim("A call was placed.", cite("CALL_ALICE", "duration_s", "96")),
          codes=frozenset({VM}), indexes={VM: {0}}, note="measure rule is numeric equality, not a tolerance band [C6] (twin of A22)"),
+    Case("R38_voicemail_cited_as_missed", "rejected",
+         claim("A call was missed.", cite("CALL_VM", "direction", "missed")),
+         codes=frozenset({VM}), indexes={VM: {0}}, note="v1.2: a voicemail is not a missed call"),
+    Case("R39_fabricated_voicemail_quote", "rejected",
+         claim("A voicemail said a reservation was cancelled.", cite("CALL_VM", "transcript", "your reservation was cancelled")),
+         codes=frozenset({VM}), indexes={VM: {0}}, note="v1.2: transcript quotes must be real substrings (twin of A23)"),
 ]
 
 CASES: list[Case] = ACCEPT + REJECT

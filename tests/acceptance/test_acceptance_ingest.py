@@ -21,9 +21,9 @@ REPO = tbxcase.REPO
 PREFIX = {"messages": "msg", "calls": "call", "locations": "loc", "media": "med", "transcripts": "trn", "image_tags": "tag"}
 BASE_TABLES = ("messages", "calls", "locations", "media")
 TS_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
-TZ_BASIS_RE = re.compile(r"utc_epoch_s|utc_epoch_ms|utc_string|unknown|local_converted:(.+)")
+TZ_BASIS_RE = re.compile(r"utc_epoch_s|utc_epoch_ms|utc_string|offset_string|unknown|local_converted:(.+)")
 ENUMS = {("messages", "direction"): {"incoming", "outgoing", "unknown"},
-         ("calls", "direction"): {"incoming", "outgoing", "missed", "rejected", "unknown"},
+         ("calls", "direction"): {"incoming", "outgoing", "missed", "rejected", "voicemail", "unknown"},
          ("media", "kind"): {"image", "audio", "video", "other"}}
 
 
@@ -139,3 +139,40 @@ def test_store_api_on_ingested_db(tbx, ingested):
     some = rows(ingested[0], "messages")[0]
     got = s.get(some["artifact_id"])
     assert got["table"] == "messages" and "raw_json" in got
+
+
+# ------------------------------------------------------------------------------- v1.2 (from the G1 gate run)
+def _call_log_rows(db):
+    return [(r, json.loads(r["raw_json"])) for r in rows(db, "calls") if r["source_path"].endswith("Call logs .tsv")]
+
+
+def test_voicemail_is_not_a_missed_call(ingested):
+    """CONTRACTS v1.2 section 4: Android call type 4 is `voicemail` (2,154 rows in the sample)."""
+    pairs = _call_log_rows(ingested[0])
+    vm = [r for r, raw in pairs if (raw.get("Raw Call Type (as stored)") or "").strip() == "4"]
+    assert vm, "no call-type-4 rows found; did the raw_json keys change?"
+    wrong = sorted({r["direction"] for r in vm} - {"voicemail"})
+    assert not wrong, f"{len(vm)} voicemail rows, directions seen besides 'voicemail': {wrong}"
+    missed = [r for r, raw in pairs if (raw.get("Raw Call Type (as stored)") or "").strip() == "3"]
+    assert missed and all(r["direction"] == "missed" for r in missed)
+
+
+def test_voicemail_transcripts_are_citable_and_clean(ingested):
+    """v1.2: the carrier transcription becomes calls.transcript; placeholders become NULL.
+    The sample has 49 real transcriptions; 2,105 say 'Transcript not available'."""
+    calls = rows(ingested[0], "calls")
+    with_text = [r for r in calls if r["transcript"] is not None]
+    assert not [r for r in with_text if not r["transcript"].strip() or "transcript not available" in r["transcript"].lower()]
+    assert len(with_text) == 49, len(with_text)
+    assert all(r["direction"] == "voicemail" for r in with_text)
+    assert any("u-haul" in r["transcript"].lower() for r in with_text)
+
+
+def test_exif_times_are_offset_strings(ingested):
+    """v1.2 section 3: camera photo times come from EXIF strings with an explicit offset."""
+    cam = [r for r in rows(ingested[0], "media") if "/DCIM/Camera/" in "/" + r["file_path"]]
+    assert cam, "no camera photos ingested"
+    with_offset = [r for r in cam if r["ts_original"] and re.search(r"[+-]\d\d:?\d\d$", r["ts_original"].strip())]
+    assert with_offset, "no EXIF time with an offset; check ts_original"
+    bad = [(r["file_path"], r["tz_basis"]) for r in with_offset if r["tz_basis"] != "offset_string"]
+    assert not bad, bad[:5]
