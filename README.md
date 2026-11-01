@@ -25,6 +25,23 @@ tbx enrich --offline --db data/tbx.db   # voice transcripts + SAM image tags fro
 tbx ask "Where was this phone between 9 and 11 pm, and who did it talk to?" --from "2024-06-27 21:00" --to "2024-06-27 23:00"
 ```
 
+## Web app
+
+```bash
+TBX_DB=data/tbx.db uvicorn tbx.web:app --port 8000   # then open http://127.0.0.1:8000
+```
+
+- **Ask:** a question with case-local From/To times and a provider toggle (meta | baseten). It runs the same agent code
+  as `tbx ask` in a background thread and writes `runs/<run_id>.jsonl`.
+- **Replay:** every trace in `runs/*.jsonl` (or `TBX_RUNS_DIR`) is listed and replays with no model call. The newest
+  good run opens by default.
+- **Run view:** status, the tool calls from the trace, a VERIFIED timeline in case-local time, and a REJECTED panel
+  with each claim's reason codes and details.
+- **Evidence drawer:** click any citation for the raw row (`raw_json`), `source_path` and `source_row`. Photos show
+  their SAM 3.1 boxes scaled to the displayed size; videos show the Muse Voice Transcribe transcript; MMS rows show
+  their attachment.
+- **Limits:** `TBX_ASK_LIMIT_PER_HOUR` (default 30, then HTTP 429; `0` turns live asking off).
+
 ## Layout
 
 | Path | What |
@@ -36,6 +53,7 @@ tbx ask "Where was this phone between 9 and 11 pm, and who did it talk to?" --fr
 | `src/tbx/checker.py` | the deterministic citation checker |
 | `src/tbx/enrich.py` | `tbx enrich`: Muse Voice Transcribe and SAM 3.1, cached in `data/sample/derived/enrich_cache.jsonl` |
 | `src/tbx/agent.py` | the tool loop, `submit_answer` validation and the JSONL trace |
+| `src/tbx/web/` | `tbx.web`: the FastAPI app and its single HTML page (no build step) |
 | `src/tbx/cli.py` | `tbx ingest`, `tbx enrich`, `tbx ask`, `tbx check` |
 | `data/sample/` | cut-down ALEAPP output from a public reference image (see `data/sample/SOURCE.md`) |
 

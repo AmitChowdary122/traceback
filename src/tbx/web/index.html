@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traceback</title>
+<style>
+:root {
+  --bg: #f4f5f7; --panel: #ffffff; --panel-2: #f9fafb; --border: #dde1e6; --border-strong: #c5ccd4;
+  --text: #14181d; --muted: #5a6472; --faint: #8a93a0;
+  --accent: #1e4fd8; --accent-bg: #e9efff;
+  --ok: #12704a; --ok-bg: #e6f4ec; --ok-line: #9fd3b8;
+  --bad: #b3261e; --bad-bg: #fcebe9; --bad-line: #efb4ae;
+  --warn: #8a5a00; --warn-bg: #fff5d9;
+  --box: #ffb000; --box-hi: #ff3d7f;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius: 6px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1014; --panel: #151a20; --panel-2: #1a2028; --border: #29313b; --border-strong: #3a4450;
+    --text: #e5e8ec; --muted: #9aa4b1; --faint: #6c7682;
+    --accent: #86a8ff; --accent-bg: #1b2440;
+    --ok: #4cc38a; --ok-bg: #12261c; --ok-line: #24553b;
+    --bad: #ff7a6e; --bad-bg: #2c1513; --bad-line: #5e2a25;
+    --warn: #f2c14e; --warn-bg: #2b2310;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1014; --panel: #151a20; --panel-2: #1a2028; --border: #29313b; --border-strong: #3a4450;
+  --text: #e5e8ec; --muted: #9aa4b1; --faint: #6c7682;
+  --accent: #86a8ff; --accent-bg: #1b2440;
+  --ok: #4cc38a; --ok-bg: #12261c; --ok-line: #24553b;
+  --bad: #ff7a6e; --bad-bg: #2c1513; --bad-line: #5e2a25;
+  --warn: #f2c14e; --warn-bg: #2b2310;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 var(--sans); }
+button, input, textarea, select { font: inherit; color: inherit; }
+.mono, code, pre { font-family: var(--mono); font-size: 12.5px; }
+a { color: var(--accent); }
+
+header.top { display: flex; align-items: center; gap: 16px; padding: 10px 20px; background: var(--panel);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }
+.brand { font-weight: 700; letter-spacing: .14em; font-size: 13px; }
+.brand span { color: var(--accent); }
+.case { color: var(--muted); font-size: 12.5px; display: flex; gap: 14px; flex-wrap: wrap; }
+.case b { color: var(--text); font-weight: 600; }
+.spacer { flex: 1; }
+.theme { border: 1px solid var(--border); background: var(--panel-2); border-radius: var(--radius); padding: 3px 9px;
+  cursor: pointer; font-size: 12px; color: var(--muted); }
+
+.layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; padding: 16px 20px 40px; max-width: 1500px;
+  margin: 0 auto; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; padding: 12px 16px 40px; } }
+
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
+.panel > h2, .section-h { margin: 0; padding: 10px 14px; font-size: 11.5px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); display: flex;
+  align-items: center; gap: 8px; }
+.panel-body { padding: 12px 14px; }
+aside .panel + .panel { margin-top: 16px; }
+
+label.f { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+textarea, input[type=datetime-local] { width: 100%; background: var(--panel-2); border: 1px solid var(--border-strong);
+  border-radius: var(--radius); padding: 7px 9px; }
+textarea { min-height: 76px; resize: vertical; }
+textarea:focus, input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.row2 > div, .layout > * { min-width: 0; }
+input[type=datetime-local] { min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: var(--radius); overflow: hidden; }
+.seg label { padding: 5px 12px; cursor: pointer; font-size: 12.5px; border-right: 1px solid var(--border-strong); }
+.seg label:last-child { border-right: 0; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg input:checked + span { color: var(--accent); font-weight: 600; }
+.seg label:has(input:checked) { background: var(--accent-bg); }
+.seg label:has(input:disabled) { opacity: .45; cursor: not-allowed; }
+.opts { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.chk { font-size: 12.5px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.btn { background: var(--accent); color: #fff; border: 0; border-radius: var(--radius); padding: 8px 16px; font-weight: 600;
+  cursor: pointer; }
+:root[data-theme="dark"] .btn { color: #0d1014; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn { color: #0d1014; } }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.hint { font-size: 12px; color: var(--faint); margin-top: 8px; }
+.err { color: var(--bad); font-size: 12.5px; margin-top: 8px; white-space: pre-wrap; }
+
+.runs { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto; }
+.runs li { border-bottom: 1px solid var(--border); }
+.runs li:last-child { border-bottom: 0; }
+.runs button { all: unset; display: block; width: 100%; box-sizing: border-box; padding: 9px 14px; cursor: pointer; }
+.runs button:hover { background: var(--panel-2); }
+.runs button[aria-current="true"] { background: var(--accent-bg); box-shadow: inset 3px 0 0 var(--accent); }
+.runs .q { font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.runs .m { font-size: 11.5px; color: var(--faint); display: flex; gap: 8px; margin-top: 2px; flex-wrap: wrap; }
+.n-ok { color: var(--ok); font-weight: 600; } .n-bad { color: var(--bad); font-weight: 600; }
+
+main { min-width: 0; }
+.empty { color: var(--muted); padding: 40px 20px; text-align: center; }
+.runhead { padding: 14px 16px; }
+.runhead .question { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
+.meta-line { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 12.5px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 1px 10px; font-size: 11.5px;
+  font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid; }
+.pill.ok { color: var(--ok); background: var(--ok-bg); border-color: var(--ok-line); }
+.pill.error { color: var(--bad); background: var(--bad-bg); border-color: var(--bad-line); }
+.pill.running { color: var(--warn); background: var(--warn-bg); border-color: var(--warn); }
+.pill.running::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+  animation: pulse 1s infinite ease-in-out; }
+@keyframes pulse { 50% { opacity: .2; } }
+.stack > * + * { margin-top: 16px; }
+
+details.trace summary { cursor: pointer; list-style: none; }
+details.trace summary::-webkit-details-marker { display: none; }
+details.trace summary::before { content: "▸"; display: inline-block; width: 12px; color: var(--faint); }
+details.trace[open] summary::before { content: "▾"; }
+.steps { list-style: none; margin: 0; padding: 4px 0; }
+.steps li { display: grid; grid-template-columns: 34px 150px minmax(0, 1fr) auto; gap: 10px; padding: 5px 14px;
+  font-size: 12.5px; align-items: baseline; border-bottom: 1px dashed var(--border); }
+.steps li:last-child { border-bottom: 0; }
+.steps .s { color: var(--faint); font-family: var(--mono); font-size: 11.5px; }
+.steps .t { font-family: var(--mono); font-weight: 600; }
+.steps .a { font-family: var(--mono); color: var(--muted); overflow-wrap: anywhere; font-size: 12px; }
+.steps .r { font-family: var(--mono); font-size: 12px; white-space: nowrap; color: var(--muted); }
+.steps li.sys .t { color: var(--accent); }
+.steps li.bad .t, .steps li.bad .r { color: var(--bad); }
+@media (max-width: 700px) { .steps li { grid-template-columns: 28px minmax(0, 1fr); } .steps .a, .steps .r { grid-column: 2; } }
+
+.verified h2 { color: var(--ok); }
+.rejected h2 { color: var(--bad); }
+.count { font-family: var(--mono); font-size: 12px; border-radius: 999px; padding: 0 8px; border: 1px solid currentColor; }
+.timeline { list-style: none; margin: 0; padding: 6px 0; }
+.tl { display: grid; grid-template-columns: 128px 18px minmax(0, 1fr); gap: 0 10px; padding: 0 16px; }
+.tl .when { text-align: right; padding: 12px 0; }
+.tl .when .clock { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+.tl .when .date { font-size: 11.5px; color: var(--muted); }
+.tl .rail { position: relative; }
+.tl .rail::before { content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--ok-line); }
+.tl:first-child .rail::before { top: 18px; } .tl:last-child .rail::before { bottom: calc(100% - 18px); }
+.tl .rail::after { content: ""; position: absolute; left: 3px; top: 15px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--panel); border: 2px solid var(--ok); }
+.tl .body { padding: 10px 0 12px; border-bottom: 1px solid var(--border); min-width: 0; }
+.tl:last-child .body { border-bottom: 0; }
+.claim { font-size: 14px; margin: 0 0 6px; }
+.span-note { font-size: 11.5px; color: var(--muted); margin: -2px 0 6px; font-family: var(--mono); }
+@media (max-width: 700px) { .tl { grid-template-columns: 84px 14px minmax(0, 1fr); padding: 0 10px; } }
+
+.cites { display: flex; flex-wrap: wrap; gap: 6px; }
+.cite { border: 1px solid var(--border-strong); background: var(--panel-2); border-radius: 4px; padding: 2px 7px;
+  font-family: var(--mono); font-size: 11.5px; cursor: pointer; text-align: left; max-width: 100%; display: inline-flex;
+  gap: 6px; align-items: baseline; }
+.cite:hover { border-color: var(--accent); }
+.cite .id { color: var(--accent); font-weight: 600; }
+.cite .fv { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: min(420px, 60vw); }
+.cite { min-width: 0; }
+.cite .idx { color: var(--faint); }
+.cite.bad { border-color: var(--bad-line); background: var(--bad-bg); }
+.cite.bad .id { color: var(--bad); }
+
+.rj { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.rj:last-child { border-bottom: 0; }
+.rj .claim { color: var(--text); }
+.reasons { list-style: none; margin: 8px 0 8px; padding: 0; }
+.reasons li { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 12.5px; padding: 2px 0; }
+.code { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--bad); background: var(--bad-bg);
+  border: 1px solid var(--bad-line); border-radius: 4px; padding: 0 6px; }
+.reasons .d { color: var(--muted); font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.note { padding: 10px 16px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+.none { padding: 12px 16px; color: var(--faint); font-size: 13px; }
+.usage { font-family: var(--mono); font-size: 12px; }
+
+.drawer-bg { position: fixed; inset: 0; background: rgba(10, 14, 20, .35); z-index: 20; display: none; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 100vw); background: var(--panel); z-index: 21;
+  border-left: 1px solid var(--border); transform: translateX(100%); transition: transform .18s ease; display: flex;
+  flex-direction: column; }
+.drawer.open { transform: none; } .drawer.open + .drawer-bg, .drawer-bg.show { display: block; }
+.drawer header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.drawer header .id { font-family: var(--mono); font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+.drawer header .tbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 6px; }
+.x { margin-left: auto; border: 1px solid var(--border); background: var(--panel-2); border-radius: var(--radius);
+  width: 30px; height: 30px; cursor: pointer; font-size: 16px; line-height: 1; }
+.drawer .content { overflow: auto; padding: 14px 16px 30px; }
+.drawer h3 { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 18px 0 6px; }
+.drawer h3:first-child { margin-top: 0; }
+.prov { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 12px; font-size: 12.5px; }
+.prov dt { color: var(--muted); } .prov dd { margin: 0; font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+table.fields { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.fields td { border-top: 1px solid var(--border); padding: 4px 6px; vertical-align: top; }
+table.fields td:first-child { color: var(--muted); width: 150px; font-family: var(--mono); font-size: 12px; }
+table.fields td:last-child { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
+table.fields tr.hit td { background: var(--accent-bg); }
+table.fields tr.hit td:first-child { box-shadow: inset 3px 0 0 var(--accent); color: var(--accent); }
+pre.raw { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px;
+  overflow: auto; max-height: 360px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.quote { border-left: 3px solid var(--accent); background: var(--panel-2); padding: 8px 12px; border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 13.5px; white-space: pre-wrap; }
+.caveat { font-size: 11.5px; color: var(--warn); background: var(--warn-bg); border-radius: 4px; padding: 4px 8px; margin-top: 6px; }
+.figure { position: relative; display: inline-block; max-width: 100%; line-height: 0; border: 1px solid var(--border);
+  border-radius: 4px; overflow: hidden; background: #000; }
+.figure img { max-width: 100%; max-height: 62vh; display: block; }
+.sam { position: absolute; border: 2px solid var(--box); box-shadow: 0 0 0 1px rgba(0, 0, 0, .55); pointer-events: none; }
+.sam span { position: absolute; left: -2px; top: -2px; transform: translateY(-100%); background: var(--box); color: #111;
+  font: 600 11px/1.4 var(--mono); padding: 0 4px; white-space: nowrap; }
+.sam.inside span { transform: none; }
+.sam.hi { border-color: var(--box-hi); z-index: 2; } .sam.hi span { background: var(--box-hi); color: #fff; }
+.sam.dim { opacity: .35; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.legend button { border: 1px solid var(--border-strong); background: var(--panel-2); border-radius: 999px; padding: 0 9px;
+  font-size: 11.5px; font-family: var(--mono); cursor: pointer; }
+.legend button[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+video, audio { max-width: 100%; display: block; border-radius: 4px; }
+.small { font-size: 12px; color: var(--muted); }
+.small.mono { overflow-wrap: anywhere; }
+.case span { overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">TRACE<span>BACK</span></div>
+  <div class="case" id="case">loading case…</div>
+  <div class="spacer"></div>
+  <button class="theme" id="theme" type="button" title="Switch light/dark">theme</button>
+</header>
+
+<div class="layout">
+  <aside>
+    <section class="panel" aria-labelledby="ask-h">
+      <h2 id="ask-h">Ask</h2>
+      <form class="panel-body" id="ask">
+        <label class="f" for="question">Question about this extraction</label>
+        <textarea id="question" required placeholder="Where was this phone between 9 and 11 pm, and who did it talk to?"></textarea>
+        <div class="row2">
+          <div><label class="f" for="from">From <span class="tzname"></span></label><input id="from" type="datetime-local"></div>
+          <div><label class="f" for="to">To <span class="tzname"></span></label><input id="to" type="datetime-local"></div>
+        </div>
+        <div class="opts">
+          <div class="seg" role="radiogroup" aria-label="Provider">
+            <label><input type="radio" name="provider" value="meta" checked><span>meta</span></label>
+            <label><input type="radio" name="provider" value="baseten"><span>baseten</span></label>
+          </div>
+          <label class="chk"><input type="checkbox" id="repair"> repair pass</label>
+          <button class="btn" id="go" type="submit">Ask</button>
+        </div>
+        <div class="hint" id="limit"></div>
+        <div class="err" id="ask-err" role="alert"></div>
+      </form>
+    </section>
+    <section class="panel" aria-labelledby="runs-h">
+      <h2 id="runs-h">Recorded runs <span class="small" id="runs-n"></span></h2>
+      <ul class="runs" id="runs"><li class="none">loading…</li></ul>
+    </section>
+  </aside>
+
+  <main id="main"><div class="panel empty">Pick a recorded run to replay it, or ask a question.</div></main>
+</div>
+
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-id">
+  <header><span class="tbl" id="dr-tbl"></span><span class="id" id="dr-id"></span>
+    <button class="x" id="dr-x" type="button" aria-label="Close">×</button></header>
+  <div class="content" id="dr-body"></div>
+</div>
+<div class="drawer-bg" id="drawer-bg"></div>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const state = { caseTz: "UTC", runId: null, poll: null, artifacts: {}, case: null };
+
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : String(kid));
+  return el;
+}
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  let body = null;
+  try { body = await r.json(); } catch (_) { /* not JSON */ }
+  if (!r.ok) throw new Error((body && (body.detail || body.error)) || `HTTP ${r.status}`);
+  return body;
+}
+
+/* ---- time: render the case-local wall time carried in ts_local, never the browser's zone ---- */
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function parseLocal(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})([+-]\d{2}:\d{2}|Z)$/.exec(s || "");
+  if (!m) return null;
+  const [y, mo, d, hh, mi, ss] = m.slice(1, 7).map(Number);
+  const h12 = ((hh + 11) % 12) + 1;
+  return { date: `${DOW[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()]} ${MON[mo - 1]} ${d}, ${y}`,
+           clock: `${h12}:${String(mi).padStart(2, "0")}:${String(ss).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`,
+           off: m[7] === "Z" ? "UTC" : `UTC${m[7]}` };
+}
+function fmtLocal(s) { const p = parseLocal(s); return p ? `${p.date} ${p.clock} (${p.off})` : (s || "—"); }
+function utcToLocalIso(utc) {
+  // Only used for display of window bounds; uses Intl with the case timezone.
+  if (!utc) return null;
+  const d = new Date(utc);
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: state.caseTz, hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    .formatToParts(d).map((p) => [p.type, p.value]));
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+/* ---- case header ---- */
+async function loadCase() {
+  try {
+    const c = await api("/api/case");
+    state.case = c;
+    state.caseTz = c.meta.device_tz || "UTC";
+    document.querySelectorAll(".tzname").forEach((e) => (e.textContent = `(${state.caseTz})`));
+    const n = c.counts;
+    $("#case").replaceChildren(
+      h("span", {}, "device ", h("b", {}, c.meta.device_model || "unknown")),
+      h("span", {}, "case tz ", h("b", {}, state.caseTz)),
+      h("span", {}, "ALEAPP ", h("b", {}, c.meta.aleapp_version || "?")),
+      h("span", {}, `${n.messages.toLocaleString()} messages · ${n.calls.toLocaleString()} calls · ` +
+        `${n.locations.toLocaleString()} locations · ${n.media} media · ${n.transcripts} transcripts · ${n.image_tags} image tags`));
+    for (const input of document.querySelectorAll('input[name=provider]')) {
+      const ok = c.providers[input.value];
+      input.disabled = !ok;
+      input.closest("label").title = ok ? "" : `no ${input.value} key on this server`;
+    }
+    if (!c.providers.meta && c.providers.baseten) document.querySelector('input[value=baseten]').checked = true;
+    const can = c.ask_limit_per_hour > 0 && (c.providers.meta || c.providers.baseten);
+    $("#go").disabled = !can;
+    $("#limit").textContent = !can ? "Live asking is off on this server; replay a recorded run."
+      : `Live asks left this hour: ${c.asks_remaining} of ${c.ask_limit_per_hour}. Times are case-local.`;
+  } catch (e) {
+    $("#case").textContent = `store not available: ${e.message}`;
+  }
+}
+
+/* ---- recorded runs ---- */
+async function loadRuns() {
+  let runs = [];
+  try { runs = await api("/api/runs"); } catch (e) { $("#runs").replaceChildren(h("li", { class: "none" }, e.message)); return []; }
+  $("#runs-n").textContent = runs.length ? `(${runs.length})` : "";
+  if (!runs.length) { $("#runs").replaceChildren(h("li", { class: "none" }, "No recorded runs yet.")); return runs; }
+  $("#runs").replaceChildren(...runs.map((r) => h("li", {}, h("button", {
+      type: "button", "aria-current": r.run_id === state.runId ? "true" : "false", "data-run": r.run_id,
+      onclick: () => openRun(r.run_id) },
+    h("div", { class: "q" }, r.question || "(starting…)"),
+    h("div", { class: "m" }, h("span", { class: `pill ${r.status}` }, r.status),
+      h("span", {}, (r.started || "").replace("T", " ").replace("Z", " UTC")),
+      h("span", {}, r.provider || ""),
+      h("span", { class: "n-ok" }, `✓ ${r.verified}`), h("span", { class: "n-bad" }, `✗ ${r.rejected}`))))));
+  return runs;
+}
+function markCurrent() {
+  document.querySelectorAll("#runs button").forEach((b) => b.setAttribute("aria-current", b.dataset.run === state.runId));
+}
+
+/* ---- one run ---- */
+async function openRun(runId) {
+  state.runId = runId;
+  clearTimeout(state.poll);
+  if (location.hash !== `#run=${runId}`) history.replaceState(null, "", `#run=${encodeURIComponent(runId)}`);
+  markCurrent();
+  await refreshRun(runId);
+}
+async function refreshRun(runId) {
+  let run;
+  try { run = await api(`/api/runs/${encodeURIComponent(runId)}`); }
+  catch (e) { $("#main").replaceChildren(h("div", { class: "panel empty" }, `Run ${runId}: ${e.message}`)); return; }
+  if (state.runId !== runId) return;
+  state.artifacts = run.artifacts || {};
+  if (run.case_tz) state.caseTz = run.case_tz;
+  renderRun(run);
+  if (run.status === "running") state.poll = setTimeout(() => refreshRun(runId), 1000);
+  else loadRuns().then(markCurrent);
+}
+
+function renderRun(run) {
+  const u = run.usage || {};
+  const win = run.window ? `${utcToLocalIso(run.window.start_utc)} → ${utcToLocalIso(run.window.end_utc)} (${state.caseTz})` : "no window";
+  const head = h("section", { class: "panel runhead" },
+    h("p", { class: "question" }, run.question || "…"),
+    h("div", { class: "meta-line" },
+      h("span", { class: `pill ${run.status}` }, run.status),
+      h("span", {}, "window ", h("b", {}, win)),
+      h("span", {}, `${run.provider || "?"} / ${run.model || "?"}`),
+      run.repair ? h("span", {}, "repair pass on") : null,
+      u.tokens != null ? h("span", { class: "usage" }, `${u.tokens.toLocaleString()} tokens · ${(u.latency_ms / 1000).toFixed(1)} s model time · ~$${(u.est_cost_usd || 0).toFixed(4)}`) : null,
+      h("span", { class: "mono small" }, run.run_id)),
+    run.error ? h("div", { class: "err" }, run.error) : null);
+  const parts = [head, renderTrace(run.events || [], run.status)];
+  if (run.status !== "running" || (run.verified || []).length || (run.rejected || []).length) {
+    parts.push(renderVerified(run), renderRejected(run.rejected || [], "Rejected", "rejected"));
+    if (run.first_round) parts.push(renderRejected(run.first_round.rejected || [], "Rejected in round 1 (before the repair pass)", "rejected"));
+  }
+  $("#main").replaceChildren(h("div", { class: "stack" }, ...parts));
+}
+
+function renderTrace(events, status) {
+  const items = [];
+  const pending = [];
+  let model = 0, toolN = 0;
+  for (const e of events) {
+    const p = e.payload || {};
+    if (e.type === "model_response") model++;
+    if (e.type === "tool_call") { pending.push({ step: e.step, name: p.name, args: p.args }); }
+    else if (e.type === "tool_result") {
+      const c = pending.shift() || { step: e.step, name: p.name, args: {} };
+      toolN++;
+      const res = p.error ? `error: ${p.error}` : `${p.returned}/${p.total} rows${p.truncated ? " (truncated)" : ""}`;
+      items.push(h("li", { class: p.error ? "bad" : "" }, h("span", { class: "s" }, `#${c.step}`),
+        h("span", { class: "t" }, c.name), h("span", { class: "a" }, compactArgs(c.args)), h("span", { class: "r" }, res)));
+    } else if (e.type === "validation_error") {
+      items.push(h("li", { class: "bad" }, h("span", { class: "s" }, `#${e.step}`), h("span", { class: "t" }, "validation"),
+        h("span", { class: "a" }, String(p.error || "").slice(0, 300)), h("span", { class: "r" }, "retry")));
+    } else if (e.type === "final_answer") {
+      items.push(h("li", { class: "sys" }, h("span", { class: "s" }, `#${e.step}`), h("span", { class: "t" }, "submit_answer"),
+        h("span", { class: "a" }, `${(p.claims || []).length} claims${p.round ? `, round ${p.round}` : ""}`), h("span", { class: "r" }, "")));
+    } else if (e.type === "check_result") {
+      items.push(h("li", { class: "sys" }, h("span", { class: "s" }, `#${e.step}`), h("span", { class: "t" }, "checker"),
+        h("span", { class: "a" }, "deterministic citation check (no LLM)"),
+        h("span", { class: "r" }, `✓ ${(p.verified || []).length}  ✗ ${(p.rejected || []).length}`)));
+    } else if (e.type === "repair") {
+      items.push(h("li", { class: "sys" }, h("span", { class: "s" }, `#${e.step}`), h("span", { class: "t" }, "repair"),
+        h("span", { class: "a" }, `${(p.rejected || []).length} rejected claims sent back once`), h("span", { class: "r" }, "")));
+    }
+  }
+  const sum = `${toolN} tool calls · ${model} model responses`;
+  return h("details", { class: "panel trace", open: status === "running" || items.length <= 14 },
+    h("summary", { class: "section-h" }, "Tool calls from the trace", h("span", { class: "small" }, sum)),
+    items.length ? h("ol", { class: "steps" }, items) : h("div", { class: "none" }, status === "running" ? "waiting for the model…" : "no tool calls"));
+}
+function compactArgs(a) {
+  if (!a || typeof a !== "object") return String(a ?? "");
+  const s = Object.entries(a).map(([k, v]) => `${k}=${typeof v === "string" ? JSON.stringify(v) : JSON.stringify(v)}`).join("  ");
+  return s || "(no arguments)";
+}
+
+function claimTime(claim) {
+  let best = null;
+  for (const c of claim.citations || []) {
+    const a = state.artifacts[c.artifact_id];
+    if (a && a.ts_utc && (!best || a.ts_utc < best.ts_utc)) best = a;
+  }
+  return best;
+}
+function renderVerified(run) {
+  const claims = (run.verified || []).map((c, i) => ({ c, i, t: claimTime(c) }));
+  claims.sort((a, b) => (a.t ? a.t.ts_utc : "~").localeCompare(b.t ? b.t.ts_utc : "~") || a.i - b.i);
+  const list = claims.map(({ c, t }) => {
+    const p = t ? parseLocal(t.ts_local) : null;
+    return h("li", { class: "tl" },
+      h("div", { class: "when" }, p ? [h("div", { class: "clock" }, p.clock), h("div", { class: "date" }, `${p.date}`)] : h("div", { class: "date" }, "undated")),
+      h("div", { class: "rail" }),
+      h("div", { class: "body" }, h("p", { class: "claim" }, c.text),
+        (c.time_start || c.time_end) ? h("div", { class: "span-note" }, `span ${c.time_start || "…"} → ${c.time_end || "…"}`) : null,
+        citeChips(c.citations || [], null)));
+  });
+  return h("section", { class: "panel verified" },
+    h("h2", {}, "Verified", h("span", { class: "count" }, String(claims.length)), h("span", { class: "small" }, `timeline in case-local time (${state.caseTz})`)),
+    list.length ? h("ol", { class: "timeline" }, list) : h("div", { class: "none" }, run.status === "running" ? "…" : "No verified claims."),
+    run.note ? h("div", { class: "note" }, h("b", {}, "Model note (not a finding): "), run.note) : null);
+}
+function renderRejected(rejected, title, cls) {
+  if (!rejected.length && cls === "rejected" && title !== "Rejected") return null;
+  return h("section", { class: `panel ${cls}` },
+    h("h2", {}, title, h("span", { class: "count" }, String(rejected.length))),
+    rejected.length ? rejected.map((r) => {
+      const badIdx = new Set((r.reasons || []).map((x) => x.citation_index).filter((x) => x != null));
+      return h("div", { class: "rj" }, h("p", { class: "claim" }, r.claim.text),
+        h("ul", { class: "reasons" }, (r.reasons || []).map((x) => h("li", {}, h("span", { class: "code" }, x.code),
+          x.citation_index != null ? h("span", { class: "small" }, `citation [${x.citation_index}]`) : null,
+          h("span", { class: "d" }, x.detail)))),
+        citeChips(r.claim.citations || [], badIdx));
+    }) : h("div", { class: "none" }, "Nothing was rejected."));
+}
+function citeChips(cites, badIdx) {
+  return h("div", { class: "cites" }, cites.map((c, i) => h("button", {
+      type: "button", class: `cite${badIdx && badIdx.has(i) ? " bad" : ""}`, title: `${c.artifact_id}.${c.field} = ${c.value}`,
+      onclick: () => openArtifact(c.artifact_id, c.field, c.value) },
+    badIdx ? h("span", { class: "idx" }, `[${i}]`) : null,
+    h("span", { class: "id" }, c.artifact_id), h("span", { class: "fv" }, `${c.field} = ${c.value}`))));
+}
+
+/* ---- the artifact drawer ---- */
+function openDrawer() { $("#drawer").classList.add("open"); $("#drawer-bg").classList.add("show"); $("#dr-x").focus(); }
+function closeDrawer() { $("#drawer").classList.remove("open"); $("#drawer-bg").classList.remove("show"); $("#dr-body").replaceChildren(); }
+$("#dr-x").addEventListener("click", closeDrawer);
+$("#drawer-bg").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+
+async function openArtifact(id, field, value) {
+  $("#dr-id").textContent = id; $("#dr-tbl").textContent = "…";
+  $("#dr-body").replaceChildren(h("div", { class: "small" }, "loading…"));
+  openDrawer();
+  let row;
+  try { row = await api(`/api/artifacts/${encodeURIComponent(id)}`); }
+  catch (e) { $("#dr-tbl").textContent = "unknown"; $("#dr-body").replaceChildren(h("div", { class: "err" }, `${id}: ${e.message}. The checker reports this as UNKNOWN_ARTIFACT.`)); return; }
+  $("#dr-tbl").textContent = row.table;
+  const body = [];
+  if (field) body.push(h("h3", {}, "Cited"), h("div", { class: "quote mono" }, `${field} = ${value}`));
+  body.push(h("h3", {}, "Provenance"), h("dl", { class: "prov" },
+    h("dt", {}, "source_path"), h("dd", {}, row.source_path), h("dt", {}, "source_row"), h("dd", {}, row.source_row),
+    h("dt", {}, "ts_local"), h("dd", {}, row.ts_local ? fmtLocal(row.ts_local) : "— (no timestamp)"),
+    h("dt", {}, "ts_utc"), h("dd", {}, row.ts_utc || "—"), h("dt", {}, "ts_original"), h("dd", {}, row.ts_original || "—"),
+    h("dt", {}, "tz_basis"), h("dd", {}, row.tz_basis)));
+  const media = await mediaSection(row);
+  if (media) body.push(...media);
+  if (row.table === "calls" && row.transcript) {
+    body.push(h("h3", {}, "Carrier voicemail transcription"), h("div", { class: "quote" }, row.transcript),
+      h("div", { class: "caveat" }, "Machine transcription by the carrier, read from the call log. Not verified against audio (the voicemail audio is not on the device)."));
+  }
+  const skip = new Set(["raw_json", "table", "source_path", "source_row", "ts_utc", "ts_original", "tz_basis", "ts_local", "box_array"]);
+  body.push(h("h3", {}, "Fields"), h("table", { class: "fields" }, h("tbody", {}, Object.entries(row).filter(([k]) => !skip.has(k)).map(([k, v]) =>
+    h("tr", { class: k === field ? "hit" : "" }, h("td", {}, k), h("td", {}, v == null ? "NULL" : String(v)))))));
+  let raw = row.raw_json;
+  try { raw = JSON.stringify(JSON.parse(raw), null, 2); } catch (_) { /* keep as stored */ }
+  body.push(h("h3", {}, "Raw row (raw_json, as ingested)"), h("pre", { class: "raw" }, raw));
+  $("#dr-body").replaceChildren(...body);
+}
+
+async function mediaSection(row) {
+  let mediaId = null, hiTag = null;
+  if (row.table === "media") mediaId = row.artifact_id;
+  else if (row.table === "image_tags") { mediaId = row.media_id; hiTag = row.artifact_id; }
+  else if (row.table === "transcripts") mediaId = row.media_id;
+  else if (row.table === "messages" && row.attachment_media_id) mediaId = row.attachment_media_id;
+  if (!mediaId) return null;
+  let m;
+  try { m = await api(`/api/artifacts/${encodeURIComponent(mediaId)}`); } catch (_) { return null; }
+  const out = [h("h3", {}, row.table === "messages" ? "Attachment" : "Media"),
+    h("div", { class: "small mono" }, `${m.artifact_id} · ${m.mime_type} · ${m.file_path}`)];
+  const src = `/api/media/${encodeURIComponent(mediaId)}`;
+  if (m.kind === "image") {
+    let tags = [];
+    try { tags = (await api(`${src}/tags`)).rows; } catch (_) { /* no tags */ }
+    out.push(samFigure(src, tags, hiTag));
+  } else if (m.kind === "video") {
+    out.push(h("video", { src, controls: true, preload: "metadata" }));
+  } else if (m.kind === "audio") {
+    out.push(h("audio", { src, controls: true, preload: "metadata" }));
+  }
+  if (m.kind === "audio" || m.kind === "video") {
+    let trn = [];
+    try { trn = (await api(`${src}/transcripts`)).rows; } catch (_) { /* none */ }
+    for (const t of trn) {
+      out.push(h("h3", {}, `Transcript · ${t.model} · ${t.duration_s} s${t.artifact_id === row.artifact_id ? " · cited" : ""}`),
+        h("div", { class: "quote" }, t.text),
+        h("div", { class: "caveat" }, "Machine transcript. Names and numbers can be misheard; review against the audio."),
+        h("div", { class: "small mono" }, t.artifact_id));
+    }
+    if (!trn.length) out.push(h("div", { class: "small" }, "No transcript for this media."));
+  }
+  return out;
+}
+
+function samFigure(src, tags, hiTag) {
+  const img = h("img", { src, alt: "cited image" });
+  const fig = h("div", { class: "figure" }, img);
+  const labels = [...new Set(tags.map((t) => t.label))];
+  const shown = new Set(labels);
+  const draw = () => {
+    fig.querySelectorAll(".sam").forEach((e) => e.remove());
+    const W = img.naturalWidth, H = img.naturalHeight;
+    if (!W || !H) return;
+    for (const t of tags) {
+      if (!shown.has(t.label) && t.artifact_id !== hiTag) continue;
+      const [x0, y0, x1, y1] = t.box;
+      // Percentages of the natural size, so boxes scale with the displayed size.
+      const b = h("div", { class: `sam${t.artifact_id === hiTag ? " hi" : ""}${hiTag && t.artifact_id !== hiTag ? " dim" : ""}${y0 / H < 0.04 ? " inside" : ""}`,
+        style: `left:${(100 * x0 / W).toFixed(3)}%;top:${(100 * y0 / H).toFixed(3)}%;width:${(100 * (x1 - x0) / W).toFixed(3)}%;height:${(100 * (y1 - y0) / H).toFixed(3)}%` },
+        h("span", {}, `${t.label} ${Number(t.score).toFixed(2)}`));
+      fig.append(b);
+    }
+  };
+  img.addEventListener("load", draw);
+  const legend = labels.length ? h("div", { class: "legend" }, labels.map((l) => {
+    const n = tags.filter((t) => t.label === l).length;
+    const b = h("button", { type: "button", "aria-pressed": "true", onclick: () => {
+      shown.has(l) ? shown.delete(l) : shown.add(l); b.setAttribute("aria-pressed", shown.has(l)); draw(); } }, `${l} ×${n}`);
+    return b;
+  })) : h("div", { class: "small" }, "No SAM 3.1 tags on this image (prompt set v1, score ≥ 0.5).");
+  return h("div", {}, fig, legend, labels.length ? h("div", { class: "small" }, "SAM 3.1 boxes, prompt set v1, score ≥ 0.5. Click a label to hide it.") : null);
+}
+
+/* ---- asking ---- */
+$("#ask").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("#ask-err").textContent = "";
+  const body = { question: $("#question").value.trim(), provider: document.querySelector("input[name=provider]:checked").value,
+                 repair: $("#repair").checked ? 1 : 0 };
+  if ($("#from").value) body.from = $("#from").value.replace("T", " ");
+  if ($("#to").value) body.to = $("#to").value.replace("T", " ");
+  if (!body.question) return;
+  $("#go").disabled = true;
+  try {
+    const { run_id } = await api("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    await loadRuns();
+    openRun(run_id);
+  } catch (err) {
+    $("#ask-err").textContent = err.message;
+  } finally {
+    $("#go").disabled = false;
+    loadCase();
+  }
+});
+
+/* ---- theme ---- */
+(function theme() {
+  let t = null;
+  try { t = localStorage.getItem("tbx-theme"); } catch (_) { /* storage blocked */ }
+  if (t) document.documentElement.dataset.theme = t;
+  $("#theme").addEventListener("click", () => {
+    const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("tbx-theme", document.documentElement.dataset.theme); } catch (_) { /* ignore */ }
+  });
+})();
+
+/* ---- start: replay a recorded run by default ---- */
+(async function start() {
+  await loadCase();
+  const runs = await loadRuns();
+  const m = /#run=([^&]+)/.exec(location.hash);
+  const pick = m ? decodeURIComponent(m[1]) : (runs.find((r) => r.status === "ok") || runs[0] || {}).run_id;
+  if (pick) openRun(pick);
+})();
+</script>
+</body>
+</html>
