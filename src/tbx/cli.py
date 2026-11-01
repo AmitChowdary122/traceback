@@ -36,10 +36,15 @@ def _parser() -> _Parser:
     ing.add_argument("--media-root", default=None)
     ing.add_argument("--db", default=None)
 
-    enr = sub.add_parser("enrich", help="voice transcripts and image tags (cached)")
-    enr.add_argument("--voice", action="store_true")
-    enr.add_argument("--images", action="store_true")
+    enr = sub.add_parser("enrich", help="voice transcripts and image tags (cached); both when neither flag is given")
+    enr.add_argument("--voice", action="store_true", help="Muse Voice Transcribe on audio and video soundtracks")
+    enr.add_argument("--images", action="store_true", help="SAM 3.1 prompt set v1 on JPEG/PNG photos")
+    enr.add_argument("--offline", action="store_true", help="use only the cache; misses are skipped and counted")
     enr.add_argument("--db", default=None)
+    enr.add_argument("--media-root", default=None, help="default: the media root recorded by `tbx ingest`")
+    enr.add_argument("--cache", default=None, help="default: <media root>/../derived/enrich_cache.jsonl")
+    enr.add_argument("--workers", type=int, default=8)
+    enr.add_argument("-v", "--verbose", action="store_true")
 
     ask = sub.add_parser("ask", help="ask a question; claims are verified by the checker")
     ask.add_argument("question")
@@ -173,7 +178,22 @@ def cmd_ingest(a) -> int:
 
 
 def cmd_enrich(a) -> int:
-    raise UsageError("enrich is not implemented yet (Day 2: voice transcripts and SAM tags)")
+    from tbx.enrich import EnrichError, enrich
+
+    voice, images = (a.voice, a.images) if (a.voice or a.images) else (True, True)
+    try:
+        summary = enrich(_db_path(a.db), voice=voice, images=images, offline=a.offline, media_root=a.media_root,
+                         cache_path=a.cache, workers=max(1, a.workers), log=_err if a.verbose else None)
+    except EnrichError as e:
+        raise UsageError(str(e)) from None
+    misses = summary["voice"]["misses"] + summary["images"]["misses"]
+    if misses:
+        _err(f"{misses} cache misses skipped (voice {summary['voice']['misses']}, "
+             f"images {summary['images']['misses']} requests)" + (" in --offline mode" if a.offline else ""))
+    for e in summary["errors"]:
+        _err(e)
+    print(json.dumps(summary, indent=2))
+    return EXIT_PROVIDER if summary["errors"] and not a.offline else EXIT_OK
 
 
 def main(argv: list[str] | None = None) -> int:

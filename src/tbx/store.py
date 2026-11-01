@@ -67,24 +67,37 @@ class Store:
         self.insert_many(table, [row])
 
     def insert_many(self, table: str, rows: Iterable[dict]) -> None:
+        with self.conn:
+            self._insert_rows(table, rows)
+
+    def replace_rows(self, table: str, where: str, params: Iterable[Any], rows: Iterable[dict]) -> None:
+        """Delete the rows matching `where`, then insert `rows`, in one transaction.
+
+        Used for derived tables (transcripts, image_tags), so enriching twice gives the same rows."""
+        if table not in FAMILY:
+            raise ValueError(f"unknown table: {table!r}")
+        with self.conn:
+            self.conn.execute(f"DELETE FROM {table} WHERE {where}", list(params))
+            self._insert_rows(table, rows)
+
+    def _insert_rows(self, table: str, rows: Iterable[dict]) -> None:
         if table not in FAMILY:
             raise ValueError(f"unknown table: {table!r}")
         allowed = set(PROVENANCE) | set(FAMILY[table])
         cols = list(PROVENANCE) + list(FAMILY[table])
         sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})"
-        with self.conn:
-            for row in rows:
-                extra = set(row) - allowed
-                if extra:
-                    raise ValueError(f"{table}: unknown columns {sorted(extra)}")
-                for c in ("artifact_id", "source_path", "source_row", "tz_basis", "raw_json"):
-                    if row.get(c) in (None, ""):
-                        raise ValueError(f"{table}: provenance column {c} is required")
-                check_rel_path(row["source_path"])
-                try:
-                    self.conn.execute(sql, [row.get(c) for c in cols])
-                except sqlite3.IntegrityError as e:
-                    raise ValueError(f"artifact_id collision in {table}: {row['artifact_id']}") from e
+        for row in rows:
+            extra = set(row) - allowed
+            if extra:
+                raise ValueError(f"{table}: unknown columns {sorted(extra)}")
+            for c in ("artifact_id", "source_path", "source_row", "tz_basis", "raw_json"):
+                if row.get(c) in (None, ""):
+                    raise ValueError(f"{table}: provenance column {c} is required")
+            check_rel_path(row["source_path"])
+            try:
+                self.conn.execute(sql, [row.get(c) for c in cols])
+            except sqlite3.IntegrityError as e:
+                raise ValueError(f"artifact_id collision in {table}: {row['artifact_id']}") from e
 
     def set_meta(self, key: str, value: str) -> None:
         with self.conn:

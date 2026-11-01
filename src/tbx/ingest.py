@@ -611,6 +611,8 @@ def ingest_report(report_dir: str, db_path: str, media_root: str | None = None) 
         meta = {"device_tz": tz, "device_tz_source": tz_src or "default", "device_model": device_model(report),
                 "aleapp_version": aleapp_version(report), "report_root": report.resolve().name,
                 "ingested_at": tu.now_utc()}
+        if mroot is not None:  # where `tbx enrich` and the web app find the media files (not citable)
+            meta["media_root"] = str(mroot.resolve())
         for k, v in meta.items():
             store.set_meta(k, v)
         ctx = Ctx(contacts=load_contacts(report), media_ids={}, case_tz=tz)

@@ -54,6 +54,17 @@ numbers, and the artifact IDs derived from them, are the same as in the full rep
 | `data/data/com.google.android.apps.messaging/cache/telephony_cache/*.bin` | 26 | Google Messages image, GIF and video attachments, **verbatim**. They include the two MMS videos (2024-02-09 and 2024-02-13) whose audio tracks are the only recorded audio in the image. |
 | `data/property/persistent_properties` | 1 | Verbatim. It is the source of `case_meta.device_tz`. |
 
+`derived/enrich_cache.jsonl`: machine output, not evidence from the image. It is the cache of `tbx enrich`, recorded once
+live on Nov 1, 2026, so the store can be rebuilt offline with `tbx enrich --offline` and no API keys. One JSON object
+per line, `{"key": "<sha256>|<model>[|<prompt_set>|<label>]", "result": {...}}`, keyed by the media file's SHA-256:
+
+- `<sha256>|muse-voice-transcribe-1.0` (2 lines): Muse Voice Transcribe on the soundtracks of the two MMS videos,
+  24 kHz mono WAV, mode `ENDPOINTING`, **no keyword biasing**. It holds `transcript`, `audioDurationMs`, `turns` and
+  `sessionId`.
+- `<sha256>|sam-3.1|v1|<label>` (360 lines): SAM 3.1 on the 60 JPEG/PNG photos, one request per label of prompt set
+  `v1` (`person`, `cell phone`, `laptop`, `car`, `license plate`, `sign`). It holds every box SAM returned, in the
+  pixels of the stored file, with its score, plus the image size; `tbx enrich` keeps the boxes with score ≥ 0.5.
+
 Left out on purpose: a 74-page PDF received as a message attachment (third-party copyrighted document, 7 MB). The
 rest of the extraction and the full report are also left out. The full report holds Wi-Fi pre-shared keys and other
 credentials of the test persona, and none of that is in this sample.

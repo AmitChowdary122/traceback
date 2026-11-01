@@ -21,6 +21,7 @@ pip install -e .
 cp .env.example .env   # fill in keys locally; never commit .env
 set -a; . ./.env; set +a   # tbx reads the environment, not the file
 tbx ingest data/sample/aleapp --media-root data/sample/media --db data/tbx.db
+tbx enrich --offline --db data/tbx.db   # voice transcripts + SAM image tags from the committed cache, no keys
 tbx ask "Where was this phone between 9 and 11 pm, and who did it talk to?" --from "2024-06-27 21:00" --to "2024-06-27 23:00"
 ```
 
@@ -33,8 +34,9 @@ tbx ask "Where was this phone between 9 and 11 pm, and who did it talk to?" --fr
 | `src/tbx/ingest.py` | ALEAPP report → store, with deterministic artifact IDs |
 | `src/tbx/tools.py` | the six typed tools the agent calls |
 | `src/tbx/checker.py` | the deterministic citation checker |
+| `src/tbx/enrich.py` | `tbx enrich`: Muse Voice Transcribe and SAM 3.1, cached in `data/sample/derived/enrich_cache.jsonl` |
 | `src/tbx/agent.py` | the tool loop, `submit_answer` validation and the JSONL trace |
-| `src/tbx/cli.py` | `tbx ingest`, `tbx ask`, `tbx check` |
+| `src/tbx/cli.py` | `tbx ingest`, `tbx enrich`, `tbx ask`, `tbx check` |
 | `data/sample/` | cut-down ALEAPP output from a public reference image (see `data/sample/SOURCE.md`) |
 
 ## Data
