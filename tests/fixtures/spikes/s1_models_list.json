@@ -1,0 +1,85 @@
+{
+  "spike": "s1",
+  "name": "s1_models_list",
+  "recorded_at": "2026-11-01T12:26:38Z",
+  "provider": "meta",
+  "request": {
+    "method": "GET",
+    "url": "${META_BASE_URL}/models",
+    "headers": {
+      "Authorization": "Bearer <REDACTED>"
+    },
+    "json": null,
+    "form": null,
+    "files": null,
+    "stream": false
+  },
+  "response": {
+    "status": 200,
+    "error": null,
+    "latency_ms": 982,
+    "headers": {
+      "Content-Type": "application/json",
+      "x-request-id": "bf645069-0dba-42f3-b5cd-54977636a53a"
+    },
+    "body": {
+      "object": "list",
+      "data": [
+        {
+          "id": "muse-wonder-1.0",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "sam-3.1",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "muse-spark-1.3-contributor",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "muse-voice-transcribe-1.0",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "muse-spark-1.3",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "muse-image-1.0",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "muse-spark-1.2-contributor",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "muse-spark-1.2",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        },
+        {
+          "id": "muse-spark-1.1",
+          "object": "model",
+          "created": 0,
+          "owned_by": "meta"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "spike": "s2",
+  "name": "s2_transcribe_m4a_rejected",
+  "recorded_at": "2026-11-01T12:29:49Z",
+  "provider": "meta",
+  "request": {
+    "method": "POST",
+    "url": "${META_BASE_URL}/asr/transcribe",
+    "headers": {
+      "Authorization": "Bearer <REDACTED>",
+      "Accept": "application/json"
+    },
+    "json": null,
+    "form": null,
+    "files": {
+      "request": {
+        "content": "{\"model\": \"muse-voice-transcribe-1.0\", \"audioEncoding\": \"WAV\", \"mode\": \"PUSH_TO_TALK\"}",
+        "content_type": "application/json"
+      },
+      "audio": {
+        "filename": "voice_note.m4a",
+        "bytes": 62458,
+        "content_type": "audio/mp4"
+      }
+    },
+    "stream": false
+  },
+  "response": {
+    "status": 400,
+    "error": null,
+    "latency_ms": 539,
+    "headers": {
+      "Content-Type": "application/json",
+      "x-request-id": "voyager/transcribe/CCA55E98E1E0495FA4831508F2BEB693"
+    },
+    "body": {
+      "sessionId": "voyager/transcribe/CCA55E98E1E0495FA4831508F2BEB693",
+      "error": {
+        "code": null,
+        "param": "audio",
+        "type": "invalid_request_error",
+        "message": "The 'audio' part must be a mono 16-bit PCM WAV at 16 or 24 kHz"
+      }
+    }
+  }
+}

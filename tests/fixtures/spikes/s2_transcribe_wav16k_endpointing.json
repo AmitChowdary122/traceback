@@ -1,0 +1,49 @@
+{
+  "spike": "s2",
+  "name": "s2_transcribe_wav16k_endpointing",
+  "recorded_at": "2026-11-01T12:29:40Z",
+  "provider": "meta",
+  "request": {
+    "method": "POST",
+    "url": "${META_BASE_URL}/asr/transcribe",
+    "headers": {
+      "Authorization": "Bearer <REDACTED>",
+      "Accept": "application/json"
+    },
+    "json": null,
+    "form": null,
+    "files": {
+      "request": {
+        "content": "{\"model\": \"muse-voice-transcribe-1.0\", \"audioEncoding\": \"WAV\", \"mode\": \"ENDPOINTING\", \"keywords\": [\"Riverside\"]}",
+        "content_type": "application/json"
+      },
+      "audio": {
+        "filename": "voice_note_src.wav",
+        "bytes": 206924,
+        "content_type": "audio/wav"
+      }
+    },
+    "stream": false
+  },
+  "response": {
+    "status": 200,
+    "error": null,
+    "latency_ms": 2341,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "sessionId": "voyager/transcribe/25F8284D371D4C0CAE4A749A33358DF0",
+      "transcript": "hey, it's Alice, meet me at the Riverside parking garage at 9 45 tonight bring the bring the blue bag",
+      "audioDurationMs": 6480,
+      "turns": [
+        {
+          "turnId": 0,
+          "startMs": 60,
+          "endMs": 5980,
+          "transcript": "hey, it's Alice, meet me at the Riverside parking garage at 9 45 tonight bring the bring the blue bag"
+        }
+      ]
+    }
+  }
+}

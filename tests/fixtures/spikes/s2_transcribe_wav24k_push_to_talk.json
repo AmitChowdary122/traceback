@@ -1,0 +1,42 @@
+{
+  "spike": "s2",
+  "name": "s2_transcribe_wav24k_push_to_talk",
+  "recorded_at": "2026-11-01T12:29:38Z",
+  "provider": "meta",
+  "request": {
+    "method": "POST",
+    "url": "${META_BASE_URL}/asr/transcribe",
+    "headers": {
+      "Authorization": "Bearer <REDACTED>",
+      "Accept": "application/json"
+    },
+    "json": null,
+    "form": null,
+    "files": {
+      "request": {
+        "content": "{\"model\": \"muse-voice-transcribe-1.0\", \"audioEncoding\": \"WAV\", \"mode\": \"PUSH_TO_TALK\"}",
+        "content_type": "application/json"
+      },
+      "audio": {
+        "filename": "voice_note_24k.wav",
+        "bytes": 310398,
+        "content_type": "audio/wav"
+      }
+    },
+    "stream": false
+  },
+  "response": {
+    "status": 200,
+    "error": null,
+    "latency_ms": 1946,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "sessionId": "voyager/transcribe/4D207F52A241498EA9211BE351E4EF50",
+      "transcript": "Hey, it's it's Salus, meet me at the riverside parking garage at 9 45 tonight, bring the blue bag..",
+      "audioDurationMs": 6480,
+      "turns": []
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "spike": "s5",
+  "name": "s5_together_reachability",
+  "provider": "together",
+  "request": {
+    "method": "GET",
+    "url": "https://api.together.xyz/v1/models",
+    "headers": {},
+    "note": "no credentials sent"
+  },
+  "response": {
+    "status": null,
+    "error": "ProxyError: HTTPSConnectionPool(host='api.together.xyz', port=443): Max retries exceeded with url: /v1/models (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')"
+  },
+  "docs": {
+    "source": "https://dev.meta.ai/docs/muse-glimmer/deploy.md#hosted-providers",
+    "provider": "Together AI",
+    "model": "meta-models/Muse-Glimmer-30B",
+    "endpoint": "https://api.together.xyz/v1/chat/completions"
+  }
+}

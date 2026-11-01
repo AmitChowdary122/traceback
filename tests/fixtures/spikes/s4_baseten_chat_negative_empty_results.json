@@ -1,0 +1,234 @@
+{
+  "spike": "s4",
+  "name": "s4_baseten_chat_negative_empty_results",
+  "recorded_at": "2026-11-01T12:32:33Z",
+  "provider": "baseten",
+  "request": {
+    "method": "POST",
+    "url": "${BASETEN_BASE_URL}/chat/completions",
+    "headers": {
+      "Authorization": "Bearer <REDACTED>"
+    },
+    "json": {
+      "model": "meta-models/muse-spark-open",
+      "temperature": 0.1,
+      "max_tokens": 4000,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_calls",
+            "description": "List call-log rows in a UTC time window.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "description": "ISO UTC start"
+                },
+                "end": {
+                  "type": "string",
+                  "description": "ISO UTC end"
+                },
+                "limit": {
+                  "type": "integer"
+                }
+              },
+              "required": []
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "get_locations",
+            "description": "List location rows in a UTC time window.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "string"
+                },
+                "end": {
+                  "type": "string"
+                },
+                "limit": {
+                  "type": "integer"
+                }
+              },
+              "required": []
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_answer",
+            "description": "Submit the final answer. Every claim must cite artifact rows.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "claims": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "time_start": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "time_end": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "citations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "artifact_id": {
+                              "type": "string"
+                            },
+                            "field": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "artifact_id",
+                            "field",
+                            "value"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "text",
+                      "citations"
+                    ]
+                  }
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "claims"
+              ]
+            }
+          }
+        }
+      ],
+      "tool_choice": "auto",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a forensic analysis agent. Answer only from tool results. When you have the data, call submit_answer. Each claim cites artifact_id, field and value copied exactly from a tool row. If nothing relevant is found, call submit_answer with an empty claims list and a note."
+        },
+        {
+          "role": "user",
+          "content": "Between 2023-03-14T01:00:00Z and 2023-03-14T03:00:00Z, who did the phone call and where was it? Call get_calls and get_locations in parallel in a single turn first."
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "chatcmpl-tool-5eacb9b25d5d43f997f72a2fa449fb2f",
+              "type": "function",
+              "function": {
+                "name": "get_calls",
+                "arguments": "{\"start\": \"2023-03-14T01:00:00Z\", \"end\": \"2023-03-14T03:00:00Z\"}"
+              }
+            },
+            {
+              "id": "chatcmpl-tool-a922fafd6e33419c872c10861f83e4c4",
+              "type": "function",
+              "function": {
+                "name": "get_locations",
+                "arguments": "{\"start\": \"2023-03-14T01:00:00Z\", \"end\": \"2023-03-14T03:00:00Z\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-5eacb9b25d5d43f997f72a2fa449fb2f",
+          "content": "{\"rows\": [], \"total\": 0, \"truncated\": false}"
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-a922fafd6e33419c872c10861f83e4c4",
+          "content": "{\"rows\": [], \"total\": 0, \"truncated\": false}"
+        }
+      ]
+    },
+    "form": null,
+    "files": null,
+    "stream": false
+  },
+  "response": {
+    "status": 200,
+    "error": null,
+    "latency_ms": 2066,
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Baseten-Accepted-At": "1793536351995",
+      "X-Baseten-Dyn-Decode-Dp-Rank": "0",
+      "X-Baseten-Dyn-Prefill-Dp-Rank": "0",
+      "X-Baseten-Dyn-Prefill-Worker-Id": "9209193777256687457",
+      "X-Baseten-Dyn-Worker-Id": "9209193777256687457",
+      "X-Baseten-Received-At": "1793536351995",
+      "X-Baseten-Request-Id": "54ca701a19718defb7dd380d83fd4e039beb9",
+      "X-Baseten-Sent-At": "1793536353731",
+      "X-Ratelimit-Limit-Requests": "120",
+      "X-Ratelimit-Limit-Tokens": "500000",
+      "X-Ratelimit-Remaining-Requests": "60",
+      "X-Ratelimit-Remaining-Tokens": "500000"
+    },
+    "body": {
+      "id": "chatcmpl-e62b376bde5b45e5831c72dac394f436",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "content": "No data found in the requested window.",
+            "role": "assistant",
+            "reasoning_content": "We need to answer between 2023-03-14T01:00:00Z and 2023-03-14T03:00:00Z, who did phone call and where was it? Tool results show no rows. So we have no data. Need to submit answer with empty claims list and note.\n\nWe must follow instruction: Answer only from tool results. When you have data, call submit_answer. Each claim cites artifact_id, field and value copied exactly from tool row. If nothing relevant is found, call submit_answer with empty claims list and note.\n\nSo we need to submit_answer with claims [] and note explaining no data found.\n\nWe should not invent.\n\nWe need to provide citations? Empty.\n\nWe should call submit_answer.\n\n"
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "created": 1793536352,
+      "model": "meta-models/muse-spark-open",
+      "object": "chat.completion",
+      "usage": {
+        "prompt_tokens": 1291,
+        "completion_tokens": 171,
+        "total_tokens": 1462,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 122,
+          "audio_tokens": 0,
+          "reasoning_tokens": 153,
+          "rejected_prediction_tokens": 214
+        }
+      }
+    }
+  }
+}
