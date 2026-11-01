@@ -42,6 +42,25 @@ TBX_DB=data/tbx.db uvicorn tbx.web:app --port 8000   # then open http://127.0.0.
   their attachment.
 - **Limits:** `TBX_ASK_LIMIT_PER_HOUR` (default 30, then HTTP 429; `0` turns live asking off).
 
+## Eval
+
+```bash
+python eval/run.py --provider meta --model muse-spark-1.3 [--repair 1]           # live, about $0.05 per question
+python eval/run.py --provider baseten --model meta-models/muse-spark-open [--repair 1]
+python eval/report.py --write                                                     # refresh the table below
+```
+
+`eval/run.py` sends every question in `eval/questions.yaml` through the same agent code as `tbx ask`, keeps each trace
+in `runs/`, and writes `eval/results/<provider>-<model>[-repair].json` with per-question scores and the totals of
+CONTRACTS §11 (fact recall, artifact recall, citation precision, `uncited_in_report`, rejections by reason,
+abstention accuracy, latency p50/p95, tokens, cost).
+
+## Eval results
+
+<!-- eval-results:start -->
+No results yet: `eval/questions.yaml` and the eval runs come from the testing session.
+<!-- eval-results:end -->
+
 ## Layout
 
 | Path | What |
@@ -55,6 +74,7 @@ TBX_DB=data/tbx.db uvicorn tbx.web:app --port 8000   # then open http://127.0.0.
 | `src/tbx/agent.py` | the tool loop, `submit_answer` validation and the JSONL trace |
 | `src/tbx/web/` | `tbx.web`: the FastAPI app and its single HTML page (no build step) |
 | `src/tbx/cli.py` | `tbx ingest`, `tbx enrich`, `tbx ask`, `tbx check` |
+| `src/tbx/evaluation.py`, `eval/` | the eval harness (`eval/run.py`) and the README table (`eval/report.py`) |
 | `data/sample/` | cut-down ALEAPP output from a public reference image (see `data/sample/SOURCE.md`) |
 
 ## Data
