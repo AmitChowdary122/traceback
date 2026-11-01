@@ -207,3 +207,22 @@ def test_jids_and_emails_are_not_names():
     assert not ingest.is_name("12027037640@s.whatsapp.net") and not ingest.is_name("a@b.org")
     assert ingest._party("12027037640@s.whatsapp.net", None) == (None, "+12027037640")
     assert ingest.is_name("Thom De'Fer") and ingest.is_name("USPS")
+
+
+def test_received_attachment_uses_message_time_not_sender_exif(report, media, tmp_path):
+    import shutil
+    rel = "data/data/com.google.android.apps.messaging/cache/telephony_cache/conversation_1_message_2_part_3_.bin"
+    dst = media / rel
+    dst.parent.mkdir(parents=True)
+    shutil.copyfile(media / "data/media/0/DCIM/Camera/PXL_20240716_235952437.jpg", dst)  # has EXIF
+    write_tsv(report, "GoogleMessages.tsv",
+              ["Message Timestamp", "Direction", "Message Sender", "Other Participant/Conversation Name", "Message",
+               "Message Type", "Attachment Byte Size", "Attachment Location", "Conversation ID"],
+              [["2024-07-26 19:41:16.943000+00:00", "Incoming", "(984) 291-5610", "Thom De'Fer", "", "image/jpeg",
+                "1", "/data/user/0/" + rel.removeprefix("data/data/"), "174"]])
+    db = tmp_path / "t.db"
+    ingest.ingest_report(str(report), str(db), media_root=str(media))
+    m = next(r for r in rows(db, "media") if r["source_path"] == rel)
+    assert m["ts_utc"] == "2024-07-26T19:41:16Z" and m["app"] == "Google Messages" and m["kind"] == "image"
+    msg = next(r for r in rows(db, "messages") if r["app"] == "Google Messages")
+    assert msg["attachment_media_id"] == m["artifact_id"]

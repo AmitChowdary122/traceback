@@ -467,7 +467,9 @@ def ingest_media(store: Store, root: pathlib.Path, report: pathlib.Path, ctx: Ct
         data = path.read_bytes()
         info = _exif(path) if kind == "image" else {}
         note: dict = {}
-        ts, ts_orig, basis = _exif_ts(info, ctx.case_tz)
+        # A received attachment's event on this device is its message time; its EXIF (if any) is the
+        # sender's camera clock, so it is kept in raw_json but not used as ts_utc.
+        ts, ts_orig, basis = (None, None, "unknown") if rel in att_times else _exif_ts(info, ctx.case_tz)
         if ts:
             note["ts_from"] = "EXIF DateTimeOriginal"
         elif rel in att_times:
