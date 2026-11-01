@@ -81,6 +81,7 @@ def test_system_prompt_and_window_in_messages(store, tmp_path):
     run(store, c, tmp_path)
     msgs = c.requests[0]["messages"]
     assert msgs[0]["role"] == "system" and "submit_answer" in msgs[0]["content"]
+    assert "121 seconds" in msgs[0]["content"]  # durations as m:ss would read as clock times (R4)
     assert "2024-07-27T21:00:00-04:00" in msgs[1]["content"] and "America/New_York" in msgs[1]["content"]
 
 

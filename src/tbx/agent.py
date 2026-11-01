@@ -48,7 +48,7 @@ ts_original or source_row.
 - Every name, phone number, email, URL, date, clock time and coordinate written in a claim's text must appear in \
 that claim's own cited values. When the text mentions a date or time, cite that artifact's ts_local.
 - Write times as case-local clock times, e.g. "9:42 PM on July 27". Do not write UTC ISO timestamps in the text, \
-and do not restate the question window.
+and do not restate the question window. Write durations in seconds or minutes ("121 seconds"), never as m:ss.
 - When citing body or text, quote it exactly (at least 8 characters).
 - Leave time_start and time_end empty unless the claim describes a span; if set, they must lie within the cited \
 artifacts' times.
