@@ -179,6 +179,51 @@ def test_media_exif_time_gps_and_photo_location(report, media, tmp_path):
     assert len(loc) == 1 and loc[0]["source_path"] == rel and loc[0]["ts_utc"] == m["ts_utc"]
 
 
+@pytest.mark.parametrize("dms, ref, want", [
+    ((38.0, 51.0, 37.21), "N", 38.8603361),        # 38.860336111... in full (the real PXL_20240724_195741 value)
+    ((77.0, 18.0, 11.66), "W", -77.3032389),       # -77.303238888...
+    ((33.0, 52.0, 4.5), "S", -33.8679167),
+    ((0.0, 0.0, 0.0), "E", 0.0),
+    ((38.0, 54.0, 8.64), "N", 38.9024),
+])
+def test_gps_degrees_are_rounded_to_7_decimals(dms, ref, want):
+    got = ingest.gps_degrees(dms, ref)
+    assert got == want
+    assert len(repr(got).split(".")[1]) <= 7
+
+
+@pytest.mark.parametrize("dms", [None, (), (38.0,), ("x", 1, 2), (38.0, 51.0, 1.0, 9.0)])
+def test_gps_degrees_rejects_malformed_values(dms):
+    assert ingest.gps_degrees(dms, "N") is None
+
+
+def test_exif_gps_is_rounded_in_store_but_raw_dms_is_kept(report, tmp_path):
+    """Claim text copies lat/lon from tool rows; 7 decimals (~1 cm) reads cleanly and IDs do not change."""
+    from PIL import Image
+    root = tmp_path / "media2"
+    cam = root / "data/media/0/DCIM/Camera"
+    cam.mkdir(parents=True)
+    exif = Image.Exif()
+    sub = exif.get_ifd(0x8769)
+    sub[36867] = "2024:07:24 15:57:41"
+    sub[36881] = "-04:00"
+    exif.get_ifd(0x8825).update({1: "N", 2: (38.0, 51.0, 37.21), 3: "W", 4: (77.0, 18.0, 11.66)})
+    rel = "data/media/0/DCIM/Camera/PXL_20240724_195741000.jpg"
+    Image.new("RGB", (32, 24), "blue").save(root / rel, exif=exif)
+    db = tmp_path / "t.db"
+    ingest.ingest_report(str(report), str(db), media_root=str(root))
+    m = rows(db, "media")[0]
+    loc = [r for r in rows(db, "locations") if r["source"] == "photo_exif"][0]
+    for r in (m, loc):
+        assert (r["lat"], r["lon"]) == (38.8603361, -77.3032389)
+    assert m["artifact_id"] == "med_" + hashlib.sha1(f"{rel}|1".encode()).hexdigest()[:10]
+    assert loc["artifact_id"] == "loc_" + hashlib.sha1(f"{rel}|1".encode()).hexdigest()[:10]
+    raw = json.loads(m["raw_json"])["exif"]
+    assert (raw["lat"], raw["lon"]) == (38.8603361, -77.3032389)
+    assert raw["gps"] == {"GPSLatitudeRef": "N", "GPSLatitude": [38.0, 51.0, 37.21],
+                          "GPSLongitudeRef": "W", "GPSLongitude": [77.0, 18.0, 11.66]}
+
+
 def test_ingest_twice_identical_ids(report, media, tmp_path):
     a, b = tmp_path / "a.db", tmp_path / "b.db"
     ingest.ingest_report(str(report), str(a), media_root=str(media))

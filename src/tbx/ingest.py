@@ -404,6 +404,33 @@ def media_app(rel: str) -> str:
     return m.group(1) if m else "Files"
 
 
+GPS_DECIMALS = 7  # ~1 cm; the 1e-4 coordinate tolerance of the checker is far coarser
+
+
+def gps_degrees(dms, ref: str | None) -> float | None:
+    """EXIF (degrees, minutes, seconds) rationals + N/S/E/W ref -> signed decimal degrees, rounded to 7 places.
+
+    Unrounded values such as 38.86033611111111 end up verbatim in claim text, so the store keeps 7 decimals;
+    the source rationals stay in raw_json. Returns None for anything that isn't three numbers.
+    """
+    try:
+        parts = [float(v) for v in dms]
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+    if len(parts) != 3:
+        return None
+    deg = round(sum(v / 60 ** i for i, v in enumerate(parts)), GPS_DECIMALS)
+    neg = str(ref or "").strip().upper()[:1] in ("S", "W")
+    return -deg if neg and deg else deg
+
+
+def _rationals(dms) -> list[float] | None:
+    try:
+        return [float(v) for v in dms]
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+
+
 def _exif(path: pathlib.Path) -> dict:
     try:
         from PIL import Image
@@ -419,14 +446,13 @@ def _exif(path: pathlib.Path) -> dict:
         info["DateTimeOriginal"] = str(dto)
     if sub.get(36881):
         info["OffsetTimeOriginal"] = str(sub.get(36881))
-    try:
-        if gps and 2 in gps and 4 in gps:
-            lat = sum(float(v) / 60 ** i for i, v in enumerate(gps[2]))
-            lon = sum(float(v) / 60 ** i for i, v in enumerate(gps[4]))
-            info["lat"] = -lat if str(gps.get(1, "N")).upper().startswith("S") else lat
-            info["lon"] = -lon if str(gps.get(3, "E")).upper().startswith("W") else lon
-    except (TypeError, ValueError, ZeroDivisionError):
-        pass
+    if gps and 2 in gps and 4 in gps:
+        lat, lon = gps_degrees(gps[2], gps.get(1, "N")), gps_degrees(gps[4], gps.get(3, "E"))
+        if lat is not None and lon is not None:
+            info["lat"], info["lon"] = lat, lon
+            # The source values, before conversion and rounding, for the raw row.
+            info["gps"] = {"GPSLatitudeRef": str(gps.get(1, "")), "GPSLatitude": _rationals(gps[2]),
+                           "GPSLongitudeRef": str(gps.get(3, "")), "GPSLongitude": _rationals(gps[4])}
     return info
 
 
