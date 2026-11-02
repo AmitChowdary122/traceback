@@ -59,6 +59,8 @@ def setup(tmp_path, monkeypatch):
                             "box": "[1, 2, 30, 40]", "prompt_set": "v1"})
     s.close()
     monkeypatch.setenv("TBX_ASK_LIMIT_PER_HOUR", "2")
+    monkeypatch.delenv("TBX_LIVE_PROVIDERS", raising=False)   # default: live asks go to meta only
+    monkeypatch.delenv("TBX_PROVIDER", raising=False)
     app = web.create_app(str(db), runs_dir=str(tmp_path / "runs"), client_factory=FakeClient)
     return TestClient(app), tmp_path
 
@@ -158,3 +160,55 @@ def test_featured_run_is_offered_only_when_it_exists(setup, monkeypatch):
     assert client.get("/api/case").json()["featured_run"] == "demo-1"
     monkeypatch.setenv("TBX_FEATURED_RUN", "../c")
     assert client.get("/api/case").json()["featured_run"] is None
+
+
+# -- live providers (TBX_LIVE_PROVIDERS): the hosted site asks Meta only; Baseten runs are replays ----------------
+def test_live_asks_default_to_meta_only(setup, monkeypatch):
+    client, tmp = setup
+    monkeypatch.delenv("TBX_LIVE_PROVIDERS", raising=False)
+    monkeypatch.setenv("BASETEN_API_KEY", "x")
+    r = client.post("/api/ask", json={"question": "Who called?", "provider": "baseten"})
+    assert r.status_code == 403
+    detail = r.json()["detail"]
+    assert "meta" in detail and "baseten" in detail and "replay" in detail
+    assert not (tmp / "runs").exists() or not list((tmp / "runs").glob("*.jsonl"))   # nothing ran
+    ids = [client.post("/api/ask", json={"question": f"q{i}", "provider": "meta"}).json()["run_id"] for i in range(2)]
+    for i in ids:                                    # the 403 did not use up the hourly ask limit of 2
+        assert _wait(client, i)["status"] == "ok"
+
+
+def test_live_providers_env_widens_and_narrows(setup, monkeypatch):
+    client, _ = setup
+    monkeypatch.setenv("TBX_LIVE_PROVIDERS", " Meta , baseten ")
+    r = client.post("/api/ask", json={"question": "Who called?", "provider": "baseten"})
+    assert r.status_code == 200
+    _wait(client, r.json()["run_id"])
+    monkeypatch.setenv("TBX_LIVE_PROVIDERS", "")                  # set but empty: no live asks at all
+    assert client.post("/api/ask", json={"question": "q", "provider": "meta"}).status_code == 403
+
+
+def test_default_provider_is_checked_too(setup, monkeypatch):
+    client, _ = setup
+    monkeypatch.delenv("TBX_LIVE_PROVIDERS", raising=False)
+    monkeypatch.setenv("TBX_PROVIDER", "baseten")
+    assert client.post("/api/ask", json={"question": "q"}).status_code == 403
+    assert client.post("/api/ask", json={"question": "q", "provider": "nope"}).status_code == 400  # unknown stays 400
+
+
+def test_case_reports_live_providers(setup, monkeypatch):
+    client, _ = setup
+    monkeypatch.delenv("TBX_LIVE_PROVIDERS", raising=False)
+    monkeypatch.setenv("META_API_KEY", "x")
+    monkeypatch.setenv("BASETEN_API_KEY", "y")
+    case = client.get("/api/case").json()
+    assert case["live_providers"] == ["meta"]
+    assert case["providers"] == {"meta": True, "baseten": False}       # baseten has a key but is replay-only
+    assert case["static"] is False
+    monkeypatch.delenv("META_API_KEY")
+    assert client.get("/api/case").json()["providers"]["meta"] is False  # live, but no key on this server
+
+
+def test_page_offers_recorded_runs_when_a_provider_is_not_live(setup):
+    client, _ = setup
+    page = client.get("/").text
+    assert 'id="replays"' in page and "live_providers" in page

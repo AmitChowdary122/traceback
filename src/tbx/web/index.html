@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Traceback</title>
+<!--tbx-static-->
 <style>
 :root {
   --bg: #f4f5f7; --panel: #ffffff; --panel-2: #f9fafb; --border: #dde1e6; --border-strong: #c5ccd4;
@@ -88,6 +89,19 @@ input[type=datetime-local] { min-width: 0; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn { color: #0d1014; } }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .hint { font-size: 12px; color: var(--faint); margin-top: 8px; }
+.replays { margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); }
+.replays[hidden] { display: none; }
+.replays .why { font-size: 12.5px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.replays .why b { color: var(--text); }
+.replays ul { list-style: none; margin: 0; padding: 0; }
+.replays li + li { border-top: 1px solid var(--border); }
+.replays button { all: unset; display: block; width: 100%; box-sizing: border-box; padding: 7px 10px; cursor: pointer;
+  font-size: 12.5px; }
+.replays button:hover, .replays button:focus-visible { background: var(--accent-bg); }
+.replays button .m { display: block; font-size: 11.5px; color: var(--faint); }
+.replays .none { padding: 8px 10px; }
+.static-note { font-size: 12px; color: var(--warn); background: var(--warn-bg); border-radius: 4px; padding: 6px 8px;
+  margin: 0 0 6px; }
 .err { color: var(--bad); font-size: 12.5px; margin-top: 8px; white-space: pre-wrap; }
 
 .runs { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto; }
@@ -248,6 +262,7 @@ video, audio { max-width: 100%; display: block; border-radius: 4px; }
           <button class="btn" id="go" type="submit">Ask</button>
         </div>
         <div class="hint" id="limit"></div>
+        <div class="replays" id="replays" hidden aria-live="polite"></div>
         <div class="err" id="ask-err" role="alert"></div>
       </form>
     </section>
@@ -270,7 +285,18 @@ video, audio { max-width: 100%; display: block; border-radius: 4px; }
 <script>
 "use strict";
 const $ = (s) => document.querySelector(s);
-const state = { caseTz: "UTC", runId: null, poll: null, artifacts: {}, case: null };
+const state = { caseTz: "UTC", runId: null, poll: null, artifacts: {}, case: null, runs: [] };
+const PROVIDER_NAMES = { meta: "Muse Spark (Meta)", baseten: "Muse Spark Open (Baseten)" };
+
+/* Static mode: `tbx export-static` writes this page with a manifest in <script id="tbx-static"> and the API
+   responses as JSON files next to it (api/runs.json, api/runs/<id>.json, ...). No server, so no live asks. */
+const STATIC = (() => {
+  const el = document.getElementById("tbx-static");
+  if (!el) return null;
+  try { return JSON.parse(el.textContent); } catch (_) { return null; }
+})();
+function apiUrl(path) { return STATIC ? `${path.replace(/^\//, "")}.json` : path; }  // relative: works under /<repo>/
+function mediaSrc(id) { return STATIC ? (STATIC.media || {})[id] || null : `/api/media/${encodeURIComponent(id)}`; }
 
 function h(tag, attrs, ...kids) {
   const el = document.createElement(tag);
@@ -284,10 +310,11 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 async function api(path, opts) {
-  const r = await fetch(path, opts);
+  if (STATIC && opts && opts.method && opts.method !== "GET") throw new Error("this static copy only replays recorded runs");
+  const r = await fetch(apiUrl(path), opts);
   let body = null;
   try { body = await r.json(); } catch (_) { /* not JSON */ }
-  if (!r.ok) throw new Error((body && (body.detail || body.error)) || `HTTP ${r.status}`);
+  if (!r.ok) throw new Error((body && (body.detail || body.error)) || (STATIC && r.status === 404 ? "not in this static copy (HTTP 404)" : `HTTP ${r.status}`));
   return body;
 }
 
@@ -329,24 +356,56 @@ async function loadCase() {
       h("span", {}, `${n.messages.toLocaleString()} messages · ${n.calls.toLocaleString()} calls · ` +
         `${n.locations.toLocaleString()} locations · ${n.media} media · ${n.transcripts} transcripts · ${n.image_tags} image tags`));
     for (const input of document.querySelectorAll('input[name=provider]')) {
-      const ok = c.providers[input.value];
-      input.disabled = !ok;
-      input.closest("label").title = ok ? "" : `no ${input.value} key on this server`;
+      input.closest("label").title = canAsk(input.value) ? "ask live" : "replay recorded runs (not asked live here)";
     }
-    if (!c.providers.meta && c.providers.baseten) document.querySelector('input[value=baseten]').checked = true;
-    const can = c.ask_limit_per_hour > 0 && (c.providers.meta || c.providers.baseten);
-    $("#go").disabled = !can;
-    $("#limit").textContent = !can ? "Live asking is off on this server; replay a recorded run."
-      : `Live asks left this hour: ${c.asks_remaining} of ${c.ask_limit_per_hour}. Times are case-local.`;
+    updateAskMode();
   } catch (e) {
     $("#case").textContent = `store not available: ${e.message}`;
   }
 }
 
+/* ---- ask or replay: a provider that is not asked live on this server offers its recorded runs instead ---- */
+function provider() { return document.querySelector("input[name=provider]:checked").value; }
+function canAsk(p) {
+  const c = state.case;
+  return !!(c && !STATIC && !c.static && c.ask_limit_per_hour > 0 && c.providers && c.providers[p]);
+}
+function whyNotLive(p) {
+  const c = state.case || {};
+  const live = c.live_providers || [];
+  if (STATIC || c.static) return ["This is a static copy of Traceback: it replays recorded runs with no server and no model call. ",
+    "Live asking needs the server (see the README)."];
+  if (!live.includes(p)) return [`Live asks on this server go to ${live.length ? live.join(" and ") : "no provider"} only. `,
+    h("b", {}, `Recorded ${PROVIDER_NAMES[p] || p} runs`), " replay below, with every claim as the checker judged it."];
+  if (!(c.providers || {})[p]) return [`No ${p} key on this server. Replay a recorded run below.`];
+  return ["Live asking is off on this server (hourly limit 0). Replay a recorded run below."];
+}
+function updateAskMode() {
+  const c = state.case;
+  if (!c) return;
+  const p = provider();
+  const live = canAsk(p);
+  $("#go").disabled = !live;
+  for (const id of ["#question", "#from", "#to", "#repair"]) $(id).disabled = !!(STATIC || c.static);
+  $("#limit").textContent = live ? `Live asks left this hour: ${c.asks_remaining} of ${c.ask_limit_per_hour}. Times are case-local.` : "";
+  const box = $("#replays");
+  if (live) { box.hidden = true; box.replaceChildren(); return; }
+  const mine = state.runs.filter((r) => r.provider === p && r.status === "ok");
+  box.replaceChildren(h("div", { class: "why" }, ...whyNotLive(p)),
+    mine.length ? h("ul", {}, mine.map((r) => h("li", {}, h("button", { type: "button", "data-replay": r.run_id,
+        onclick: () => openRun(r.run_id) }, r.question || r.run_id,
+      h("span", { class: "m" }, `${r.model || p} · ✓ ${r.verified} ✗ ${r.rejected} · ${(r.started || "").slice(0, 10)}`)))))
+      : h("div", { class: "none" }, `No recorded ${p} runs here.`));
+  box.hidden = false;
+}
+document.querySelectorAll("input[name=provider]").forEach((i) => i.addEventListener("change", updateAskMode));
+
 /* ---- recorded runs ---- */
 async function loadRuns() {
   let runs = [];
   try { runs = await api("/api/runs"); } catch (e) { $("#runs").replaceChildren(h("li", { class: "none" }, e.message)); return []; }
+  state.runs = runs;
+  updateAskMode();
   $("#runs-n").textContent = runs.length ? `(${runs.length})` : "";
   if (!runs.length) { $("#runs").replaceChildren(h("li", { class: "none" }, "No recorded runs yet.")); return runs; }
   $("#runs").replaceChildren(...runs.map((r) => h("li", {}, h("button", {
@@ -538,10 +597,12 @@ async function mediaSection(row) {
   try { m = await api(`/api/artifacts/${encodeURIComponent(mediaId)}`); } catch (_) { return null; }
   const out = [h("h3", {}, row.table === "messages" ? "Attachment" : "Media"),
     h("div", { class: "small mono" }, `${m.artifact_id} · ${m.mime_type} · ${m.file_path}`)];
-  const src = `/api/media/${encodeURIComponent(mediaId)}`;
-  if (m.kind === "image") {
+  const api_ = `/api/media/${encodeURIComponent(mediaId)}`;
+  const src = mediaSrc(mediaId);
+  if (!src) out.push(h("div", { class: "small" }, "The media file is not included in this static copy."));
+  else if (m.kind === "image") {
     let tags = [];
-    try { tags = (await api(`${src}/tags`)).rows; } catch (_) { /* no tags */ }
+    try { tags = (await api(`${api_}/tags`)).rows; } catch (_) { /* no tags */ }
     out.push(samFigure(src, tags, hiTag));
   } else if (m.kind === "video") {
     out.push(h("video", { src, controls: true, preload: "metadata" }));
@@ -550,7 +611,7 @@ async function mediaSection(row) {
   }
   if (m.kind === "audio" || m.kind === "video") {
     let trn = [];
-    try { trn = (await api(`${src}/transcripts`)).rows; } catch (_) { /* none */ }
+    try { trn = (await api(`${api_}/transcripts`)).rows; } catch (_) { /* none */ }
     for (const t of trn) {
       out.push(h("h3", {}, `Transcript · ${t.model} · ${t.duration_s} s${t.artifact_id === row.artifact_id ? " · cited" : ""}`),
         h("div", { class: "quote" }, t.text),
@@ -595,8 +656,8 @@ function samFigure(src, tags, hiTag) {
 $("#ask").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("#ask-err").textContent = "";
-  const body = { question: $("#question").value.trim(), provider: document.querySelector("input[name=provider]:checked").value,
-                 repair: $("#repair").checked ? 1 : 0 };
+  if (!canAsk(provider())) { updateAskMode(); return; }
+  const body = { question: $("#question").value.trim(), provider: provider(), repair: $("#repair").checked ? 1 : 0 };
   if ($("#from").value) body.from = $("#from").value.replace("T", " ");
   if ($("#to").value) body.to = $("#to").value.replace("T", " ");
   if (!body.question) return;
@@ -608,7 +669,6 @@ $("#ask").addEventListener("submit", async (e) => {
   } catch (err) {
     $("#ask-err").textContent = err.message;
   } finally {
-    $("#go").disabled = false;
     loadCase();
   }
 });
@@ -628,6 +688,10 @@ $("#ask").addEventListener("submit", async (e) => {
 
 /* ---- start: replay a recorded run by default ---- */
 (async function start() {
+  if (STATIC) {
+    $("#ask").prepend(h("div", { class: "static-note" }, "Static copy: replay only. Asking is disabled here; pick a recorded run."));
+    document.title = "Traceback (replay)";
+  }
   await loadCase();
   const runs = await loadRuns();
   const m = /#run=([^&]+)/.exec(location.hash);

@@ -6,8 +6,9 @@
 
 Environment: TBX_DB (store), TBX_RUNS_DIR (default ./runs), TBX_MEDIA_ROOT (default: the media root
 recorded by `tbx ingest`), TBX_ASK_LIMIT_PER_HOUR (default 30; 0 turns asking off), TBX_FEATURED_RUN (the
-recorded run the page replays by default), plus the provider keys used by `tbx ask`. Keys are never returned,
-logged or traced.
+recorded run the page replays by default), TBX_LIVE_PROVIDERS (comma-separated providers that may be asked live,
+default "meta"; any other provider gets HTTP 403 and the page offers its recorded runs as replays; set but empty
+means no live asks), plus the provider keys used by `tbx ask`. Keys are never returned, logged or traced.
 """
 from __future__ import annotations
 
@@ -33,6 +34,19 @@ RUN_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
 STALE_S = 15 * 60          # a trace with no run_end, untouched this long and not running here, is an error
 META_KEYS = ("device_tz", "device_model", "aleapp_version", "report_root", "ingested_at")
 OPEN_START, OPEN_END = "1970-01-01T00:00:00Z", "2100-01-01T00:00:00Z"
+DEFAULT_LIVE_PROVIDERS = "meta"   # the hosted demo pays for Meta asks only; Baseten runs are recorded replays
+PROVIDER_KEYS = (("meta", "META_API_KEY"), ("baseten", "BASETEN_API_KEY"))
+
+
+def live_providers() -> list[str]:
+    """TBX_LIVE_PROVIDERS as a list: unset means "meta"; set but empty means none."""
+    raw = os.environ.get("TBX_LIVE_PROVIDERS")
+    raw = DEFAULT_LIVE_PROVIDERS if raw is None else raw
+    out: list[str] = []
+    for p in (x.strip().lower() for x in raw.split(",")):
+        if p and p not in out:
+            out.append(p)
+    return out
 
 
 class AskBody(BaseModel):
@@ -194,19 +208,21 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             s = store()
             meta = s.meta()
             counts = {t: s.count(t) for t in ("messages", "calls", "locations", "media", "transcripts", "image_tags")}
-        providers = {p: bool(os.environ.get(k)) for p, k in (("meta", "META_API_KEY"), ("baseten", "BASETEN_API_KEY"))}
+        live = live_providers()
+        # providers[p]: this server can ask p live right now (p is in TBX_LIVE_PROVIDERS and its key is set).
+        providers = {p: p in live and bool(os.environ.get(k)) for p, k in PROVIDER_KEYS}
         featured = os.environ.get("TBX_FEATURED_RUN") or None
         if featured and not (RUN_ID.fullmatch(featured) and (runs / f"{featured}.jsonl").is_file()):
             featured = None
         return {"meta": {k: meta.get(k) for k in META_KEYS}, "counts": counts, "providers": providers,
-                "ask_limit_per_hour": limiter.per_hour, "asks_remaining": limiter.remaining(),
-                "featured_run": featured}
+                "live_providers": live, "ask_limit_per_hour": limiter.per_hour,
+                "asks_remaining": limiter.remaining(), "featured_run": featured, "static": False}
 
     # -- asking ---------------------------------------------------------------------------------
     @app.post("/api/ask")
     def ask(body: dict) -> JSONResponse:
         from tbx.agent import new_run_id, run_agent
-        from tbx.llm import ConfigError, LLMClient
+        from tbx.llm import PROVIDERS, ConfigError, LLMClient
 
         try:
             a = AskBody.parse(body)
@@ -216,6 +232,14 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             raise HTTPException(400, "question is empty")
         if a.repair not in (0, 1):
             raise HTTPException(400, "repair must be 0 or 1")
+        provider = (a.provider or os.environ.get("TBX_PROVIDER") or "meta").strip().lower()
+        if provider not in PROVIDERS:
+            raise HTTPException(400, f"unknown provider {provider!r} (use one of {', '.join(PROVIDERS)})")
+        live = live_providers()
+        if provider not in live:  # checked before the rate limit, so a refused ask costs nothing
+            allowed = f"go to {' and '.join(live)} only" if live else "are turned off"
+            raise HTTPException(403, f"Live asks on this server {allowed}. Recorded {provider} runs are listed "
+                                     f"under the {provider} toggle: replay one instead (no model call).")
         tz = case_tz()
         window = None
         if a.from_ or a.to:
@@ -226,7 +250,7 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             except ValueError as ex:
                 raise HTTPException(400, f"bad from/to: {ex}") from None
         try:
-            client = (client_factory or LLMClient)(a.provider, a.model)
+            client = (client_factory or LLMClient)(provider, a.model)
         except ConfigError as e:
             raise HTTPException(400, str(e)) from None
         ok, retry = limiter.take()
