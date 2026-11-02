@@ -16,3 +16,6 @@ data/*.ingest-tmp
 data/raw/
 runs/*.jsonl
 .cache/
+
+# static replay site (tbx export-static)
+site/

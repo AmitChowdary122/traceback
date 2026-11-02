@@ -1,0 +1,54 @@
+# Static replay site on GitHub Pages: rebuilds the store offline (no keys), runs `tbx export-static`, deploys site/.
+# Runs only when started by hand (Actions -> "Static replay site" -> Run workflow), after
+# Settings -> Pages -> Build and deployment -> Source is set to "GitHub Actions".
+name: Static replay site
+
+on:
+  workflow_dispatch:
+    inputs:
+      featured:
+        description: "Run ID the page opens by default (empty: the newest good run)"
+        required: false
+        default: "20261101T162631Z-ae5039"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -e .
+      - name: Build the store offline (committed inputs and enrich cache; no API keys)
+        run: |
+          tbx ingest data/sample/aleapp --media-root data/sample/media --db data/tbx.db > /dev/null
+          tbx enrich --offline --db data/tbx.db > /dev/null
+      - name: Export the static site
+        env:
+          FEATURED: ${{ inputs.featured }}
+        run: tbx export-static --out site --db data/tbx.db --runs-dir deploy/runs ${FEATURED:+--featured "$FEATURED"}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

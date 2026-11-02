@@ -373,8 +373,7 @@ function canAsk(p) {
 function whyNotLive(p) {
   const c = state.case || {};
   const live = c.live_providers || [];
-  if (STATIC || c.static) return ["This is a static copy of Traceback: it replays recorded runs with no server and no model call. ",
-    "Live asking needs the server (see the README)."];
+  if (STATIC || c.static) return [h("b", {}, `Recorded ${PROVIDER_NAMES[p] || p} runs`), " replay below, with no server and no model call."];
   if (!live.includes(p)) return [`Live asks on this server go to ${live.length ? live.join(" and ") : "no provider"} only. `,
     h("b", {}, `Recorded ${PROVIDER_NAMES[p] || p} runs`), " replay below, with every claim as the checker judged it."];
   if (!(c.providers || {})[p]) return [`No ${p} key on this server. Replay a recorded run below.`];
@@ -689,7 +688,7 @@ $("#ask").addEventListener("submit", async (e) => {
 /* ---- start: replay a recorded run by default ---- */
 (async function start() {
   if (STATIC) {
-    $("#ask").prepend(h("div", { class: "static-note" }, "Static copy: replay only. Asking is disabled here; pick a recorded run."));
+    $("#ask").prepend(h("div", { class: "static-note" }, "Static copy: replay only. Asking needs the server, so it is off here; pick a recorded run."));
     document.title = "Traceback (replay)";
   }
   await loadCase();

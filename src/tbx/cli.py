@@ -61,6 +61,13 @@ def _parser() -> _Parser:
     chk.add_argument("--from", dest="from_", default=None, metavar="T")
     chk.add_argument("--to", default=None, metavar="T")
     chk.add_argument("--db", default=None)
+
+    exp = sub.add_parser("export-static", help="write a replay-only copy of the web app as static files (GitHub Pages)")
+    exp.add_argument("--out", default="site", help="output directory (default: site)")
+    exp.add_argument("--db", default=None)
+    exp.add_argument("--runs-dir", default="deploy/runs", help="recorded runs to include (default: deploy/runs)")
+    exp.add_argument("--media-root", default=None, help="default: the media root recorded by `tbx ingest`")
+    exp.add_argument("--featured", default=None, help="run the page opens by default (default: TBX_FEATURED_RUN)")
     return p
 
 
@@ -196,10 +203,23 @@ def cmd_enrich(a) -> int:
     return EXIT_PROVIDER if summary["errors"] and not a.offline else EXIT_OK
 
 
+def cmd_export_static(a) -> int:
+    from tbx.export_static import ExportError, export_static
+
+    try:
+        summary = export_static(a.out, _db_path(a.db), a.runs_dir, media_root=a.media_root,
+                                featured=a.featured or os.environ.get("TBX_FEATURED_RUN") or None)
+    except ExportError as e:
+        raise UsageError(str(e)) from None
+    print(json.dumps(summary, indent=2))
+    return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     try:
         a = _parser().parse_args(argv)
-        return {"ask": cmd_ask, "check": cmd_check, "ingest": cmd_ingest, "enrich": cmd_enrich}[a.cmd](a)
+        return {"ask": cmd_ask, "check": cmd_check, "ingest": cmd_ingest, "enrich": cmd_enrich,
+                "export-static": cmd_export_static}[a.cmd](a)
     except UsageError as e:
         _err(str(e))
         return EXIT_USAGE
