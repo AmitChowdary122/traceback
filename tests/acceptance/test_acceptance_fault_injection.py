@@ -1,7 +1,10 @@
 """Acceptance: labeled fault injection on REAL model answers (offline, no API).
 
-Every recorded answer in deploy/runs/ is real model output that verifies cleanly. Each claim is then broken
-in one controlled way at a time and re-checked against the store built from the committed sample:
+Every recorded answer in deploy/runs/ is real, unedited model output. Its recorded verdicts must hold: re-checked
+against the store built from the committed sample, the claims the recording verified still verify, and the claims
+it rejected (a real rejection, e.g. Eval 2's q10, where the model named senders without citing them) are still
+rejected with the same reason codes. Each claim that verified is then broken in one controlled way at a time and
+re-checked:
 
 - a cited value is altered: a timestamp +1 minute, a phone digit, lat/lon +0.001, a quote cut to 5 chars,
   a label/name/direction typo, a measure +2;
@@ -9,9 +12,9 @@ in one controlled way at a time and re-checked against the store built from the 
 - the claim text gets a wrong clock time, a wrong day of the month, or an invented phone number;
 - the claim gets a time range on a day none of its rows covers.
 
-Every faulty copy must be rejected, and every original must still verify. This is how the README's
-fault-injection catch rate is measured. The faults are labeled as injected; they are never shown as model
-errors.
+Every faulty copy must be rejected. This is how the README's fault-injection catch rate is measured. The faults
+are labeled as injected; they are never shown as model errors, and a claim the recording already rejected is not
+broken further (it is counted as a real rejection instead).
 """
 from __future__ import annotations
 
@@ -91,10 +94,23 @@ def real_store(tbx, tbx_cli, tmp_path_factory):
 
 
 def _recorded(path):
+    """-> (window, last final answer, last recorded check result)."""
     ev = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
     start = next(e["payload"] for e in ev if e["type"] == "run_start")
     answers = [e["payload"] for e in ev if e["type"] == "final_answer"]
-    return start.get("window"), answers[-1]
+    checks = [e["payload"] for e in ev if e["type"] == "check_result"]
+    return start.get("window"), answers[-1], (checks[-1] if checks else None)
+
+
+def _key(tbx, claim: dict) -> str:
+    """A claim's canonical JSON (as the Claim model dumps it), to match recorded and re-checked claims."""
+    dumped = tbx.Answer.model_validate({"claims": [claim]}).model_dump(mode="json")["claims"][0]
+    return json.dumps(dumped, sort_keys=True)
+
+
+def _rejected_codes(tbx, rejected: list[dict]) -> dict[str, list[str]]:
+    """{claim key: sorted reason codes (duplicates kept)} for a CheckResult's rejected list."""
+    return {_key(tbx, r["claim"]): sorted(x["code"] for x in r["reasons"]) for r in rejected}
 
 
 def _window(tbx, w):
@@ -105,15 +121,21 @@ def _window(tbx, w):
 
 
 @pytest.mark.p1
-def test_real_answers_verify_and_every_injected_fault_is_rejected(tbx, real_store):
-    caught, total, missed = 0, 0, []
+def test_recorded_verdicts_hold_and_every_injected_fault_is_rejected(tbx, real_store):
+    caught, total, missed, real_rejections = 0, 0, [], 0
     for path in RUNS:
-        w, answer = _recorded(path)
+        w, answer, recorded = _recorded(path)
+        assert recorded is not None, f"{path.name}: no recorded check_result"
         window = _window(tbx, w)
         claims = [{k: v for k, v in c.items()} for c in answer["claims"]]
-        clean = tbx.check(tbx.Answer.model_validate({"claims": claims}), real_store, window)
-        assert len(clean.rejected) == 0, f"{path.name}: a recorded real answer no longer verifies"
+        now = tbx.check(tbx.Answer.model_validate({"claims": claims}), real_store, window).model_dump(mode="json")
+        was = _rejected_codes(tbx, recorded["rejected"])
+        assert _rejected_codes(tbx, now["rejected"]) == was, \
+            f"{path.name}: the re-check differs from the recorded verdicts"
         for ci, claim in enumerate(claims):
+            if _key(tbx, claim) in was:
+                real_rejections += 1        # rejected in the recording too: a real rejection, not a fault target
+                continue
             for label, bad in faults(claim):
                 total += 1
                 res = tbx.check(tbx.Answer.model_validate({"claims": [bad]}), real_store, window)
@@ -122,5 +144,6 @@ def test_real_answers_verify_and_every_injected_fault_is_rejected(tbx, real_stor
                 else:
                     missed.append(f"{path.name} claim {ci}: {label}: {bad['text'][:90]}")
     print(f"\nfault injection on real answers: {caught}/{total} rejected")
+    print(f"real rejections in the recorded runs (reproduced, not injected): {real_rejections} claims")
     assert total >= 100, f"too few injected faults ({total}); are the recorded runs present?"
     assert not missed, "faults that passed the checker:\n" + "\n".join(missed[:20])
