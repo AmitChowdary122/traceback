@@ -908,7 +908,7 @@ ${run.repair ? `<p class="muted"><b>Repair pass:</b> ${esc(run.repair.summary)}<
 <dt>Model ID</dt><dd class="mono">${esc(run.model)}</dd>
 <dt>Traceback</dt><dd>version ${esc(b.version || "?")}, ${commit}</dd>
 <dt>Run trace</dt><dd>${esc(run.run_id)}.jsonl SHA-256 <span class="mono">${esc(run.trace_sha256 || "not available")}</span></dd>
-<dt>Checker</dt><dd>tbx.checker (contract v1.3, deterministic, no model). ${esc((run.recheck || {}).message || "")}</dd>
+<dt>Checker</dt><dd>tbx.checker (contract v1.4, deterministic, no model). ${esc((run.recheck || {}).message || "")}</dd>
 </dl>
 <footer>Highlighting: <mark class="ok">green</mark> = checked by code: a time, number or name that matches a cited row, or text quoted from one · <mark class="bad">red</mark> = not found in any cited row · <span class="prose">plain text</span> = the model's own words, not verified.
 Times are case-local (${esc(state.caseTz)}) unless marked UTC.</footer>

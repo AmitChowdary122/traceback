@@ -90,6 +90,14 @@ against the cited values. So a claim that restates the question window's times (
 window's ISO bounds) is rejected unless a cited artifact carries those times: the window is not evidence. The system
 prompt also tells the model never to restate the window.
 
+**Quoted evidence (contract v1.4).** A passage of the claim text in double quotes (`"…"` or `“…”`) is a *verified
+quote* when its normalized content has at least 8 characters and is part of the **stored** body, text or transcript
+of a citation of the same claim that has no reason. Entities entirely inside a verified quote are grounded: the record
+says them. So a quoted voicemail's "we're here until 9:00 p.m." is not compared with the voicemail's own timestamp,
+while "At 9:00 PM she left a voicemail" still is, and so is a time inside a quote that isn't in the stored text. This
+came from the first live eval, where all 5 rejected claims were word-for-word voicemail quotes rejected for the
+times inside them (see "How we know the checker works").
+
 On the page, each reason reads as one plain sentence built from the cited row, with the code in small type:
 "Cited direction = 'outgoing'; the record says 'incoming'.", "'9:36 PM' doesn't match the cited record's time
 (9:06 PM).", "This record is from Thu Jun 27, 2024 9:45:55 AM (UTC-04:00), outside the question window."
@@ -99,7 +107,7 @@ unbacked time or name reads "isn't backed by a correctly cited time" (or "value"
 
 With `--repair 1`, rejected claims and their reasons go back to the model once; the final report is the check of
 its second answer, and the trace keeps both rounds. The page's repair view puts each round-1 rejected claim next to
-what round 2 submitted for it: **corrected** (now verified), **dropped**, or **still rejected**. The red-team suite (`tests/redteam/`, 149 tests) pins every rule,
+what round 2 submitted for it: **corrected** (now verified), **dropped**, or **still rejected**. The red-team suite (`tests/redteam/`, 160 tests) pins every rule,
 including real model claims recorded in the API spikes.
 
 **What exactly was checked (contract v1.3).** The checker also returns `entities`: for every claim, each R4 entity it

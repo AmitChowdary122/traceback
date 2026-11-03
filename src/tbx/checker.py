@@ -1,9 +1,12 @@
-"""The deterministic citation checker (CONTRACTS.md v1.3 section 7).
+"""The deterministic citation checker (CONTRACTS.md v1.4 section 7).
 
 Pure: no network, no LLM, no clock. Same inputs give byte-identical model_dump_json().
 Strict: a claim with any reason is rejected, and every reason is listed.
 v1.3: CheckResult.entities lists the R4 entities of each claim as spans of its text, so a reader can tell the words
 code checked (grounded or not) from the model's own wording, which is not verified.
+v1.4: quoted evidence. An R4 entity entirely inside a verified quote (a double-quoted passage of 8+ normalized
+characters found in the stored body, text or transcript of a cited, reason-free citation) is grounded: the record
+says it, so a voicemail's "until 9:00 p.m." is not compared with the voicemail's own timestamp.
 """
 from __future__ import annotations
 
@@ -123,6 +126,7 @@ _CLOCK = re.compile(r"(?<![\d:.])\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp]\.?\s?[Mm]\
 _COORD = re.compile(r"(?<![\d.])-?\d{1,3}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}(?!\d|\.\d)")
 _PHONE = re.compile(r"\+?\(?\d[\d\s().\-]{5,}\d\)?")
 _DECIMAL = re.compile(r"-?\d+\.\d+")
+_QUOTED = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d')   # "…" or “…” (v1.4 quoted evidence)
 _BLANK = "\x00"
 ORDER = ("url", "email", "timestamp", "date", "clock_time", "coordinate", "phone")
 _RANK = {t: i for i, t in enumerate((*ORDER, "contact"))}
@@ -296,6 +300,17 @@ def _grounded(e: Entity, pool: _Pool, case_tz: str) -> bool:
     return any(needle in fold(v) for v in pool.values)
 
 
+def verified_quotes(text: str, sources: list[str]) -> list[tuple[int, int]]:
+    """v1.4: the [start, end) spans (quote marks included) of the double-quoted passages of text whose folded content
+    has at least MIN_QUOTE characters and is a substring of one of sources (folded stored values)."""
+    out = []
+    for m in _QUOTED.finditer(text):
+        content = fold(m.group(1) if m.group(1) is not None else m.group(2))
+        if len(content) >= MIN_QUOTE and any(content in src for src in sources):
+            out.append((m.start(), m.end()))
+    return out
+
+
 # ------------------------------------------------------------------------------ the check
 def _check_claim(claim: Claim, store: Store, window: tu.Window | None, case_tz: str,
                  contacts: set[str]) -> tuple[list[Reason], list[EntitySpan]]:
@@ -303,11 +318,13 @@ def _check_claim(claim: Claim, store: Store, window: tu.Window | None, case_tz: 
     pool = _Pool([], [], [])
     support: list[datetime] = []
     coord_parts: dict[str, dict[str, float]] = {}
+    quote_sources: list[str] = []   # v1.4: folded STORED text values of citations that have no reason
 
     if not claim.citations:
         reasons.append(Reason(code=NO_CITATIONS, detail="the claim cites no artifacts", citation_index=None))
 
     for i, c in enumerate(claim.citations):
+        before = len(reasons)
         row = store.get(c.artifact_id)
         if row is None:
             reasons.append(Reason(code=UNKNOWN_ARTIFACT, detail=f"{c.artifact_id!r} is not in the store",
@@ -339,20 +356,24 @@ def _check_claim(claim: Claim, store: Store, window: tu.Window | None, case_tz: 
                 reasons.append(Reason(code=OUTSIDE_WINDOW, citation_index=i,
                                       detail=f"{row['ts_utc']} is outside {tu.fmt_utc(window.start_utc)}"
                                              f"..{tu.fmt_utc(window.end_utc)}"))
+        if len(reasons) == before and c.field in TEXT_FIELDS and row.get(c.field):
+            quote_sources.append(fold(row[c.field]))
     pool.coords = [(p["lat"], p["lon"]) for p in coord_parts.values() if {"lat", "lon"} <= set(p)]
 
     spans: list[EntitySpan] = []
     named: set[str] = set()
+    quotes = verified_quotes(claim.text, quote_sources) if quote_sources else []
     for e in extract_entities(claim.text, contacts):
-        grounded = _grounded(e, pool, case_tz)
+        grounded = any(qa <= e.start and e.end <= qb for qa, qb in quotes) or _grounded(e, pool, case_tz)
         spans.append(EntitySpan(type=e.type, text=e.text, start=e.start, end=e.end, grounded=grounded))
-        if e.type == "contact":       # one reason per contact name, however often it occurs (as in v1.2)
+        if grounded:
+            continue
+        if e.type == "contact":       # one reason per contact name, however often it is ungrounded (as in v1.2)
             if e.key in named:
                 continue
             named.add(e.key)
-        if not grounded:
-            reasons.append(Reason(code=f"UNGROUNDED_ENTITY:{e.type}", citation_index=None,
-                                  detail=f"{e.type} {e.key!r} is not supported by the claim's cited values"))
+        reasons.append(Reason(code=f"UNGROUNDED_ENTITY:{e.type}", citation_index=None,
+                              detail=f"{e.type} {e.key!r} is not supported by the claim's cited values"))
     spans.sort(key=lambda x: (x.start, x.end, _RANK[x.type], x.text))
 
     reasons += _check_range(claim, support, case_tz)

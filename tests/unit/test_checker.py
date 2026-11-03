@@ -210,3 +210,111 @@ def test_contact_span_after_an_emoji_uses_code_point_offsets(store):
     res = run(store, text, (CALL, "contact_name", "Liz Dehner"))
     (e,) = res.entities[0]
     assert (e.start, e.end, text[e.start:e.end]) == (2, 12, "Liz Dehner")
+
+
+# ---------------------------------------------------------------------------- v1.4 quoted evidence (CONTRACTS §7)
+# MSG is at 12:31 PM case-local and its body says "after 12:30 PM": the quoted time is the record's words, not its time.
+BODY = "Call 919-555-0000 or 919 555 1234 after 12:30 PM"
+
+
+def _ents(res, typ):
+    return [(e.text, e.grounded) for e in res.entities[0] if e.type == typ]
+
+
+def test_time_inside_verified_quote_is_grounded(store):
+    res = run(store, f'Liz Dehner texted "{BODY}".', (MSG, "body", BODY), (MSG, "sender", "Liz Dehner"))
+    assert res.verified and _ents(res, "clock_time") == [("12:30 PM", True)]
+
+
+def test_same_time_outside_quotes_is_still_checked(store):
+    res = run(store, f"At 12:30 PM Liz Dehner texted {BODY}.", (MSG, "body", BODY), (MSG, "sender", "Liz Dehner"))
+    assert codes(res) == ["UNGROUNDED_ENTITY:clock_time"]
+    assert _ents(res, "clock_time") == [("12:30 PM", False), ("12:30 PM", False)]
+
+
+def test_quote_and_unquoted_time_in_one_claim(store):
+    """Only the occurrence inside the quote is exempt; the unquoted 12:30 PM is compared with the 12:31 PM record."""
+    res = run(store, f'At 12:30 PM the message said "after 12:30 PM".', (MSG, "body", BODY))
+    assert codes(res) == ["UNGROUNDED_ENTITY:clock_time"]
+    assert _ents(res, "clock_time") == [("12:30 PM", False), ("12:30 PM", True)]
+
+
+def test_curly_quote_partial_casefolded(store):
+    res = run(store, "The text says “AFTER  12:30 pm”.", (MSG, "body", BODY))
+    assert res.verified and _ents(res, "clock_time") == [("12:30 pm", True)]
+
+
+def test_quote_is_matched_against_the_stored_value_not_the_cited_one(store):
+    """The citation quotes only the start of the body; the claim's quote comes from later in the stored body."""
+    res = run(store, 'It ends "after 12:30 PM".', (MSG, "body", "Call 919-555-0000"))
+    assert res.verified and _ents(res, "clock_time") == [("12:30 PM", True)]
+
+
+@pytest.mark.parametrize("text", [
+    'It says "12:30 PM!"',            # not a substring of the body
+    'It says "at 12:30"',             # not in the body ("after 12:30")
+    'It says "12:30"',                # in the body, but shorter than 8 characters
+    'It says "after 12:30 PM”',  # mismatched quote marks: not a quoted passage
+    "It says 'after 12:30 PM'",       # single quotes are not quotes for this rule
+])
+def test_unverified_quotes_are_checked_as_usual(store, text):
+    res = run(store, text, (MSG, "body", BODY))
+    assert codes(res) == ["UNGROUNDED_ENTITY:clock_time"] and all(not g for _, g in _ents(res, "clock_time"))
+
+
+def test_quote_from_a_citation_with_a_reason_does_not_count(store):
+    """OUTSIDE_WINDOW is a reason on that citation, so its stored body verifies no quote."""
+    early = Window(parse_utc("2023-03-14T00:00:00Z"), parse_utc("2023-03-14T05:00:00Z"))
+    res = run(store, 'Liz Dehner texted "after 12:30 PM".', (MSG, "body", BODY), (CALL, "contact_name", "Liz Dehner"),
+              window=early)
+    assert codes(res) == ["OUTSIDE_WINDOW", "UNGROUNDED_ENTITY:clock_time"]
+    assert _ents(res, "clock_time") == [("12:30 PM", False)]
+
+
+def test_quote_from_a_mismatched_citation_does_not_count(store):
+    res = run(store, 'Liz Dehner texted "after 12:30 PM".', (MSG, "body", "after 12:45 PM"),
+              (CALL, "contact_name", "Liz Dehner"))
+    assert codes(res) == ["UNGROUNDED_ENTITY:clock_time", "VALUE_MISMATCH"]
+
+
+def test_quote_needs_a_cited_text_field(store):
+    """The quote is in the body, but the claim cites only the sender: not quoted evidence."""
+    res = run(store, 'Liz Dehner texted "after 12:30 PM".', (MSG, "sender", "Liz Dehner"))
+    assert codes(res) == ["UNGROUNDED_ENTITY:clock_time"]
+
+
+def test_contact_quoted_and_unquoted_gets_one_reason(tmp_path):
+    s = Store(str(tmp_path / "q.db"))
+    s.set_meta("device_tz", NY)
+    prov = {"ts_original": "x", "tz_basis": "utc_string", "raw_json": "{}"}
+    for row, sender, body in ((1, "Liz Dehner", "hi"), (2, "Bob Ray", "tell Liz Dehner to call me")):
+        s.insert("messages", {"artifact_id": artifact_id("messages", "sms.tsv", str(row)), "source_path": "sms.tsv",
+                              "source_row": str(row), "ts_utc": "2023-03-14T16:31:00Z", **prov, "app": "SMS",
+                              "thread_id": "1", "direction": "incoming", "sender": sender, "body": body})
+    bob = artifact_id("messages", "sms.tsv", "2")
+    res = run(s, 'Liz Dehner was mentioned: "tell Liz Dehner to call me".', (bob, "body", "tell Liz Dehner to call me"))
+    assert res.verified  # the cited body grounds the name everywhere (containment)
+    res = run(s, 'Liz Dehner was mentioned: "tell Liz Dehner to call me".', (bob, "body", "to call me"))
+    assert [(e.text, e.grounded) for e in res.entities[0]] == [("Liz Dehner", False), ("Liz Dehner", True)]
+    assert [r.code for r in res.rejected[0].reasons] == ["UNGROUNDED_ENTITY:contact"]
+
+
+def test_phone_runs_inside_a_cited_path_still_ground(tmp_path):
+    """The q16 demo run (a269f0) cites a photo's source_path; its digit runs are phone entities and must ground."""
+    s = Store(str(tmp_path / "p.db"))
+    s.set_meta("device_tz", NY)
+    med = artifact_id("media", "DCIM/Camera/PXL_20240715_225229429.jpg", "f")
+    s.insert("media", {"artifact_id": med, "source_path": "DCIM/Camera/PXL_20240715_225229429.jpg", "source_row": "f",
+                       "ts_utc": "2024-07-15T22:52:29Z", "ts_original": "x", "tz_basis": "utc_string",
+                       "raw_json": "{}", "kind": "image"})
+    res = run(s, "Photo PXL_20240715_225229429.jpg shows a car.",
+              (med, "source_path", "DCIM/Camera/PXL_20240715_225229429.jpg"))
+    assert res.verified and _ents(res, "phone") == [("20240715", True), ("225229429", True)]
+
+
+def test_quote_check_is_deterministic(store):
+    a = Answer.model_validate({"claims": [{"text": f'"{BODY}" at 12:31 PM', "citations": [
+        {"artifact_id": MSG, "field": "body", "value": BODY}, {"artifact_id": MSG, "field": "ts_local",
+                                                              "value": "2023-03-14 12:31"}]}]})
+    outs = {checker.check(a, store, None).model_dump_json() for _ in range(3)}
+    assert len(outs) == 1 and not checker.check(a, store, None).rejected
