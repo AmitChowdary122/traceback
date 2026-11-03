@@ -13,7 +13,7 @@ import json
 
 import pytest
 import tbxcase
-from fakeprovider import FakeProvider, closed_port, has_tool_results, text_reply, tool_messages, tool_reply
+from fakeprovider import FakeProvider, closed_port, completion, has_tool_results, text_reply, tool_messages, tool_reply
 from tbxcase import IDS, cite, find_trace, spike_claims
 
 META_CLAIMS = spike_claims("s1_chat_tools_turn2_submit_4k")
@@ -153,6 +153,22 @@ def test_text_only_reply_is_retried_once(run_cli, cli_env, tmp_path):
     assert out["verified"] == [] and out["rejected"] == []
     trace = find_trace(tmp_path, out["run_id"])
     assert trace and '"validation_error"' in trace.read_text()
+
+
+def test_length_cutoff_is_retried_cleanly(run_cli, cli_env):
+    """Eval run 20261103T112815Z-d7e402 (q03, Meta): a reply cut off at max_tokens has no content and no tool
+    calls. The retry must not echo that empty assistant turn back; Meta answers that with HTTP 400."""
+    def responder(req, n):
+        if not has_tool_results(req):
+            return tool_reply(("get_calls", TOOL_ARGS))
+        if n == 2:
+            return completion({"content": None}, "length")
+        return tool_reply(("submit_answer", {"claims": META_CLAIMS[:1]}))
+    with FakeProvider(responder) as fp:
+        cli_env["META_BASE_URL"] = fp.base_url
+        out = parse_json_out(ask(run_cli, cli_env))
+    assert len(out["verified"]) == 1
+    assert len(fp.chat_requests) == 3
 
 
 def test_two_text_only_replies_exit_2(run_cli, cli_env):

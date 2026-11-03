@@ -118,6 +118,13 @@ class FakeProvider:
                     n = sum(1 for r in fp.requests if r["path"].endswith("/chat/completions"))
                 if not self.path.rstrip("/").endswith("/chat/completions"):
                     return self._send(404, {"error": {"message": f"fake provider only serves /chat/completions, got {self.path}"}})
+                bad_turn = next((i for i, m in enumerate(req.get("messages") or [])
+                                 if m.get("role") == "assistant" and not m.get("content") and not m.get("tool_calls")), None)
+                if bad_turn is not None:
+                    # Real Meta behaviour (eval run 20261103T112815Z-d7e402): an assistant turn with neither
+                    # content nor tool_calls, e.g. a reply cut off at max_tokens and echoed back, is a 400.
+                    return self._send(400, {"error": {"code": None, "param": f"messages[{bad_turn}]", "type": "invalid_request_error",
+                                                      "message": "assistant message must have `content` or `tool_calls`"}})
                 out = fp.responder(req, n)
                 status, body = out if isinstance(out, tuple) else (200, out)
                 if status == 200 and req.get("tool_choice") not in (None, "auto"):

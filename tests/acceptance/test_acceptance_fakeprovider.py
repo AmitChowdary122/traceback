@@ -72,3 +72,15 @@ def test_openai_sdk_compatibility_if_installed():
         stream = client.chat.completions.create(model="m", messages=[{"role": "tool", "tool_call_id": "x", "content": "{}"}], stream=True)
         chunks = list(stream)
         assert chunks[0].choices[0].delta.tool_calls[0].function.name == "submit_answer"
+
+
+def test_empty_assistant_turn_is_400_like_meta():
+    with FakeProvider(lambda r, n: text_reply("x")) as fp:
+        msgs = [{"role": "user", "content": "q"}, {"role": "assistant", "content": None}, {"role": "user", "content": "again"}]
+        s, b = post(f"{fp.base_url}/chat/completions", {"model": "m", "messages": msgs})
+        assert s == 400 and "content" in json.loads(b)["error"]["message"]
+        msgs[1] = {"role": "assistant", "content": None, "tool_calls": [{"id": "c1", "type": "function",
+                                                                          "function": {"name": "get_calls", "arguments": "{}"}}]}
+        s, _ = post(f"{fp.base_url}/chat/completions", {"model": "m", "messages": msgs})
+        assert s == 200
+
