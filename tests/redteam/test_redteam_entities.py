@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from redteam_cases import CASES, META_CLAIMS, OPEN_CLAIMS
+from redteam_cases import CASES, META_CLAIMS, OPEN_CLAIMS, REAL_QUOTE_CLAIM
 from tbxcase import EVENING, make_window
 
 ENTITY_TYPES = {"phone", "email", "url", "timestamp", "date", "clock_time", "coordinate", "contact"}
@@ -115,3 +115,13 @@ def test_every_contact_occurrence_is_listed(tbx, case_store):
     (per_claim,) = entities_of(check_claims(tbx, case_store, [claim]))
     contacts = [(e["text"], e["grounded"]) for e in per_claim if e["type"] == "contact"]
     assert contacts == [("Alice", True), ("Alice", True), ("Bob", False)], contacts
+
+
+def test_times_inside_a_verified_quote_are_grounded(tbx, case_store):
+    """v1.4 (C9): the real q07 claim. '8:00' and '9:30' are inside the verified transcript quote, so they are
+    grounded; the claim's own '9:28 AM' is checked against the cited timestamp and also grounded."""
+    (per_claim,) = entities_of(check_claims(tbx, case_store, [REAL_QUOTE_CLAIM], window=None))
+    clocks = {e["text"]: e["grounded"] for e in per_claim if e["type"] == "clock_time"}
+    assert clocks.get("8:00") is True and clocks.get("9:30") is True, per_claim
+    assert any(k.startswith("9:28") and v for k, v in clocks.items()), per_claim
+

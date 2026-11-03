@@ -31,6 +31,9 @@ def claim(text: str, *citations: dict, time_start: str | None = None, time_end: 
 
 ALICE = cite("CALL_ALICE", "contact_name", "Alice")
 
+# Real eval output (Meta, q07), verbatim: a correct claim quoting a voicemail transcript that contains times.
+REAL_QUOTE_CLAIM = {"text": "The 9:28 AM on February 10 voicemail from +19199291133 said \"Hi. Yes, this is Jaclyn from the U-Haul and Chapel Hill, see how the reservation this morning at 8:00. It is now going on 9:30. We're going to go ahead and cancel this reservation. If you can give us a call back, that would be great. Thank you.\"", "time_start": None, "time_end": None, "citations": [{"artifact_id": "call_f777b490c2", "field": "ts_local", "value": "2024-02-10T09:28:06-05:00"}, {"artifact_id": "call_f777b490c2", "field": "number", "value": "+19199291133"}, {"artifact_id": "call_f777b490c2", "field": "transcript", "value": "Hi. Yes, this is Jaclyn from the U-Haul and Chapel Hill, see how the reservation this morning at 8:00. It is now going on 9:30. We're going to go ahead and cancel this reservation. If you can give us a call back, that would be great. Thank you."}]}
+
 # ------------------------------------------------------------------------------------------
 # MUST-ACCEPT
 # ------------------------------------------------------------------------------------------
@@ -135,6 +138,17 @@ ACCEPT += [
          claim("A voicemail said a reservation was ready for pickup.",
                cite("CALL_VM", "direction", "voicemail"), cite("CALL_VM", "transcript", "reservation is ready for pickup")),
          note="v1.2: calls.direction 'voicemail'; calls.transcript is citable under the text rule"),
+    Case("A24_real_quoted_voicemail_with_times", "verified", REAL_QUOTE_CLAIM, window=None,
+         note="REAL muse-spark-1.3 output (eval q07, run 20261103T113123Z-eb2773), rejected under v1.3 because '8:00' "
+              "and '9:30' inside the verbatim transcript quote were checked against the voicemail's timestamp [v1.4 C9]"),
+    Case("A25_time_inside_verified_quote", "verified",
+         claim('Alice texted "Meet me at the Riverside garage at 9:45, bring the blue bag."',
+               cite("MSG_ALICE", "sender", "Alice"), cite("MSG_ALICE", "body", "Meet me at the Riverside garage at 9:45, bring the blue bag.")),
+         note="v1.4: a time inside a quote verified against the stored body is grounded by the quote"),
+    Case("A26_curly_quote_partial_casefolded", "verified",
+         claim("Alice wrote \u201cmeet me at the riverside garage at 9:45\u201d.",
+               cite("MSG_ALICE", "sender", "Alice"), cite("MSG_ALICE", "body", "riverside garage at 9:45")),
+         note="v1.4: curly quotes; the quote only has to be a (normalized, >= 8 chars) substring of the stored body"),
 ]
 
 # ------------------------------------------------------------------------------------------
@@ -268,6 +282,16 @@ REJECT: list[Case] = [
     Case("R39_fabricated_voicemail_quote", "rejected",
          claim("A voicemail said a reservation was cancelled.", cite("CALL_VM", "transcript", "your reservation was cancelled")),
          codes=frozenset({VM}), indexes={VM: {0}}, note="v1.2: transcript quotes must be real substrings (twin of A23)"),
+    Case("R40_altered_quote_time_is_still_checked", "rejected",
+         claim('Alice texted "Meet me at the Riverside garage at 10:15."',
+               cite("MSG_ALICE", "sender", "Alice"), cite("MSG_ALICE", "body", "Meet me at the Riverside garage")),
+         codes=frozenset({UE("clock_time")}),
+         note="v1.4: the quote is not in the stored body (10:15 vs 9:45), so its time is checked as usual (twin of A25)"),
+    Case("R41_time_outside_quotes_is_still_checked", "rejected",
+         claim("Alice asked to meet at 9:45.",
+               cite("MSG_ALICE", "sender", "Alice"), cite("MSG_ALICE", "body", "Meet me at the Riverside garage at 9:45")),
+         codes=frozenset({UE("clock_time")}),
+         note="v1.4: only quoted text is exempt; an unquoted time is an event time and needs a cited timestamp"),
 ]
 
 CASES: list[Case] = ACCEPT + REJECT
