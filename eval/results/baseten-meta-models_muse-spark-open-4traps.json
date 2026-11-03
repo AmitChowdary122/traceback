@@ -1,0 +1,484 @@
+{
+ "provider": "baseten",
+ "model": "meta-models/muse-spark-open",
+ "repair": 0,
+ "case_tz": "America/New_York",
+ "started": "2026-11-03T11:29:24Z",
+ "finished": "2026-11-03T11:30:17Z",
+ "commit": "9e91df4",
+ "totals": {
+  "questions": 4,
+  "errors": 0,
+  "fact_recall": 1.0,
+  "artifact_recall": 1.0,
+  "citation_precision": 1.0,
+  "verified_claims": 19,
+  "rejected_claims": 0,
+  "uncited_in_report": 0,
+  "rejected_by_reason": {},
+  "rejected_by_reason_round1": {},
+  "abstention_accuracy": 1.0,
+  "negative_questions": 1,
+  "latency_p50_s": 10.511,
+  "latency_p95_s": 22.68,
+  "tokens": 367687,
+  "est_cost_usd": 0.230951
+ },
+ "questions": [
+  {
+   "id": "q06",
+   "run_id": "20261103T112924Z-1044ca",
+   "status": "ok",
+   "error": null,
+   "question": "What do the photos taken on July 24, 2024 show?",
+   "tags": [
+    "photos",
+    "sam"
+   ],
+   "verified": [
+    {
+     "text": "A photo was taken at 12:05 PM on July 24, 2024.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_8870c15ef4",
+       "field": "ts_local",
+       "value": "2024-07-24T12:05:30-04:00"
+      }
+     ]
+    },
+    {
+     "text": "The photo taken at 12:05 PM on July 24, 2024 shows a cell phone.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_8870c15ef4",
+       "field": "ts_local",
+       "value": "2024-07-24T12:05:30-04:00"
+      },
+      {
+       "artifact_id": "tag_735fb27cd7",
+       "field": "label",
+       "value": "cell phone"
+      }
+     ]
+    },
+    {
+     "text": "The photo taken at 12:05 PM on July 24, 2024 shows a person.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_8870c15ef4",
+       "field": "ts_local",
+       "value": "2024-07-24T12:05:30-04:00"
+      },
+      {
+       "artifact_id": "tag_3d63963ab2",
+       "field": "label",
+       "value": "person"
+      }
+     ]
+    },
+    {
+     "text": "A photo was taken at 12:32 PM on July 24, 2024.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_3755e38c69",
+       "field": "ts_local",
+       "value": "2024-07-24T12:32:25-04:00"
+      }
+     ]
+    },
+    {
+     "text": "The photo taken at 12:32 PM on July 24, 2024 shows a cell phone.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_3755e38c69",
+       "field": "ts_local",
+       "value": "2024-07-24T12:32:25-04:00"
+      },
+      {
+       "artifact_id": "tag_d78bdb0e6c",
+       "field": "label",
+       "value": "cell phone"
+      }
+     ]
+    },
+    {
+     "text": "The photo taken at 12:32 PM on July 24, 2024 shows a laptop.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_3755e38c69",
+       "field": "ts_local",
+       "value": "2024-07-24T12:32:25-04:00"
+      },
+      {
+       "artifact_id": "tag_e60dd42e36",
+       "field": "label",
+       "value": "laptop"
+      }
+     ]
+    },
+    {
+     "text": "A photo was taken at 3:57 PM on July 24, 2024.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_e48be04e20",
+       "field": "ts_local",
+       "value": "2024-07-24T15:57:34-04:00"
+      }
+     ]
+    },
+    {
+     "text": "The photo taken at 3:57 PM on July 24, 2024 shows a car.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_e48be04e20",
+       "field": "ts_local",
+       "value": "2024-07-24T15:57:34-04:00"
+      },
+      {
+       "artifact_id": "tag_f9b27ebd05",
+       "field": "label",
+       "value": "car"
+      }
+     ]
+    },
+    {
+     "text": "The photo taken at 3:57 PM on July 24, 2024 shows a license plate.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_e48be04e20",
+       "field": "ts_local",
+       "value": "2024-07-24T15:57:34-04:00"
+      },
+      {
+       "artifact_id": "tag_0e3bf61852",
+       "field": "label",
+       "value": "license plate"
+      }
+     ]
+    },
+    {
+     "text": "The photo taken at 3:57 PM on July 24, 2024 shows a sign.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_e48be04e20",
+       "field": "ts_local",
+       "value": "2024-07-24T15:57:34-04:00"
+      },
+      {
+       "artifact_id": "tag_57d2d9c244",
+       "field": "label",
+       "value": "sign"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 3,
+   "found_entities": 3,
+   "missing_entities": [],
+   "expected_artifacts": 3,
+   "found_artifacts": 3,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 12.412,
+   "tokens": 10966,
+   "est_cost_usd": 0.026628
+  },
+  {
+   "id": "q08",
+   "run_id": "20261103T112936Z-8528c7",
+   "status": "ok",
+   "error": null,
+   "question": "Who left a voicemail on the evening of February 29, 2024, and what number did they ask to be called back on?",
+   "tags": [
+    "voicemail",
+    "est",
+    "trap-tz-boundary"
+   ],
+   "verified": [
+    {
+     "text": "A voicemail from +13363276855 was received at 8:37 PM on February 29, 2024.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "ts_local",
+       "value": "2024-02-29T20:37:26-05:00"
+      },
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "number",
+       "value": "+13363276855"
+      },
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "direction",
+       "value": "voicemail"
+      }
+     ]
+    },
+    {
+     "text": "The voicemail transcript states \"Cuz this your cousin Keisha call me back at 336-327-6855. Love you. Bye.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "transcript",
+       "value": "Cuz this your cousin Keisha call me back at 336-327-6855. Love you. Bye."
+      }
+     ]
+    },
+    {
+     "text": "The caller identified herself as cousin Keisha and asked to be called back at 336-327-6855.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "transcript",
+       "value": "Cuz this your cousin Keisha call me back at 336-327-6855. Love you. Bye."
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 1,
+   "found_artifacts": 1,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 8.61,
+   "tokens": 12427,
+   "est_cost_usd": 0.013792
+  },
+  {
+   "id": "q15",
+   "run_id": "20261103T112945Z-07b01f",
+   "status": "ok",
+   "error": null,
+   "question": "Who tried to reach the phone on the morning of July 27, 2024, and what did any voicemail say?",
+   "tags": [
+    "calls",
+    "voicemail",
+    "completeness",
+    "trap-voicemail-vs-missed"
+   ],
+   "verified": [
+    {
+     "text": "At 10:13 AM on July 27, 2024, the phone logged a missed call from +19195190323.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_b3b0c37e7d",
+       "field": "ts_local",
+       "value": "2024-07-27T10:13:05-04:00"
+      },
+      {
+       "artifact_id": "call_b3b0c37e7d",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_b3b0c37e7d",
+       "field": "direction",
+       "value": "missed"
+      }
+     ]
+    },
+    {
+     "text": "At 10:13 AM on July 27, 2024, the phone logged a second missed call from +19195190323.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_9a5c3047ff",
+       "field": "ts_local",
+       "value": "2024-07-27T10:13:47-04:00"
+      },
+      {
+       "artifact_id": "call_9a5c3047ff",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_9a5c3047ff",
+       "field": "direction",
+       "value": "missed"
+      }
+     ]
+    },
+    {
+     "text": "At 10:13 AM on July 27, 2024, the phone received a voicemail from +19195190323 lasting 17 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "ts_local",
+       "value": "2024-07-27T10:13:53-04:00"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "duration_s",
+       "value": "17"
+      }
+     ]
+    },
+    {
+     "text": "The voicemail at 10:13 AM on July 27, 2024 from +19195190323 had the carrier transcription \"Good morning, Cheryl. This your brother. Talked to him our mother and said she hadn't heard from you. So I'm trying to see if you're okay and give me a phone call back as soon as you can. All right, bye-bye.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "ts_local",
+       "value": "2024-07-27T10:13:53-04:00"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "transcript",
+       "value": "Good morning, Cheryl. This your brother. Talked to him our mother and said she hadn't heard from you. So I'm trying to see if you're okay and give me a phone call back as soon as you can. All right, bye-bye."
+      }
+     ]
+    },
+    {
+     "text": "At 10:43 AM on July 27, 2024, the phone logged a missed call from +19197523033.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_735f6585a7",
+       "field": "ts_local",
+       "value": "2024-07-27T10:43:08-04:00"
+      },
+      {
+       "artifact_id": "call_735f6585a7",
+       "field": "number",
+       "value": "+19197523033"
+      },
+      {
+       "artifact_id": "call_735f6585a7",
+       "field": "direction",
+       "value": "missed"
+      }
+     ]
+    },
+    {
+     "text": "At 10:43 AM on July 27, 2024, the phone received a voicemail from +19197523033 lasting 2 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "ts_local",
+       "value": "2024-07-27T10:43:58-04:00"
+      },
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "number",
+       "value": "+19197523033"
+      },
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "duration_s",
+       "value": "2"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 5,
+   "found_artifacts": 5,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 7.738,
+   "tokens": 8740,
+   "est_cost_usd": 0.01629
+  },
+  {
+   "id": "q21",
+   "run_id": "20261103T112953Z-bcec6c",
+   "status": "ok",
+   "error": null,
+   "question": "Where was the phone between 9 and 11 PM on July 15, 2024?",
+   "tags": [
+    "negative",
+    "locations",
+    "trap-empty-window"
+   ],
+   "verified": [],
+   "rejected": [],
+   "expected_entities": 0,
+   "found_entities": 0,
+   "missing_entities": [],
+   "expected_artifacts": 0,
+   "found_artifacts": 0,
+   "missing_artifact_ids": [],
+   "fact_recall": null,
+   "artifact_recall": null,
+   "citation_precision": null,
+   "uncited_in_report": 0,
+   "latency_s": 24.492,
+   "tokens": 335554,
+   "est_cost_usd": 0.174241
+  }
+ ],
+ "questions_file": "eval/questions.yaml"
+}
