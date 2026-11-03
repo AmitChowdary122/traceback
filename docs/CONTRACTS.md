@@ -1,4 +1,4 @@
-# Traceback contracts (v1.2)
+# Traceback contracts (v1.3)
 
 These are the interfaces that the build session implements and the testing session tests against. Change them only by editing this file in a commit of its own, with a reason, so tests and code stay in sync.
 
@@ -150,10 +150,19 @@ from tbx.checker import check
 result = check(answer: Answer, store: Store, window: Window | None) -> CheckResult
 # CheckResult.verified: list[Claim]
 # CheckResult.rejected: list[{"claim": Claim, "reasons": [{"code": str, "detail": str, "citation_index": int | None}]}]
+# CheckResult.entities: list[list[{"type": str, "text": str, "start": int, "end": int, "grounded": bool}]]
 ```
 
 - It is pure and deterministic: the same inputs give byte-identical `result.model_dump_json()`. It makes no network calls and no LLM calls.
 - **Strict rule:** a claim with *any* reason is rejected, and every reason is listed.
+- **`entities` (v1.3):** the R4 entities the checker found in each claim's text, so the UI can show which words code checked.
+  - `entities[i]` belongs to `answer.claims[i]`, in the answer's order, for verified and rejected claims alike. An answer with zero claims gives `[]`.
+  - Each entity has its `type` (an R4 type), `start` and `end` (Python string offsets into `claim.text`), and `text`, which equals `claim.text[start:end]`.
+  - A span has no leading or trailing whitespace and no trailing `.`, `,`, `;`, `:`, `!` or `?`.
+  - `grounded` is `false` exactly when that entity produced an `UNGROUNDED_ENTITY:<type>` reason.
+  - Each claim's entities are ordered by `start`, then `end`. Every whole-word occurrence of a contact name is listed.
+  - Everything in a claim's text outside these spans is the model's own wording and is not verified. The UI must say so.
+  - `entities` is part of `model_dump_json()`, so it is covered by the determinism rule.
 
 **Normalization:**
 
@@ -288,6 +297,7 @@ The app lives in **`tbx.web`**. It exposes `create_app(db_path: str | None = Non
 
 ## Changelog
 
+- **v1.3 (Nov 3, 2026):** §7 `CheckResult.entities`: the checked spans of each claim's text, with their positions and whether each is grounded. They let the UI separate what code verified from the model's own wording; prose and predicates are still not checked. This is an addition; nothing else changes.
 - **v1.2 (Nov 1, 2026):** additions for Day 2, from the G0/G1 gate run (`docs/GATES.md`).
   - §2: the order of `n` in `image_tags` row keys.
   - §3: new `tz_basis` value `offset_string` (EXIF times carry an explicit offset).
