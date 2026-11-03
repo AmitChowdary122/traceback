@@ -195,6 +195,9 @@ table.cov-table .cut { color: var(--warn); font-weight: 600; }
 .span-legend { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; font-size: 12px; color: var(--muted);
   margin-top: 8px; }
 .span-legend .prose { color: var(--muted); border-bottom: 1px dotted var(--border-strong); }
+.exhibit-btn { margin-left: auto; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-bg);
+  border-radius: var(--radius); padding: 3px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.exhibit-btn:disabled { opacity: .6; cursor: progress; }
 .recheck { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; }
 .recheck.ok { color: var(--ok); }
 .recheck-warn { margin-top: 10px; padding: 8px 10px; border-radius: var(--radius); font-size: 12.5px; color: var(--warn);
@@ -510,7 +513,10 @@ function renderRun(run) {
       run.repair ? h("span", {}, "repair pass on") : null,
       u.tokens != null ? h("span", { class: "usage" }, `${u.tokens.toLocaleString()} tokens · ${(u.latency_ms / 1000).toFixed(1)} s model time · ~$${(u.est_cost_usd || 0).toFixed(4)}`) : null,
       h("span", { class: "mono small" }, run.run_id),
-      recheckBadge(run.recheck)),
+      recheckBadge(run.recheck),
+      run.status === "ok" ? h("button", { class: "exhibit-btn", id: "exhibit", type: "button",
+        title: "Download this run as a self-contained HTML exhibit",
+        onclick: (e) => exportExhibit(run, e.currentTarget) }, "Export exhibit") : null),
     run.error ? h("div", { class: "err" }, run.error) : null,
     recheckWarning(run.recheck),
     run.status !== "running" ? spanLegend() : null);
@@ -583,29 +589,34 @@ function compactArgs(a) {
 }
 
 /* ---- v1.3 entity spans: offsets are Python string offsets (code points), so index by code point ---- */
-function claimText(text, ents) {
-  if (!Array.isArray(ents)) return h("p", { class: "claim" }, text);   // no spans (re-check unavailable)
+function segments(text, ents) {
+  // -> [{text, cls: "ok" | "bad" | null, types, title}]; overlapping spans: red wins over green.
   const chars = Array.from(text || "");
   const cover = chars.map(() => []);
-  ents.forEach((e, k) => { for (let i = Math.max(0, e.start); i < Math.min(e.end, chars.length); i++) cover[i].push(k); });
-  const p = h("p", { class: "claim spans" });
+  (ents || []).forEach((e, k) => { for (let i = Math.max(0, e.start); i < Math.min(e.end, chars.length); i++) cover[i].push(k); });
+  const out = [];
   let i = 0;
   while (i < chars.length) {
     const key = cover[i].join(",");
     let j = i + 1;
     while (j < chars.length && cover[j].join(",") === key) j++;
     const piece = chars.slice(i, j).join("");
-    if (!cover[i].length) p.append(piece);
+    if (!cover[i].length) out.push({ text: piece, cls: null });
     else {
       const covering = cover[i].map((k) => ents[k]);
       const bad = covering.some((e) => !e.grounded);
       const types = [...new Set(covering.map((e) => e.type.replace("_", " ")))].join(", ");
-      p.append(h("span", { class: `ent ${bad ? "bad" : "ok"}`, "data-type": covering.map((e) => e.type).join(" "),
-        title: `${types}: ${bad ? "not found in any cited row" : "checked by code against the cited rows"}` }, piece));
+      out.push({ text: piece, cls: bad ? "bad" : "ok", types: covering.map((e) => e.type).join(" "),
+        title: `${types}: ${bad ? "not found in any cited row" : "checked by code against the cited rows"}` });
     }
     i = j;
   }
-  return p;
+  return out;
+}
+function claimText(text, ents) {
+  if (!Array.isArray(ents)) return h("p", { class: "claim" }, text);   // no spans (re-check unavailable)
+  return h("p", { class: "claim spans" }, segments(text, ents).map((g) => g.cls
+    ? h("span", { class: `ent ${g.cls}`, "data-type": g.types, title: g.title }, g.text) : g.text));
 }
 function spanLegend() {
   return h("div", { class: "span-legend", "aria-label": "How to read the claims" },
@@ -707,6 +718,135 @@ function citeChips(cites, badIdx) {
       onclick: () => openArtifact(c.artifact_id, c.field, c.value) },
     badIdx ? h("span", { class: "idx" }, `[${i}]`) : null,
     h("span", { class: "id" }, c.artifact_id), h("span", { class: "fv" }, `${c.field} = ${c.value}`))));
+}
+
+/* ---- Export exhibit: one self-contained HTML file, built here in the browser (so the static copy can do it) ---- */
+const EXHIBIT_LINE = "Every claim was checked by deterministic code against the cited rows; the model's own wording is not verified.";
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function spansHtml(text, ents) {
+  if (!Array.isArray(ents)) return esc(text);
+  return segments(text, ents).map((g) => g.cls ? `<mark class="${g.cls}" title="${esc(g.title)}">${esc(g.text)}</mark>`
+    : `<span class="prose">${esc(g.text)}</span>`).join("");
+}
+function prettyRaw(raw) { try { return JSON.stringify(JSON.parse(raw), null, 2); } catch (_) { return raw ?? ""; } }
+function recordHead(id, row) {
+  if (!row) return `<b class="mono">${esc(id)}</b> · not in this extraction (the checker reports UNKNOWN_ARTIFACT)`;
+  return `<b class="mono">${esc(id)}</b> · ${esc(row.table)} · <span class="mono">${esc(row.source_path)}</span> row ${esc(row.source_row)}`
+    + ` · ${esc(row.ts_local ? fmtLocal(row.ts_local) : "no timestamp")}`;
+}
+function citesHtml(cites, rows, badIdx) {
+  if (!cites.length) return `<p class="muted">No citations.</p>`;
+  return `<table class="cites"><thead><tr><th>#</th><th>Record</th><th>Field</th><th>Cited value</th><th>Source row</th></tr></thead><tbody>`
+    + cites.map((c, i) => {
+      const r = rows[c.artifact_id];
+      return `<tr${badIdx && badIdx.has(i) ? ' class="bad"' : ""}><td>[${i}]</td><td class="mono">${esc(c.artifact_id)}</td>`
+        + `<td class="mono">${esc(c.field)}</td><td class="mono">${esc(c.value)}</td>`
+        + `<td class="mono">${r ? `${esc(r.source_path)} row ${esc(r.source_row)}` : "not in this extraction"}</td></tr>`;
+    }).join("") + `</tbody></table>`;
+}
+function rawRowsHtml(cites, rows) {
+  const ids = [...new Set(cites.map((c) => c.artifact_id))];
+  return ids.map((id) => {
+    const r = rows[id];
+    const fields = r ? Object.entries(r).filter(([k]) => !["raw_json", "table", "box_array"].includes(k))
+      .map(([k, v]) => `<tr><td class="mono">${esc(k)}</td><td class="mono">${esc(v == null ? "NULL" : v)}</td></tr>`).join("") : "";
+    return `<div class="record"><div class="rh">${recordHead(id, r)}</div>`
+      + (r ? `<div class="lbl">Stored row</div><table class="fields">${fields}</table>`
+        + `<div class="lbl">Raw row as ingested (raw_json)</div><pre>${esc(prettyRaw(r.raw_json))}</pre>` : "") + `</div>`;
+  }).join("");
+}
+function exhibitHtml(run, rows, c, builtAt) {
+  const meta = (c && c.meta) || {}, b = (c && c.build) || {};
+  const ann = run.annotations || {};
+  const win = run.window ? `${esc(utcToLocalIso(run.window.start_utc))} – ${esc(utcToLocalIso(run.window.end_utc))} (${esc(state.caseTz)}, both ends inclusive)` : "no window";
+  const verified = (run.verified || []).map((cl, i) => {
+    const t = claimTime(cl);
+    return `<li><p class="claim">${spansHtml(cl.text, ann.verified && ann.verified[i] && ann.verified[i].entities)}</p>`
+      + (t ? `<p class="muted">Earliest cited record: ${esc(fmtLocal(t.ts_local))}</p>` : "")
+      + citesHtml(cl.citations || [], rows, null) + rawRowsHtml(cl.citations || [], rows) + `</li>`;
+  }).join("");
+  const rejected = (run.rejected || []).map((r, i) => {
+    const a = ann.rejected && ann.rejected[i];
+    const reasons = (r.reasons || []).map((x, k) => `<li>${esc((a && a.sentences && a.sentences[k]) || x.detail)} `
+      + `<span class="code">${esc(x.code)}${x.citation_index != null ? ` · citation [${x.citation_index}]` : ""}</span></li>`).join("");
+    return `<li><p class="claim">${spansHtml(r.claim.text, a && a.entities)}</p><ul class="reasons">${reasons}</ul>`
+      + citesHtml(r.claim.citations || [], rows, badIndexes(r.reasons)) + `</li>`;
+  }).join("");
+  const cov = run.coverage;
+  const coverage = cov ? `<p>${esc(cov.summary)}</p><ul>${(cov.families || []).map((f) => `<li>${esc(f.sentence)}</li>`).join("")}</ul>` : "";
+  const commit = b.git_commit ? `commit <span class="mono">${esc(b.git_commit)}</span>${b.git_dirty ? " (built from a working tree with uncommitted changes)" : ""}` : "commit unknown";
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traceback exhibit · ${esc(run.run_id)}</title>
+<style>
+body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #14181d; background: #fff; margin: 0; }
+main { max-width: 980px; margin: 0 auto; padding: 28px 24px 48px; }
+h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: #3a4450;
+  border-bottom: 2px solid #14181d; padding-bottom: 4px; margin: 30px 0 12px; }
+.mono, pre, td.mono { font-family: ui-monospace, Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; }
+.muted { color: #5a6472; font-size: 12.5px; margin: 2px 0 6px; }
+.statement { border: 2px solid #14181d; padding: 10px 14px; font-weight: 700; margin: 16px 0; }
+dl.kv { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 4px 14px; margin: 0; }
+dl.kv dt { color: #5a6472; } dl.kv dd { margin: 0; overflow-wrap: anywhere; }
+ol.claims > li { margin: 0 0 22px; padding-left: 4px; } .claim { font-size: 15px; margin: 0 0 6px; }
+mark { border-radius: 2px; padding: 0 2px; font-weight: 600; } mark.ok { background: #e6f4ec; color: #12704a; }
+mark.bad { background: #fcebe9; color: #b3261e; text-decoration: underline wavy #b3261e; } .prose { color: #4a5462; }
+table { border-collapse: collapse; width: 100%; margin: 6px 0; } th, td { border: 1px solid #c5ccd4; padding: 3px 6px;
+  text-align: left; vertical-align: top; overflow-wrap: anywhere; } th { background: #f4f5f7; font-size: 12px; }
+table.cites td:nth-child(-n+3), table.cites th { white-space: nowrap; } table.cites td:nth-child(4) { width: 40%; }
+tr.bad td { background: #fcebe9; } .record { border: 1px solid #dde1e6; border-radius: 4px; padding: 8px 10px; margin: 8px 0; }
+.rh { font-size: 12.5px; margin-bottom: 4px; } .lbl { font-size: 11.5px; color: #5a6472; margin-top: 6px; }
+pre { background: #f9fafb; border: 1px solid #dde1e6; padding: 8px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 0; }
+ul.reasons { margin: 4px 0 8px; } .code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #b3261e; }
+table.fields td:first-child { width: 170px; color: #5a6472; } footer { margin-top: 36px; font-size: 12px; color: #5a6472; }
+@media print { main { padding: 0; } .record, ol.claims > li { break-inside: avoid-page; } }
+</style></head><body><main>
+<h1>Traceback exhibit</h1>
+<p class="muted">Run <span class="mono">${esc(run.run_id)}</span> · built ${esc(builtAt)} in the browser from ${esc(STATIC ? "a static replay copy" : "the Traceback server")} at ${esc(location.origin + location.pathname)}</p>
+<p class="statement">${esc(EXHIBIT_LINE)}</p>
+<h2>Question</h2>
+<dl class="kv"><dt>Question</dt><dd>${esc(run.question)}</dd><dt>Question window (case-local)</dt><dd>${win}</dd>
+<dt>Device</dt><dd>${esc(meta.device_model || "unknown")} · case timezone ${esc(state.caseTz)} · ALEAPP ${esc(meta.aleapp_version || "?")}</dd>
+<dt>Model</dt><dd>${esc(run.provider)} / <span class="mono">${esc(run.model)}</span></dd>
+<dt>Run started</dt><dd>${esc(run.started || "?")}</dd></dl>
+<h2>Verified claims (${(run.verified || []).length})</h2>
+${verified ? `<ol class="claims">${verified}</ol>` : `<p>No verified claims.</p>`}
+${run.note ? `<p class="muted"><b>Model note (not a finding):</b> ${esc(run.note)}</p>` : ""}
+<h2>Rejected claims (${(run.rejected || []).length})</h2>
+${rejected ? `<ol class="claims">${rejected}</ol>` : `<p>Nothing was rejected.</p>`}
+${run.repair ? `<p class="muted"><b>Repair pass:</b> ${esc(run.repair.summary)}</p>` : ""}
+<h2>What was searched</h2>${coverage}
+<h2>Provenance</h2>
+<dl class="kv">
+<dt>Input manifest</dt><dd>${b.manifest_sha256 ? `${esc(b.manifest || "MANIFEST.json")} SHA-256 <span class="mono">${esc(b.manifest_sha256)}</span>` : "not available"}</dd>
+<dt>Model ID</dt><dd class="mono">${esc(run.model)}</dd>
+<dt>Traceback</dt><dd>version ${esc(b.version || "?")}, ${commit}</dd>
+<dt>Run trace</dt><dd>${esc(run.run_id)}.jsonl SHA-256 <span class="mono">${esc(run.trace_sha256 || "not available")}</span></dd>
+<dt>Checker</dt><dd>tbx.checker (contract v1.3, deterministic, no model). ${esc((run.recheck || {}).message || "")}</dd>
+</dl>
+<footer>Highlighting: <mark class="ok">green</mark> = checked by code against the cited rows · <mark class="bad">red</mark> = not found in any cited row · <span class="prose">plain text</span> = the model's own words, not verified.
+Times are case-local (${esc(state.caseTz)}) unless marked UTC.</footer>
+</main></body></html>`;
+}
+async function exportExhibit(run, btn) {
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Building…";
+  try {
+    const claims = [...(run.verified || []), ...(run.rejected || []).map((r) => r.claim)];
+    const ids = [...new Set(claims.flatMap((c) => (c.citations || []).map((x) => x.artifact_id)))].sort();
+    const rows = Object.fromEntries(await Promise.all(ids.map(async (id) => {
+      try { return [id, await api(`/api/artifacts/${encodeURIComponent(id)}`)]; } catch (_) { return [id, null]; }
+    })));
+    const html = exhibitHtml(run, rows, state.case, new Date().toISOString().replace(/\.\d+Z$/, "Z"));
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+    const a = h("a", { href: url, download: `traceback-exhibit-${run.run_id}.html` });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (err) {
+    alert(`Could not build the exhibit: ${err.message}`);
+  } finally { btn.disabled = false; btn.textContent = label; }
 }
 
 /* ---- the artifact drawer ---- */

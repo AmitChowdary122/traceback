@@ -169,6 +169,12 @@ TBX_DB=data/tbx.db uvicorn tbx.web:app --port 8000   # then open http://127.0.0.
   voicemail, locations, photos and media, voice transcripts) what was searched, with its time window, how many rows
   matched and how many the model saw ("Locations: 73 in the window, 50 shown; then all 73 with a higher limit."),
   and which families were never searched. A table lists every search with its case-local window.
+- **Export exhibit:** one click builds a self-contained HTML file in the browser (no scripts, no external files, so
+  it also works on the static site): the question and its case-local window, the verified claims with their
+  citations and the raw rows behind them, the rejected claims with their plain-English reasons, what was searched,
+  and the provenance: the SHA-256 of `data/sample/MANIFEST.json`, the model ID, the Traceback version and git commit,
+  and the SHA-256 of the run's trace file. It states: "Every claim was checked by deterministic code against the
+  cited rows; the model's own wording is not verified."
 - **Evidence drawer:** click any citation for the raw row (`raw_json`), `source_path` and `source_row`. Photos show
   their SAM 3.1 boxes scaled to the displayed size; videos show the Muse Voice Transcribe transcript; MMS rows show
   their attachment.

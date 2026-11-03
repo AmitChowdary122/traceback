@@ -19,10 +19,12 @@ from __future__ import annotations
 
 import asyncio
 import collections
+import hashlib
 import json
 import os
 import pathlib
 import re
+import subprocess
 import threading
 import time
 from typing import Any, Callable
@@ -31,6 +33,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from tbx import __version__
 from tbx import coverage as cov
 from tbx import runview
 from tbx import timeutil as tu
@@ -54,6 +57,29 @@ def live_providers() -> list[str]:
         if p and p not in out:
             out.append(p)
     return out
+
+
+def git_commit() -> tuple[str | None, bool]:
+    """(commit, working tree has uncommitted changes): TBX_GIT_COMMIT, else git, else GITHUB_SHA (Actions)."""
+    if os.environ.get("TBX_GIT_COMMIT"):
+        return os.environ["TBX_GIT_COMMIT"], False
+    try:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=HERE, capture_output=True, text=True, timeout=5)
+        if head.returncode == 0 and head.stdout.strip():
+            dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=HERE,
+                                   capture_output=True, text=True, timeout=5)
+            return head.stdout.strip(), bool(dirty.stdout.strip())
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return os.environ.get("GITHUB_SHA") or None, False
+
+
+def _shown_path(path: pathlib.Path) -> str:
+    """A path for a public page: relative to the working directory when inside it, else the file name only."""
+    try:
+        return path.resolve().relative_to(pathlib.Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return path.name
 
 
 class AskBody(BaseModel):
@@ -181,6 +207,21 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
                 root = store().meta().get("media_root")
         return pathlib.Path(root).resolve() if root else None
 
+    def build_info() -> dict:
+        """What an exhibit cites: the Traceback version and commit, and the SHA-256 of the sample's MANIFEST.json
+        (next to the media root, where `tbx ingest` reads it). Computed once."""
+        if state.get("build") is None:
+            commit, dirty = git_commit()
+            info = {"version": __version__, "git_commit": commit, "git_dirty": dirty, "manifest": None,
+                    "manifest_sha256": None}
+            root = files_root()
+            manifest = root.parent / "MANIFEST.json" if root else None
+            if manifest is not None and manifest.is_file():
+                info.update(manifest=_shown_path(manifest),
+                            manifest_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest())
+            state["build"] = info
+        return state["build"]
+
     def run_path(run_id: str) -> pathlib.Path:
         if not RUN_ID.fullmatch(run_id or ""):
             raise HTTPException(404, "unknown run")
@@ -236,7 +277,8 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             featured = None
         return {"meta": {k: meta.get(k) for k in META_KEYS}, "counts": counts, "providers": providers,
                 "live_providers": live, "ask_limit_per_hour": limiter.per_hour,
-                "asks_remaining": limiter.remaining(), "featured_run": featured, "static": False}
+                "asks_remaining": limiter.remaining(), "featured_run": featured, "static": False,
+                "build": build_info()}
 
     # -- asking ---------------------------------------------------------------------------------
     @app.post("/api/ask")
@@ -337,7 +379,7 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             view["error"] = mine["error"]
         tz = view.get("case_tz") or case_tz()
         view.update(run_id=run_id, events=events, artifacts=artifacts_for(view, tz), case_tz=tz,
-                    coverage=cov.coverage(events, tz))
+                    coverage=cov.coverage(events, tz), trace_sha256=hashlib.sha256(p.read_bytes()).hexdigest())
         if view["status"] == "running":
             view.update(recheck={"status": "none", "message": "", "rounds": [], "entities_recorded": False},
                         annotations={"verified": [], "rejected": []}, repair=None)

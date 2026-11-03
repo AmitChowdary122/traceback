@@ -269,3 +269,22 @@ def test_run_view_carries_coverage(setup):
     assert fam["calls"]["sentence"] == "Calls and voicemail: 1 in the whole extraction, shown."
     assert fam["calls"]["text"] == "1 in the whole extraction, shown."
     assert run["coverage"]["summary"].startswith("Searched 1 of 5 evidence families. Never searched: messages")
+
+
+def test_case_and_run_carry_exhibit_provenance(setup):
+    import hashlib
+    client, tmp = setup
+    (tmp / "MANIFEST.json").write_text('{"media": {}}\n')     # next to the media root, where ingest reads it
+    run = _wait(client, client.post("/api/ask", json={"question": "Who called?"}).json()["run_id"])
+    trace = (tmp / "runs" / f"{run['run_id']}.jsonl").read_bytes()
+    assert run["trace_sha256"] == hashlib.sha256(trace).hexdigest()
+    build = client.get("/api/case").json()["build"]
+    assert build["manifest"] == "MANIFEST.json"
+    assert build["manifest_sha256"] == hashlib.sha256(b'{"media": {}}\n').hexdigest()
+    assert build["version"] == "0.1.0" and "git_commit" in build
+
+
+def test_build_info_without_a_manifest(setup):
+    client, _ = setup
+    build = client.get("/api/case").json()["build"]
+    assert build["manifest_sha256"] is None and build["manifest"] is None
