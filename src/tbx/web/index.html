@@ -195,7 +195,25 @@ table.cov-table .cut { color: var(--warn); font-weight: 600; }
 .span-legend { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; font-size: 12px; color: var(--muted);
   margin-top: 8px; }
 .span-legend .prose { color: var(--muted); border-bottom: 1px dotted var(--border-strong); }
-.exhibit-btn { margin-left: auto; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-bg);
+/* U5: animated replay of a run (tool calls -> claims -> checker verdict) */
+.pending { opacity: 0; transform: translateY(6px); }
+.reveal { transition: opacity .35s ease, transform .35s ease; }
+.ent { transition: background-color .6s ease, color .6s ease, box-shadow .6s ease; }
+.replaying .claim .ent { color: inherit; background: transparent; box-shadow: none; text-decoration-color: transparent; }
+.replaying .claim.spans { color: var(--text); }
+.instant .reveal, .instant .ent { transition: none !important; }
+.replay-bar { position: fixed; right: 20px; bottom: 20px; z-index: 30; display: flex; gap: 10px; align-items: center;
+  background: var(--panel); border: 1px solid var(--border-strong); border-radius: 999px; padding: 5px 5px 5px 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .18); font-size: 12.5px; color: var(--accent); font-weight: 600; max-width: calc(100vw - 40px); }
+.skip-replay { border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text); border-radius: 999px;
+  padding: 5px 14px; font-weight: 600; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .reveal, .ent { transition: none; } }
+.run-top { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.run-actions { display: flex; gap: 8px; flex: none; }
+@media (max-width: 700px) { .run-top { flex-direction: column; } }
+.replay-btn { border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text);
+  border-radius: var(--radius); padding: 3px 11px; font-size: 12.5px; cursor: pointer; }
+.exhibit-btn { border: 1px solid var(--accent); color: var(--accent); background: var(--accent-bg);
   border-radius: var(--radius); padding: 3px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
 .exhibit-btn:disabled { opacity: .6; cursor: progress; }
 .recheck { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; }
@@ -482,14 +500,15 @@ function markCurrent() {
 }
 
 /* ---- one run ---- */
-async function openRun(runId) {
+async function openRun(runId, opts) {
+  stopReplay();
   state.runId = runId;
   clearTimeout(state.poll);
   if (location.hash !== `#run=${runId}`) history.replaceState(null, "", `#run=${encodeURIComponent(runId)}`);
   markCurrent();
-  await refreshRun(runId);
+  await refreshRun(runId, opts);
 }
-async function refreshRun(runId) {
+async function refreshRun(runId, opts) {
   let run;
   try { run = await api(`/api/runs/${encodeURIComponent(runId)}`); }
   catch (e) { $("#main").replaceChildren(h("div", { class: "panel empty" }, `Run ${runId}: ${e.message}`)); return; }
@@ -497,6 +516,7 @@ async function refreshRun(runId) {
   state.artifacts = run.artifacts || {};
   if (run.case_tz) state.caseTz = run.case_tz;
   renderRun(run);
+  if (opts && opts.animate && run.status === "ok") animateRun($("#main"));
   if (run.status === "running") state.poll = setTimeout(() => refreshRun(runId), 1000);
   else loadRuns().then(markCurrent);
 }
@@ -504,8 +524,14 @@ async function refreshRun(runId) {
 function renderRun(run) {
   const u = run.usage || {};
   const win = run.window ? `${utcToLocalIso(run.window.start_utc)} → ${utcToLocalIso(run.window.end_utc)} (${state.caseTz})` : "no window";
+  const actions = run.status === "ok" ? h("div", { class: "run-actions" },
+    h("button", { class: "replay-btn", id: "replay", type: "button",
+      title: "Play this run step by step: tool calls, claims, then the checker's verdict",
+      onclick: () => { renderRun(run); animateRun($("#main")); } }, "▶ Replay steps"),
+    h("button", { class: "exhibit-btn", id: "exhibit", type: "button", title: "Download this run as a self-contained HTML exhibit",
+      onclick: (e) => exportExhibit(run, e.currentTarget) }, "Export exhibit")) : null;
   const head = h("section", { class: "panel runhead" },
-    h("p", { class: "question" }, run.question || "…"),
+    h("div", { class: "run-top" }, h("p", { class: "question" }, run.question || "…"), actions),
     h("div", { class: "meta-line" },
       h("span", { class: `pill ${run.status}` }, run.status),
       h("span", {}, "window ", h("b", {}, win)),
@@ -513,10 +539,7 @@ function renderRun(run) {
       run.repair ? h("span", {}, "repair pass on") : null,
       u.tokens != null ? h("span", { class: "usage" }, `${u.tokens.toLocaleString()} tokens · ${(u.latency_ms / 1000).toFixed(1)} s model time · ~$${(u.est_cost_usd || 0).toFixed(4)}`) : null,
       h("span", { class: "mono small" }, run.run_id),
-      recheckBadge(run.recheck),
-      run.status === "ok" ? h("button", { class: "exhibit-btn", id: "exhibit", type: "button",
-        title: "Download this run as a self-contained HTML exhibit",
-        onclick: (e) => exportExhibit(run, e.currentTarget) }, "Export exhibit") : null),
+      recheckBadge(run.recheck)),
     run.error ? h("div", { class: "err" }, run.error) : null,
     recheckWarning(run.recheck),
     run.status !== "running" ? spanLegend() : null);
@@ -718,6 +741,64 @@ function citeChips(cites, badIdx) {
       onclick: () => openArtifact(c.artifact_id, c.field, c.value) },
     badIdx ? h("span", { class: "idx" }, `[${i}]`) : null,
     h("span", { class: "id" }, c.artifact_id), h("span", { class: "fv" }, `${c.field} = ${c.value}`))));
+}
+
+/* ---- U5: animated replay. The run is rendered in full, then revealed in order: tool calls, the submitted
+   claims (colors held back), the checker's verdict (the spans light up), then coverage. About 6 seconds. ---- */
+let replay = null;
+function stopReplay() { if (replay) replay.finish(); }
+function animateRun(root) {
+  stopReplay();
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const steps = [...root.querySelectorAll(".trace .steps li")];
+  const checkerAt = steps.findIndex((li) => (li.querySelector(".t") || {}).textContent === "checker");
+  const before = checkerAt < 0 ? steps : steps.slice(0, checkerAt);
+  const verdict = checkerAt < 0 ? [] : steps.slice(checkerAt);
+  const coverage = [...root.querySelectorAll(".coverage")];
+  const claims = [...root.querySelectorAll(".verified .timeline > li, .repair .pair, .rejected .rj")];
+  const panels = [...root.querySelectorAll(".verified, .repair, .rejected")];
+  const tail = [...root.querySelectorAll(".runhead .span-legend, .runhead .recheck, .verified .note")];
+  const all = [...before, ...verdict, ...coverage, ...panels, ...claims, ...tail];
+  if (!all.length) return;
+  all.forEach((el) => el.classList.add("pending", "reveal"));
+  root.classList.add("replaying");
+  const timers = [];
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+  const show = (el) => el.classList.remove("pending");
+  const note = h("span", { role: "status" }, "Replaying the recorded run: tool calls…");
+  const skip = h("button", { class: "skip-replay", type: "button", onclick: () => finish(true) }, "Skip ▸▸");
+  const bar = h("div", { class: "replay-bar" }, note, skip);
+  const onKey = (e) => { if (e.key === "Escape") finish(true); };
+  document.body.append(bar);
+  document.addEventListener("keydown", onKey);
+  function finish(instant) {
+    timers.forEach(clearTimeout);
+    if (instant) root.classList.add("instant");
+    all.forEach(show);
+    root.classList.remove("replaying");
+    bar.remove();
+    document.removeEventListener("keydown", onKey);
+    if (instant) requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("instant")));
+    replay = null;
+  }
+  replay = { finish };
+  // about 2.4 s: the tool calls, one by one, then what they covered
+  const per = Math.max(110, Math.min(400, 2300 / Math.max(1, before.length)));
+  before.forEach((el, i) => at(150 + i * per, () => show(el)));
+  let t = 150 + before.length * per;
+  at(t, () => coverage.forEach(show));
+  t += 350;
+  // then the submitted claims, colors held back
+  at(t, () => { note.textContent = "Replaying the recorded run: the model's claims…"; panels.forEach(show); });
+  const perClaim = Math.max(120, Math.min(360, 1400 / Math.max(1, claims.length)));
+  claims.forEach((el, i) => at(t + 100 + i * perClaim, () => show(el)));
+  t += 100 + claims.length * perClaim + 200;
+  // the checker's verdict: the checker row, and the spans light up green or red
+  at(t, () => { note.textContent = "The checker verifies every citation (code, no model)…"; verdict.forEach(show); });
+  at(t + 400, () => root.classList.remove("replaying"));
+  // finally the re-check and the legend
+  tail.forEach((el, i) => at(t + 800 + i * 120, () => show(el)));
+  at(t + 800 + tail.length * 120 + 500, () => finish(false));
 }
 
 /* ---- Export exhibit: one self-contained HTML file, built here in the browser (so the static copy can do it) ---- */
@@ -998,7 +1079,8 @@ $("#ask").addEventListener("submit", async (e) => {
   const featured = state.case && state.case.featured_run;
   const pick = m ? decodeURIComponent(m[1])
     : (featured || (runs.find((r) => r.status === "ok") || runs[0] || {}).run_id);
-  if (pick) openRun(pick);
+  // Opening the page on its default run plays it step by step (U5); a link to a run (#run=...) opens it as is.
+  if (pick) openRun(pick, { animate: !m });
 })();
 </script>
 </body>

@@ -169,6 +169,10 @@ TBX_DB=data/tbx.db uvicorn tbx.web:app --port 8000   # then open http://127.0.0.
   voicemail, locations, photos and media, voice transcripts) what was searched, with its time window, how many rows
   matched and how many the model saw ("Locations: 73 in the window, 50 shown; then all 73 with a higher limit."),
   and which families were never searched. A table lists every search with its case-local window.
+- **Replay:** opening the page plays the featured run step by step in about 6 seconds (the tool calls, what they
+  covered, the model's claims, then the checker's verdict lighting up the checked words), with a Skip button
+  (or Escape); "Replay steps" plays any run again. A link to a run (`#run=<id>`) and `prefers-reduced-motion` open it
+  without animation.
 - **Export exhibit:** one click builds a self-contained HTML file in the browser (no scripts, no external files, so
   it also works on the static site): the question and its case-local window, the verified claims with their
   citations and the raw rows behind them, the rejected claims with their plain-English reasons, what was searched,
