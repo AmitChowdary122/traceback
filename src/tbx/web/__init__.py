@@ -2,8 +2,9 @@
 
 - POST /api/ask returns {run_id} at once and runs the same agent code as `tbx ask` in a background thread.
 - GET /api/runs and /api/runs/{id} read runs/*.jsonl, so recorded runs replay with no model call. Each recorded
-  answer is re-checked on load with the deterministic checker (tbx.runview): the view carries the re-check's verdict,
-  a warning when it differs from the recorded check_result, the v1.3 entity spans of every claim it shows, one
+  answer is re-checked on load with the deterministic checker (tbx.runview): the view carries the re-check's verdict
+  and, when it differs from the recorded check_result, shows the re-checked verdicts with a warning that lists the
+  recorded ones; plus the v1.3 entity spans of every claim it shows, one
   plain-English sentence per rejection reason (tbx.explain) and, for repaired runs, round 1 next to round 2.
 - Each run view also carries its coverage (tbx.coverage): what each search looked at and which evidence families were
   never searched, from the trace's tool calls.
@@ -348,13 +349,16 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             with active_lock:
                 is_active = active.get(run_id, {}).get("status") == "running"
             v = summarize(events, is_active, p.stat().st_mtime)
+            shown = v
             try:
-                recheck = reverify(p, events)["recheck"]["status"] if v["status"] != "running" else "none"
+                rv = reverify(p, events) if v["status"] != "running" else None
+                recheck = rv["recheck"]["status"] if rv else "none"
+                shown = (rv or {}).get("verdicts") or v      # a differing re-check is what the run view shows
             except HTTPException:  # no store: the list still works, the run view reports the store error
                 recheck = "unavailable"
             out.append({"run_id": run_id, "question": v["question"], "status": v["status"], "started": v["started"],
-                        "provider": v["provider"], "model": v["model"], "verified": len(v["verified"]),
-                        "rejected": len(v["rejected"]), "recheck": recheck})
+                        "provider": v["provider"], "model": v["model"], "verified": len(shown["verified"]),
+                        "rejected": len(shown["rejected"]), "recheck": recheck})
         with active_lock:
             pending = [(k, v) for k, v in active.items() if not (runs / f"{k}.jsonl").exists()]
         for run_id, v in pending:
@@ -386,8 +390,12 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
         else:
             rv = reverify(p, events)
             view.update(recheck=rv["recheck"], annotations=rv["annotations"], repair=rv["repair"])
+            if rv["verdicts"] is not None:     # the re-checked verdicts when they differ from the recording
+                view.update(rv["verdicts"])
             if view.get("first_round") and rv["first_round_annotations"]:
                 view["first_round"]["annotations"] = rv["first_round_annotations"]
+                if rv["first_round_verdicts"] is not None:
+                    view["first_round"].update(rv["first_round_verdicts"])
         return view
 
     @app.get("/api/runs/{run_id}/events")

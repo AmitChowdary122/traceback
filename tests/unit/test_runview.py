@@ -76,7 +76,59 @@ def test_a_tampered_record_is_flagged(store):
     assert out["recheck"]["status"] == "differs"
     changes = out["recheck"]["rounds"][0]["changes"]
     assert any("Claim 1" in c and "verified" in c and "rejects" in c for c in changes), changes
-    assert out["annotations"]["verified"][0]["index"] == 0      # still aligned with what the record shows
+    # B3: the page shows the re-checked verdicts, and the warning lists the recorded ones
+    assert out["recheck"]["shown"] == "rechecked"
+    assert [c["text"] for c in out["verdicts"]["verified"]] == [GOOD["text"]]
+    assert [r["claim"]["text"] for r in out["verdicts"]["rejected"]] == [BAD["text"]]
+    assert [a["index"] for a in out["annotations"]["verified"]] == [1]
+    assert [a["index"] for a in out["annotations"]["rejected"]] == [0]
+    assert [(v["claim"], v["verdict"]) for v in out["recheck"]["rounds"][0]["recorded_verdicts"]] == \
+        [(1, "verified"), (2, "verified")]
+    assert "Recorded: claim 1 verified; claim 2 verified." in out["recheck"]["message"]
+
+
+def test_place_looks_claims_up_by_canonical_json():
+    """An in-order walk lost claim 1 when a record lists claims out of answer order; a lookup pairs every claim."""
+    record = {"verified": [GOOD, BAD], "rejected": []}
+    assert runview.place([BAD, GOOD], record) == [("verified", 1), ("verified", 0)]
+    record = {"verified": [GOOD], "rejected": [{"claim": BAD, "reasons": []}, {"claim": BAD, "reasons": []}]}
+    assert runview.place([BAD, GOOD, BAD, FIXED], record) == [("rejected", 0), ("verified", 0), ("rejected", 1), None]
+    reordered = dict(reversed(list(GOOD.items())))          # key order does not matter
+    assert runview.place([GOOD], {"verified": [reordered]}) == [("verified", 0)]
+
+
+def test_a_matching_run_shows_the_recorded_verdicts(store):
+    ev = trace(store, [BAD, GOOD])
+    rec = next(e["payload"] for e in ev if e["type"] == "check_result")
+    out = runview.reverify(ev, store)
+    assert out["recheck"]["shown"] == "recorded" and "recorded_verdicts" not in out["recheck"]["rounds"][0]
+    assert out["verdicts"] == {"verified": rec["verified"], "rejected": rec["rejected"]}
+
+
+def test_a_record_out_of_order_still_differs_claim_by_claim(store):
+    ev = trace(store, [GOOD, FIXED])
+    rec = next(e["payload"] for e in ev if e["type"] == "check_result")
+    rec["verified"].reverse()                       # same verdicts, listed out of answer order
+    out = runview.reverify(ev, store)
+    assert out["recheck"]["status"] == "differs"
+    assert [(v["claim"], v["verdict"]) for v in out["recheck"]["rounds"][0]["recorded_verdicts"]] == \
+        [(1, "verified"), (2, "verified")]
+    assert not any("not in the recorded" in c for c in out["recheck"]["rounds"][0]["changes"])
+
+
+def test_a_repaired_run_whose_first_round_differs_shows_that_round_rechecked(store):
+    ev = trace(store, [BAD, GOOD], [GOOD])
+    first = next(e["payload"] for e in ev if e["type"] == "check_result")
+    first["verified"].insert(0, copy.deepcopy(first["rejected"][0]["claim"]))
+    first["rejected"] = []
+    out = runview.reverify(ev, store)
+    assert out["recheck"]["status"] == "differs"
+    assert [r["same"] for r in out["recheck"]["rounds"]] == [False, True]
+    assert [r["claim"]["text"] for r in out["first_round_verdicts"]["rejected"]] == [BAD["text"]]
+    assert [c["text"] for c in out["verdicts"]["verified"]] == [GOOD["text"]]
+    assert "Recorded (round 1): claim 1 verified; claim 2 verified." in out["recheck"]["message"]
+    # the repair view now starts from round 1's re-checked rejection (the tampered record listed none)
+    assert [x["outcome"] for x in out["repair"]["items"]] == ["dropped"]
 
 
 def test_changed_reasons_are_flagged(store):

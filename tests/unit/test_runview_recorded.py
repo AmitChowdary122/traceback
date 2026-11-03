@@ -140,3 +140,64 @@ def test_a_wrong_cited_time_is_shown_case_local_and_the_text_is_not_backed(store
         "Thu Jun 27, 2024 9:06:18 PM (UTC-04:00).",
         "'June 27' isn't backed by a correctly cited time (the cited record's date is Thu Jun 27, 2024).",
         "'9:36 PM' isn't backed by a correctly cited time (the cited record's time is 9:06 PM)."]
+
+
+# ------------------------------------------------------------------------------ B3: a re-check that differs (real trace)
+# Eval 1, q07 on Meta (docs/gates/eval1/runs_meta/20261103T113123Z-eb2773.jsonl, unedited): the recorded check rejected
+# a word-for-word voicemail quote for the times inside it ("at 8:00", "9:30"); under contract v1.4 it verifies.
+# It is a test fixture only, never a demo run in deploy/runs.
+Q07 = pathlib.Path(__file__).parent / "fixtures" / "eval1_q07_20261103T113123Z-eb2773.jsonl"
+
+
+def q07_events():
+    return [json.loads(x) for x in Q07.read_text(encoding="utf-8").splitlines() if x.strip()]
+
+
+def test_q07_fixture_is_the_unedited_eval_trace():
+    assert Q07.read_bytes() == (REPO / "docs/gates/eval1/runs_meta/20261103T113123Z-eb2773.jsonl").read_bytes()
+    assert not (RUNS / "20261103T113123Z-eb2773.jsonl").exists()
+
+
+def test_q07_recheck_differs_and_shows_the_rechecked_verdicts(store):
+    ev = q07_events()
+    rec = [e["payload"] for e in ev if e["type"] == "check_result"][-1]
+    assert (len(rec["verified"]), len(rec["rejected"])) == (3, 1)
+    out = runview.reverify(ev, store)
+    rc = out["recheck"]
+    assert rc["status"] == "differs" and rc["shown"] == "rechecked"
+    (rnd,) = rc["rounds"]
+    assert (rnd["recorded"], rnd["rechecked"]) == ("3 verified, 1 rejected", "4 verified, 0 rejected")
+    quote = rec["rejected"][0]["claim"]
+    k = next(i for i, c in enumerate(next(e for e in ev if e["type"] == "final_answer")["payload"]["claims"])
+             if c["text"] == quote["text"])
+    assert any(f"Claim {k + 1} was recorded as rejected; the re-check verifies it." == c for c in rnd["changes"])
+    recorded = {v["claim"]: (v["verdict"], v["codes"]) for v in rnd["recorded_verdicts"]}
+    assert recorded[k + 1] == ("rejected", ["UNGROUNDED_ENTITY:clock_time", "UNGROUNDED_ENTITY:clock_time"])
+    assert all(v == ("verified", []) for n, v in recorded.items() if n != k + 1)
+    assert f"claim {k + 1} rejected (UNGROUNDED_ENTITY:clock_time, UNGROUNDED_ENTITY:clock_time)" in rc["message"]
+    # what the page shows: the re-check's four verified claims, in answer order, with spans aligned to them
+    assert out["verdicts"]["rejected"] == [] and len(out["verdicts"]["verified"]) == 4
+    assert [a["index"] for a in out["annotations"]["verified"]] == [0, 1, 2, 3]
+    spans = out["annotations"]["verified"][k]["entities"]
+    text = quote["text"]
+    assert {(e["text"], e["grounded"]) for e in spans if e["type"] == "clock_time"} >= {("8:00", True), ("9:30", True)}
+    assert_well_formed([(c["text"], a["entities"]) for c, a in zip(out["verdicts"]["verified"],
+                                                                   out["annotations"]["verified"])])
+    assert text.index("8:00") > text.index('"')     # the exempt times are inside the quote
+
+
+def test_q07_run_view_and_list_use_the_rechecked_verdicts(store, tmp_path):
+    from fastapi.testclient import TestClient
+
+    from tbx.web import create_app
+
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    (runs / "20261103T113123Z-eb2773.jsonl").write_bytes(Q07.read_bytes())
+    client = TestClient(create_app(db_path=store.path, runs_dir=str(runs)))
+    view = client.get("/api/runs/20261103T113123Z-eb2773").json()
+    assert view["recheck"]["status"] == "differs"
+    assert (len(view["verified"]), len(view["rejected"])) == (4, 0)
+    assert len(view["annotations"]["verified"]) == 4
+    (row,) = client.get("/api/runs").json()
+    assert (row["recheck"], row["verified"], row["rejected"]) == ("differs", 4, 0)

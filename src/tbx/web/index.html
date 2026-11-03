@@ -221,6 +221,7 @@ table.cov-table .cut { color: var(--warn); font-weight: 600; }
 .recheck-warn { margin-top: 10px; padding: 8px 10px; border-radius: var(--radius); font-size: 12.5px; color: var(--warn);
   background: var(--warn-bg); border: 1px solid var(--warn); }
 .recheck-warn b { color: var(--text); }
+.recheck-warn ul.recorded-verdicts { margin: 6px 0 0; padding-left: 18px; }
 .runs .warn-flag { color: var(--warn); font-weight: 700; }
 .span-note { font-size: 11.5px; color: var(--muted); margin: -2px 0 6px; font-family: var(--mono); }
 @media (max-width: 700px) { .tl { grid-template-columns: 84px 14px minmax(0, 1fr); padding: 0 10px; } }
@@ -657,10 +658,22 @@ function recheckBadge(rc) {
 }
 function recheckWarning(rc) {
   if (!rc || (rc.status !== "differs" && rc.status !== "error")) return null;
+  if (rc.status === "error") {
+    return h("div", { class: "recheck-warn", role: "alert" }, h("b", {}, "Re-check failed. "), rc.message,
+      " The verdicts shown are the recorded ones.");
+  }
+  const when = STATIC ? "made when this copy was exported" : "made on load";
+  const rounds = (rc.rounds || []).filter((r) => !r.same);
+  const multi = (rc.rounds || []).length > 1;
   return h("div", { class: "recheck-warn", role: "alert" },
-    h("b", {}, rc.status === "differs" ? "Re-check differs from the recorded result. " : "Re-check failed. "),
-    rc.status === "differs" ? (rc.rounds || []).flatMap((r) => r.changes || []).join(" ") : rc.message,
-    " The verdicts shown are the recorded ones; the highlighting is today's re-check.");
+    h("b", {}, "Re-check differs from the recorded result. "),
+    rounds.flatMap((r) => r.changes || []).join(" "),
+    ` The verdicts shown are the re-check's (${when}). The recorded verdicts were:`,
+    ...rounds.map((r) => h("ul", { class: "recorded-verdicts", "aria-label": `Recorded verdicts${multi ? `, round ${r.round}` : ""}` },
+      (r.recorded_verdicts || []).map((v) => h("li", {},
+        h("b", {}, `${multi ? `Round ${r.round}, claim` : "Claim"} ${v.claim}: ${v.verdict}`),
+        v.codes && v.codes.length ? h("span", { class: "mono small" }, ` (${v.codes.join(", ")})`) : null,
+        ` · “${v.text.length > 90 ? v.text.slice(0, 89) + "…" : v.text}”`)))));
 }
 
 function claimTime(claim) {

@@ -6,6 +6,9 @@ colors for every claim it shows: the v1.3 entity spans (including for runs recor
 spans for the words that match the value of a citation that passed (display only; the checker is unchanged). No model
 is called.
 
+When a round's re-check differs from its recording, the page shows the re-checked verdicts (`verdicts`, with
+annotations aligned to them), and the warning lists the recorded verdicts claim by claim (`recorded_verdicts`).
+
 The web app calls it for GET /api/runs/{id}; `tbx export-static` saves that response, so a static copy carries the
 re-check made at export time.
 """
@@ -67,22 +70,36 @@ def recorded_rounds(events: list[dict]) -> list[dict]:
 def place(claims: list[dict], record: dict) -> list[tuple[str, int] | None]:
     """Where each answer claim sits in a check result: ("verified", j), ("rejected", j), or None.
 
-    The checker keeps answer order inside both lists, so one in-order walk pairs them up."""
-    ver = record.get("verified") or []
-    rej = record.get("rejected") or []
-    jv = jr = 0
+    A lookup by canonical claim JSON, so a record whose lists are out of answer order, or that misses a claim, still
+    pairs every claim it does have. Identical claims take that claim's entries in turn (verified ones first)."""
+    slots: dict[str, list[tuple[str, int]]] = {}
+    for j, c in enumerate(record.get("verified") or []):
+        slots.setdefault(_canon(c), []).append(("verified", j))
+    for j, r in enumerate(record.get("rejected") or []):
+        slots.setdefault(_canon((r or {}).get("claim")), []).append(("rejected", j))
     out: list[tuple[str, int] | None] = []
     for c in claims:
-        cc = _canon(c)
-        if jv < len(ver) and _canon(ver[jv]) == cc:
-            out.append(("verified", jv))
-            jv += 1
-        elif jr < len(rej) and _canon((rej[jr] or {}).get("claim")) == cc:
-            out.append(("rejected", jr))
-            jr += 1
-        else:
-            out.append(None)
+        free = slots.get(_canon(c))
+        out.append(free.pop(0) if free else None)
     return out
+
+
+def recorded_verdicts(claims: list[dict], record: dict) -> list[dict]:
+    """Each answer claim's verdict in a (recorded) check result: {"claim" (1-based), "text", "verdict", "codes"}.
+
+    verdict is "verified", "rejected" or "not recorded"; codes are the rejected claim's reason codes."""
+    out = []
+    for i, (c, spot) in enumerate(zip(claims, place(claims, record)), 1):
+        verdict = spot[0] if spot else "not recorded"
+        codes = _codes(record["rejected"][spot[1]]) if spot and spot[0] == "rejected" else []
+        out.append({"claim": i, "text": c.get("text", ""), "verdict": verdict, "codes": codes})
+    return out
+
+
+def _verdict_line(v: dict) -> str:
+    if v["verdict"] == "rejected":
+        return f"claim {v['claim']} rejected ({', '.join(v['codes']) or 'no reason recorded'})"
+    return f"claim {v['claim']} {v['verdict']}"
 
 
 def _codes(entry: dict | None) -> list[str]:
@@ -327,8 +344,10 @@ def reverify(events: list[dict], store: Store) -> dict:
     not run) or "none" (no recorded answer yet)."""
     rounds = recorded_rounds(events)
     empty = {"verified": [], "rejected": []}
-    out: dict[str, Any] = {"recheck": {"status": "none", "message": "", "rounds": [], "entities_recorded": False},
-                           "annotations": empty, "first_round_annotations": None, "repair": None}
+    out: dict[str, Any] = {"recheck": {"status": "none", "message": "", "rounds": [], "entities_recorded": False,
+                                       "shown": "recorded"},
+                           "annotations": empty, "first_round_annotations": None, "repair": None,
+                           "verdicts": None, "first_round_verdicts": None}
     checked = [r for r in rounds if r["check"] is not None]
     if not checked:
         return out
@@ -343,6 +362,7 @@ def reverify(events: list[dict], store: Store) -> dict:
         last = checked[-1]
         claims = last["answer"].get("claims") if isinstance(last["answer"].get("claims"), list) else []
         out["annotations"] = _annotations(claims, last["check"], last["check"].get("entities") or [], store)
+        out["verdicts"] = _lists(last["check"])
         return out
 
     summary = []
@@ -350,22 +370,37 @@ def reverify(events: list[dict], store: Store) -> dict:
         claims = [c for c in Answer.model_validate({"claims": r["answer"]["claims"]}).model_dump()["claims"]]
         changes = _compare(claims, r["check"], now)
         summary.append({"round": r["round"], "same": not changes, "recorded": _counts(r["check"]),
-                        "rechecked": _counts(now), "changes": changes, "_claims": claims, "_now": now})
+                        "rechecked": _counts(now), "changes": changes, "_claims": claims, "_now": now,
+                        **({"recorded_verdicts": recorded_verdicts(claims, r["check"])} if changes else {})})
     same = all(s["same"] for s in summary)
     label = "; ".join(f"round {s['round']}: {s['recorded']}" for s in summary) if len(summary) > 1 else summary[0]["recorded"]
     if same:
         message = f"Re-checked against the store: the same result as recorded ({label})."
     else:
-        message = "The re-check differs from the recorded result. " + " ".join(
-            c for s in summary for c in s["changes"])
+        recorded = " ".join(
+            ("Recorded" + (f" (round {s['round']})" if len(summary) > 1 else "") + ": "
+             + "; ".join(_verdict_line(v) for v in s["recorded_verdicts"]) + ".")
+            for s in summary if not s["same"])
+        message = ("The re-check differs from the recorded result. " + " ".join(c for s in summary for c in s["changes"])
+                   + " The verdicts shown are the re-check's. " + recorded)
     out["recheck"] = {"status": "match" if same else "differs", "message": message,
                       "entities_recorded": all("entities" in r["check"] for r in checked),
+                      "shown": "recorded" if same else "rechecked",
                       "rounds": [{k: v for k, v in s.items() if not k.startswith("_")} for s in summary]}
-    views = [{"claims": s["_claims"], "record": r["check"], "ann": _annotations(s["_claims"], r["check"],
-                                                                                s["_now"]["entities"], store)}
-             for s, r in zip(summary, checked)]
+    # A round whose re-check differs is shown as re-checked; its recorded verdicts are listed in the warning.
+    views = []
+    for s, r in zip(summary, checked):
+        record = r["check"] if s["same"] else s["_now"]
+        views.append({"claims": s["_claims"], "record": record,
+                      "ann": _annotations(s["_claims"], record, s["_now"]["entities"], store)})
     out["annotations"] = views[-1]["ann"]
+    out["verdicts"] = _lists(views[-1]["record"])
     if len(views) > 1:
         out["first_round_annotations"] = views[0]["ann"]
+        out["first_round_verdicts"] = _lists(views[0]["record"])
     out["repair"] = repair_view(events, views)
     return out
+
+
+def _lists(record: dict) -> dict:
+    return {"verified": record.get("verified", []), "rejected": record.get("rejected", [])}
