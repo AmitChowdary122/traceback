@@ -151,6 +151,22 @@ the trace's tool calls, the verified timeline, the rejected panel, and the evide
 with its SAM boxes, or the video with its transcript. `tbx check answer.json --db data/tbx.db` re-runs the checker on
 any saved answer, and `TBX_STRICT_TESTS=1 pytest -q` runs all the suites offline.
 
+The 12 recorded runs in `deploy/runs/` are real, unedited traces (`docs/gates/` keeps the originals). Each one
+re-checks to the same result against the store built from the committed sample.
+
+| Run | Model | Question | Result |
+|---|---|---|---|
+| `ae5039` (featured) | Meta | Where was this phone between 9 and 11 pm, and who did it talk to? | 5 verified |
+| `3f05db` | open weights | the same question | 5 verified |
+| `00584f` | Meta | What was said in the video messages this phone received? | 4 verified |
+| `797bbf`, `1044ca` | open weights | What do the photos taken on July 24, 2024 show? (SAM tags) | 8, 10 verified |
+| `61b070` | Meta | the same photos, and where they were taken | 5 verified |
+| `a579c2` | Meta | the video messages of February 2024 (Voice Transcribe) | 6 verified |
+| `febe0d`, `07b01f` | Meta, open weights | Who tried to reach the phone on the morning of July 27? (voicemail vs missed, carrier transcript) | 6, 6 verified |
+| `a269f0` | Meta | Which photos taken July 15–17 show a license plate? (SAM + location) | 3 verified |
+| `9b0b49` | Meta | Any contact with 919-579-4675? (a near-miss number exists) | 0 claims; the note explains |
+| `416044` | Meta | Where was the phone 9–11 PM on July 15? (no data in the window) | 0 claims |
+
 ## Ask live
 
 ```bash
