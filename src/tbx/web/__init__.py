@@ -5,6 +5,8 @@
   answer is re-checked on load with the deterministic checker (tbx.runview): the view carries the re-check's verdict,
   a warning when it differs from the recorded check_result, the v1.3 entity spans of every claim it shows, one
   plain-English sentence per rejection reason (tbx.explain) and, for repaired runs, round 1 next to round 2.
+- Each run view also carries its coverage (tbx.coverage): what each search looked at and which evidence families were
+  never searched, from the trace's tool calls.
 - The page (index.html, next to this file) needs no build step.
 
 Environment: TBX_DB (store), TBX_RUNS_DIR (default ./runs), TBX_MEDIA_ROOT (default: the media root
@@ -29,6 +31,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from tbx import coverage as cov
 from tbx import runview
 from tbx import timeutil as tu
 from tbx.store import Store
@@ -333,7 +336,8 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
         if mine and mine["status"] == "error" and view["status"] != "running" and not view.get("error"):
             view["error"] = mine["error"]
         tz = view.get("case_tz") or case_tz()
-        view.update(run_id=run_id, events=events, artifacts=artifacts_for(view, tz), case_tz=tz)
+        view.update(run_id=run_id, events=events, artifacts=artifacts_for(view, tz), case_tz=tz,
+                    coverage=cov.coverage(events, tz))
         if view["status"] == "running":
             view.update(recheck={"status": "none", "message": "", "rounds": [], "entities_recorded": False},
                         annotations={"verified": [], "rejected": []}, repair=None)

@@ -145,6 +145,30 @@ details.trace[open] summary::before { content: "▾"; }
 .steps li.bad .t, .steps li.bad .r { color: var(--bad); }
 @media (max-width: 700px) { .steps li { grid-template-columns: 28px minmax(0, 1fr); } .steps .a, .steps .r { grid-column: 2; } }
 
+.coverage .cov-sum { padding: 10px 16px 4px; font-size: 13px; }
+.cov-list { list-style: none; margin: 0; padding: 4px 16px 8px; }
+.cov-list li { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 2px 12px; padding: 4px 0; font-size: 13px;
+  border-bottom: 1px dashed var(--border); align-items: baseline; }
+.cov-list li:last-child { border-bottom: 0; }
+.cov-list .fam { font-weight: 600; display: flex; gap: 7px; align-items: baseline; }
+.cov-list .fam::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none;
+  transform: translateY(-1px); }
+.cov-list li.never .fam { color: var(--muted); font-weight: 500; }
+.cov-list li.never .fam::before { background: transparent; border: 1.5px dashed var(--warn); }
+.cov-list li.never .txt { color: var(--warn); }
+.cov-list li.failed .txt { color: var(--bad); }
+details.cov-calls { border-top: 1px solid var(--border); }
+details.cov-calls summary { cursor: pointer; padding: 8px 16px; font-size: 12px; color: var(--muted); }
+.cov-table-wrap { overflow-x: auto; padding: 0 16px 10px; }
+table.cov-table { border-collapse: collapse; font-size: 12px; width: 100%; min-width: 560px; }
+table.cov-table th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .06em; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+table.cov-table td { padding: 4px 8px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11.5px;
+  vertical-align: top; }
+table.cov-table td.n { text-align: right; }
+table.cov-table .cut { color: var(--warn); font-weight: 600; }
+@media (max-width: 700px) { .cov-list li { grid-template-columns: minmax(0, 1fr); } }
+
 .verified h2 { color: var(--ok); }
 .rejected h2 { color: var(--bad); }
 .count { font-family: var(--mono); font-size: 12px; border-radius: 999px; padding: 0 8px; border: 1px solid currentColor; }
@@ -491,7 +515,7 @@ function renderRun(run) {
     recheckWarning(run.recheck),
     run.status !== "running" ? spanLegend() : null);
   const ann = run.annotations || {};
-  const parts = [head, renderTrace(run.events || [], run.status)];
+  const parts = [head, renderTrace(run.events || [], run.status), renderCoverage(run.coverage)];
   if (run.status !== "running" || (run.verified || []).length || (run.rejected || []).length) {
     parts.push(renderVerified(run), renderRepair(run.repair), renderRejected(run.rejected || [], "Rejected", "rejected", ann.rejected));
   }
@@ -531,6 +555,26 @@ function renderTrace(events, status) {
   return h("details", { class: "panel trace", open: status === "running" || items.length <= 14 },
     h("summary", { class: "section-h" }, "Tool calls from the trace", h("span", { class: "small" }, sum)),
     items.length ? h("ol", { class: "steps" }, items) : h("div", { class: "none" }, status === "running" ? "waiting for the model…" : "no tool calls"));
+}
+/* Coverage: what each search looked at, and which evidence families were never searched (from the trace). */
+function renderCoverage(cov) {
+  if (!cov) return null;
+  const fams = cov.families || [];
+  const searched = fams.filter((f) => f.searched).length;
+  const calls = fams.flatMap((f) => (f.calls || []).map((c) => ({ ...c, label: f.label })));
+  return h("section", { class: "panel coverage" },
+    h("h2", {}, "Coverage", h("span", { class: "count" }, `${searched} of ${fams.length}`), h("span", { class: "small" }, "what the agent searched, from the trace")),
+    h("div", { class: "cov-sum" }, cov.summary),
+    h("ul", { class: "cov-list" }, fams.map((f) => h("li", { class: f.searched ? "" : (f.calls || []).length ? "failed" : "never", "data-family": f.family },
+      h("span", { class: "fam" }, f.label), h("span", { class: "txt" }, f.text || f.sentence)))),
+    calls.length ? h("details", { class: "cov-calls" }, h("summary", {}, `Each search: time window, rows found, rows shown (${calls.length})`),
+      h("div", { class: "cov-table-wrap" }, h("table", { class: "cov-table" },
+        h("thead", {}, h("tr", {}, ["Tool", "Window (case-local)", "Filters", "Found", "Shown", ""].map((t) => h("th", {}, t)))),
+        h("tbody", {}, calls.map((c) => h("tr", {},
+          h("td", {}, c.tool), h("td", {}, c.window), h("td", {}, c.filters || "—"),
+          h("td", { class: "n" }, String(c.total)), h("td", { class: "n" }, String(c.returned)),
+          h("td", {}, c.error ? h("span", { class: "cut" }, `error: ${c.error}`)
+            : c.truncated ? h("span", { class: "cut" }, `cut at limit ${c.limit}`) : ""))))))) : null);
 }
 function compactArgs(a) {
   if (!a || typeof a !== "object") return String(a ?? "");

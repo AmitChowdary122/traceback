@@ -259,3 +259,13 @@ def test_a_repaired_run_carries_plain_sentences_and_the_repair_view(setup):
     rep = run["repair"]
     assert rep["status"] == "repaired" and [i["outcome"] for i in rep["items"]] == ["dropped"]
     assert rep["items"][0]["before"]["sentences"] == ["Cited contact_name = 'Bob'; the record says 'Liz Dehner'."]
+
+
+def test_run_view_carries_coverage(setup):
+    client, _ = setup
+    run = _wait(client, client.post("/api/ask", json={"question": "Who called?", "from": "2024-07-27 21:00",
+                                                       "to": "2024-07-27 23:00"}).json()["run_id"])
+    fam = {f["family"]: f for f in run["coverage"]["families"]}
+    assert fam["calls"]["sentence"] == "Calls and voicemail: 1 in the whole extraction, shown."
+    assert fam["calls"]["text"] == "1 in the whole extraction, shown."
+    assert run["coverage"]["summary"].startswith("Searched 1 of 5 evidence families. Never searched: messages")

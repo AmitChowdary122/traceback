@@ -165,6 +165,10 @@ TBX_DB=data/tbx.db uvicorn tbx.web:app --port 8000   # then open http://127.0.0.
   with one plain sentence per reason (the code in small type). Claim text is colored by what code checked (green),
   what failed (red) and what is the model's own wording (plain); the header shows the re-check made on load. Repaired
   runs show round 1 next to round 2 (corrected, dropped or still rejected).
+- **Coverage:** built from the trace's tool calls, in plain English: for each evidence family (messages, calls and
+  voicemail, locations, photos and media, voice transcripts) what was searched, with its time window, how many rows
+  matched and how many the model saw ("Locations: 73 in the window, 50 shown; then all 73 with a higher limit."),
+  and which families were never searched. A table lists every search with its case-local window.
 - **Evidence drawer:** click any citation for the raw row (`raw_json`), `source_path` and `source_row`. Photos show
   their SAM 3.1 boxes scaled to the displayed size; videos show the Muse Voice Transcribe transcript; MMS rows show
   their attachment.
@@ -293,6 +297,7 @@ record: the archive's SHA-256, the extraction path inside it, the ALEAPP version
 | `src/tbx/checker.py` | the deterministic citation checker |
 | `src/tbx/runview.py` | recorded runs re-checked on load: the re-check verdict, the entity spans the page colors, the repair view |
 | `src/tbx/explain.py` | one plain-English sentence per rejection reason, from the cited row |
+| `src/tbx/coverage.py` | what the agent searched (and never searched), from the trace's tool calls |
 | `src/tbx/enrich.py` | `tbx enrich`: Muse Voice Transcribe and SAM 3.1, cached in `data/sample/derived/enrich_cache.jsonl` |
 | `src/tbx/agent.py` | the tool loop, `submit_answer` validation and the JSONL trace |
 | `src/tbx/web/` | `tbx.web`: the FastAPI app and its single HTML page (no build step) |
