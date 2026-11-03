@@ -244,6 +244,7 @@ def test_tbx_check_cli_prints_check_result_json(run_cli, cli_env, tmp_path):
     assert len(out["rejected"]) == 1 and out["rejected"][0]["claim"]["text"] == tool_call_id_claim["text"]
     reasons = out["rejected"][0]["reasons"]
     assert [(r["code"], r["citation_index"]) for r in reasons] == [("UNKNOWN_ARTIFACT", 0)], reasons
+    assert len(out.get("entities", [])) == 2, "v1.3: CheckResult.entities, one list per claim"
 
 
 def test_tbx_check_invalid_answer_file_exit_1(run_cli, cli_env, tmp_path):

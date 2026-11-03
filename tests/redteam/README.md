@@ -1,6 +1,6 @@
 # Red-team suite for the citation checker
 
-These are claim cases checked against CONTRACTS.md v1.2 §7. Each one is a single claim, run through `tbx.checker.check` against a small case store. The store comes from `tests/support/tbxcase.py`: one evening, case timezone `America/New_York`. Mar 13, 2023 is the day after the DST change.
+These are claim cases checked against CONTRACTS.md v1.3 §7. Each one is a single claim, run through `tbx.checker.check` against a small case store. The store comes from `tests/support/tbxcase.py`: one evening, case timezone `America/New_York`. Mar 13, 2023 is the day after the DST change.
 
 ```bash
 pytest tests/redteam -v
@@ -19,3 +19,4 @@ TBX_STRICT_TESTS=1 pytest tests/redteam
 - Notes tagged `[Cn]` pin a rule added in CONTRACTS.md v1.1 (see its changelog and `docs/SPIKES.md` → "Contract clarifications").
 - `tbxcase.load_contract()` imports the modules the contract names: `tbx.store`, `tbx.checker`, `tbx.models` and `tbx.timeutil`.
 - The case store is written only through `Store(path)`, `Store.set_meta()` and `Store.insert()`.
+- `test_redteam_entities.py` (v1.3): `CheckResult.entities`. Spans must line up with the claim text, `grounded=false` must match the `UNGROUNDED_ENTITY` reasons exactly, and specific spans are pinned on real model outputs (R27's two red window timestamps; A01 with no double extraction).
