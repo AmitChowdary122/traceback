@@ -241,3 +241,21 @@ def test_a_trace_whose_record_differs_from_the_recheck_is_flagged(setup):
     assert run["recheck"]["status"] == "differs"
     assert "Claim 2 was recorded as verified; the re-check rejects it (VALUE_MISMATCH)" in run["recheck"]["message"]
     assert client.get("/api/runs").json()[0]["recheck"] == "differs"
+
+
+def test_a_repaired_run_carries_plain_sentences_and_the_repair_view(setup):
+    client, tmp = setup
+    fixed = {"claims": [ANSWER["claims"][0]]}          # round 2 drops the rejected claim
+
+    class RepairClient(FakeClient):
+        def __init__(self, provider, model):
+            super().__init__(provider, model)
+            self.script = [_turn("get_calls", {}), _turn("submit_answer", ANSWER), _turn("submit_answer", fixed)]
+
+    app = web.create_app(str(tmp / "c.db"), runs_dir=str(tmp / "runs"), client_factory=RepairClient)
+    c = TestClient(app)
+    run = _wait(c, c.post("/api/ask", json={"question": "Who called?", "repair": 1}).json()["run_id"])
+    assert run["rejected"] == [] and run["recheck"]["status"] == "match"
+    rep = run["repair"]
+    assert rep["status"] == "repaired" and [i["outcome"] for i in rep["items"]] == ["dropped"]
+    assert rep["items"][0]["before"]["sentences"] == ["Cited contact_name = 'Bob'; the record says 'Liz Dehner'."]

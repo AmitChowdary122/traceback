@@ -3,7 +3,8 @@
 - POST /api/ask returns {run_id} at once and runs the same agent code as `tbx ask` in a background thread.
 - GET /api/runs and /api/runs/{id} read runs/*.jsonl, so recorded runs replay with no model call. Each recorded
   answer is re-checked on load with the deterministic checker (tbx.runview): the view carries the re-check's verdict,
-  a warning when it differs from the recorded check_result, and the v1.3 entity spans of every claim it shows.
+  a warning when it differs from the recorded check_result, the v1.3 entity spans of every claim it shows, one
+  plain-English sentence per rejection reason (tbx.explain) and, for repaired runs, round 1 next to round 2.
 - The page (index.html, next to this file) needs no build step.
 
 Environment: TBX_DB (store), TBX_RUNS_DIR (default ./runs), TBX_MEDIA_ROOT (default: the media root
@@ -335,10 +336,10 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
         view.update(run_id=run_id, events=events, artifacts=artifacts_for(view, tz), case_tz=tz)
         if view["status"] == "running":
             view.update(recheck={"status": "none", "message": "", "rounds": [], "entities_recorded": False},
-                        annotations={"verified": [], "rejected": []})
+                        annotations={"verified": [], "rejected": []}, repair=None)
         else:
             rv = reverify(p, events)
-            view.update(recheck=rv["recheck"], annotations=rv["annotations"])
+            view.update(recheck=rv["recheck"], annotations=rv["annotations"], repair=rv["repair"])
             if view.get("first_round") and rv["first_round_annotations"]:
                 view["first_round"]["annotations"] = rv["first_round_annotations"]
         return view

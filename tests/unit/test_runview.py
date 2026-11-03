@@ -45,6 +45,8 @@ def trace(store, *rounds, window=WINDOW, legacy=False):
             result.pop("entities")       # a trace recorded before contract v1.3
         ev.append({"step": n, "type": "final_answer", "payload": {**answer.model_dump(), "round": n}})
         ev.append({"step": n, "type": "check_result", "payload": {**result, "round": n}})
+        if n < len(rounds):   # as tbx.agent writes it: the rejected claims go back once
+            ev.append({"step": n, "type": "repair", "payload": {"rejected": result["rejected"]}})
     ev.append({"step": 9, "type": "run_end", "payload": {"status": "ok", "totals": {}}})
     return ev
 
@@ -121,3 +123,57 @@ def test_a_different_store_is_a_difference(store, tmp_path):
     other.set_meta("device_tz", NY)
     out = runview.reverify(trace(store, [GOOD]), other)
     assert out["recheck"]["status"] == "differs"
+
+
+# ------------------------------------------------------------------------------ U1: sentences and the repair view
+FIXED = {"text": "Liz Dehner placed an outgoing call at 9:40 PM, as the call log shows.",
+         "citations": [{"artifact_id": CALL, "field": "contact_name", "value": "Liz Dehner"},
+                       {"artifact_id": CALL, "field": "ts_local", "value": "2024-07-27T21:40:00-04:00"}]}
+WRONG_TIME = {"text": "Liz Dehner placed an outgoing call at 9:15 PM.",
+              "citations": [{"artifact_id": CALL, "field": "contact_name", "value": "Liz Dehner"}]}
+GHOST = {"text": "A message arrived at 10:00 PM.", "citations": [{"artifact_id": "msg_ffffffffff", "field": "body", "value": "hi"}]}
+BOB = {"text": "Bob called.", "citations": [{"artifact_id": CALL, "field": "contact_name", "value": "Bob"}]}
+BOB_AGAIN = {"text": "Bob called.", "citations": [{"artifact_id": CALL, "field": "direction", "value": "incoming"}]}
+
+
+def test_rejected_annotations_carry_one_sentence_per_reason(store):
+    out = runview.reverify(trace(store, [BAD]), store)
+    (ann,) = out["annotations"]["rejected"]
+    assert ann["sentences"] == ["'9:15 PM' doesn't appear in any cited record.",
+                                "'Bob' doesn't appear in any cited record."]
+
+
+def test_repair_view_pairs_round_one_rejections_with_round_two(store):
+    out = runview.reverify(trace(store, [WRONG_TIME, GOOD, GHOST, BOB], [GOOD, FIXED, BOB_AGAIN]), store)
+    rep = out["repair"]
+    assert rep["status"] == "repaired"
+    got = [(i["before"]["claim"]["text"], i["outcome"], i["after"] and i["after"]["claim"]["text"]) for i in rep["items"]]
+    assert got == [(WRONG_TIME["text"], "corrected", FIXED["text"]), (GHOST["text"], "dropped", None),
+                   (BOB["text"], "still rejected", BOB_AGAIN["text"])]
+    assert rep["kept"] == 1 and rep["new"] == 0
+    assert rep["items"][0]["before"]["sentences"] == ["'9:15 PM' doesn't appear in any cited record."]
+    assert rep["items"][0]["after"]["verdict"] == "verified"
+    assert [e["text"] for e in rep["items"][0]["after"]["entities"]] == ["Liz Dehner", "9:40 PM"]
+    assert rep["items"][2]["after"]["sentences"][0] == "Cited direction = 'incoming'; the record says 'outgoing'."
+    assert rep["summary"] == "Round 1 rejected 3 claims. Round 2: 1 corrected, 1 dropped, 1 still rejected."
+
+
+def test_a_resubmitted_claim_counts_as_still_rejected_and_extra_claims_as_new(store):
+    out = runview.reverify(trace(store, [BOB], [BOB, GOOD]), store)
+    (item,) = out["repair"]["items"]
+    assert item["outcome"] == "still rejected" and item["after"]["index"] == 0
+    assert out["repair"]["new"] == 1
+
+
+def test_a_failed_repair_round_keeps_round_one(store):
+    ev = trace(store, [BAD])
+    ev.insert(-1, {"step": 5, "type": "repair", "payload": {"rejected": []}})
+    ev.insert(-1, {"step": 6, "type": "validation_error",
+                   "payload": {"error": "repair round failed: step cap reached; keeping round 1"}})
+    rep = runview.reverify(ev, store)["repair"]
+    assert rep["status"] == "failed" and "keeping round 1" in rep["summary"]
+    assert [i["outcome"] for i in rep["items"]] == ["still rejected"]
+
+
+def test_no_repair_view_without_a_repair_round(store):
+    assert runview.reverify(trace(store, [BAD, GOOD]), store)["repair"] is None

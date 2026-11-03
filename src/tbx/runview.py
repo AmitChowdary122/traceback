@@ -9,15 +9,19 @@ re-check made at export time.
 """
 from __future__ import annotations
 
+import difflib
 import json
 from typing import Any
 
+from tbx import explain
 from tbx import timeutil as tu
-from tbx.checker import check
+from tbx.checker import check, fold
 from tbx.models import Answer
 from tbx.store import Store
 
 MAX_CHANGES = 8
+PAIR_TEXT = 0.5          # a round-2 claim this similar to a round-1 rejected claim is its repair...
+PAIR_TEXT_SAME_ROW = 0.3  # ...or this similar when it also cites one of the same records
 
 
 def _canon(x: Any) -> str:
@@ -106,14 +110,99 @@ def _compare(claims: list[dict], record: dict, now: dict) -> list[str]:
     return changes[:MAX_CHANGES]
 
 
-def _annotations(claims: list[dict], record: dict, entities: list[list[dict]]) -> dict:
-    """Entity spans for the claims the page shows, aligned with record["verified"] and record["rejected"]."""
+def _annotations(claims: list[dict], record: dict, entities: list[list[dict]], store: Store) -> dict:
+    """For the claims the page shows, aligned with record["verified"] and record["rejected"]: each claim's answer
+    index and entity spans, plus one plain-English sentence per reason for the rejected ones."""
     out: dict[str, list[dict]] = {"verified": [{"index": None, "entities": []} for _ in record.get("verified", [])],
                                   "rejected": [{"index": None, "entities": []} for _ in record.get("rejected", [])]}
     for i, spot in enumerate(place(claims, record)):
         if spot is not None:
             out[spot[0]][spot[1]] = {"index": i, "entities": entities[i] if i < len(entities) else []}
+    tz = store.case_tz
+    for entry, ann in zip(record.get("rejected", []), out["rejected"]):
+        try:
+            ann["sentences"] = explain.sentences(entry, ann["entities"], store, tz)
+        except Exception:  # noqa: BLE001 - never lose the codes over a sentence; fall back to the details
+            ann["sentences"] = [r.get("detail") or r.get("code", "") for r in entry.get("reasons", [])]
     return out
+
+
+# ------------------------------------------------------------------------------ the repair view
+def _ids(claim: dict) -> set[str]:
+    return {c.get("artifact_id") for c in claim.get("citations") or [] if c.get("artifact_id")}
+
+
+def _pair_score(a: dict, b: dict) -> float | None:
+    """How likely round-2 claim b is the repair of round-1 claim a (None: not a candidate)."""
+    if _canon(a) == _canon(b):
+        return 2.0
+    text = difflib.SequenceMatcher(None, fold(a.get("text", "")), fold(b.get("text", "")), autojunk=False).ratio()
+    same_row = bool(_ids(a) & _ids(b))
+    if text >= PAIR_TEXT or (same_row and text >= PAIR_TEXT_SAME_ROW):
+        return text + (0.2 if same_row else 0.0)
+    return None
+
+
+def _side(claims: list[dict], record: dict, ann: dict, i: int) -> dict:
+    """One claim of a round, with its verdict, reasons, sentences and spans."""
+    spot = place(claims, record)[i]
+    verdict, j = spot if spot else ("unknown", -1)
+    a = ann.get(verdict, [])[j] if spot and j < len(ann.get(verdict, [])) else {"entities": []}
+    entry = record["rejected"][j] if verdict == "rejected" else {}
+    return {"index": i, "claim": claims[i], "verdict": verdict, "reasons": entry.get("reasons", []),
+            "sentences": a.get("sentences", []), "entities": a.get("entities", [])}
+
+
+def repair_view(events: list[dict], rounds: list[dict]) -> dict | None:
+    """Round-1 rejected claims next to what round 2 submitted: corrected, dropped or still rejected.
+
+    rounds: [{"claims", "record", "ann"}] per checked round. A round-2 claim identical to a round-1 verified claim is
+    "kept"; the others are paired with round-1 rejected claims by text similarity (with a bonus for citing one of the
+    same records), best pairs first. A round-2 claim paired with nothing is "new"."""
+    if not any(e.get("type") == "repair" for e in events) or not rounds:
+        return None
+    first = rounds[0]
+    places1 = place(first["claims"], first["record"])
+    rejected1 = [i for i, sp in enumerate(places1) if sp and sp[0] == "rejected"]
+    befores = {i: _side(first["claims"], first["record"], first["ann"], i) for i in rejected1}
+    if len(rounds) < 2:
+        why = next((str((e.get("payload") or {}).get("error", "")) for e in reversed(events)
+                    if e.get("type") == "validation_error" and "repair" in str((e.get("payload") or {}).get("error", ""))),
+                   "")
+        return {"status": "failed", "kept": 0, "new": 0,
+                "summary": f"The repair round did not produce a valid answer{f' ({why})' if why else ''}; "
+                           "the report keeps round 1.",
+                "items": [{"before": befores[i], "outcome": "still rejected", "after": None} for i in rejected1]}
+    last = rounds[-1]
+    verified1 = {_canon(first["claims"][i]) for i, sp in enumerate(places1) if sp and sp[0] == "verified"}
+    kept = {k for k, c in enumerate(last["claims"]) if _canon(c) in verified1}
+    pairs = []
+    for i in rejected1:
+        for k, c in enumerate(last["claims"]):
+            if k in kept:
+                continue
+            score = _pair_score(first["claims"][i], c)
+            if score is not None:
+                pairs.append((-score, i, k))
+    match: dict[int, int] = {}
+    used: set[int] = set()
+    for _, i, k in sorted(pairs):
+        if i not in match and k not in used:
+            match[i] = k
+            used.add(k)
+    items = []
+    for i in rejected1:
+        if i not in match:
+            items.append({"before": befores[i], "outcome": "dropped", "after": None})
+            continue
+        after = _side(last["claims"], last["record"], last["ann"], match[i])
+        items.append({"before": befores[i], "after": after,
+                      "outcome": "corrected" if after["verdict"] == "verified" else "still rejected"})
+    n = {o: sum(1 for x in items if x["outcome"] == o) for o in ("corrected", "dropped", "still rejected")}
+    summary = (f"Round 1 rejected {len(items)} claim{'s' if len(items) != 1 else ''}. Round 2: "
+               + ", ".join(f"{v} {k}" for k, v in n.items()) + ".")
+    return {"status": "repaired", "summary": summary, "items": items, "kept": len(kept),
+            "new": len(last["claims"]) - len(kept) - len(used)}
 
 
 def _counts(x: dict) -> str:
@@ -128,7 +217,7 @@ def reverify(events: list[dict], store: Store) -> dict:
     rounds = recorded_rounds(events)
     empty = {"verified": [], "rejected": []}
     out: dict[str, Any] = {"recheck": {"status": "none", "message": "", "rounds": [], "entities_recorded": False},
-                           "annotations": empty, "first_round_annotations": None}
+                           "annotations": empty, "first_round_annotations": None, "repair": None}
     checked = [r for r in rounds if r["check"] is not None]
     if not checked:
         return out
@@ -142,7 +231,7 @@ def reverify(events: list[dict], store: Store) -> dict:
         out["recheck"].update(status="error", message=f"Could not re-check this run: {type(e).__name__}: {e}"[:400])
         last = checked[-1]
         claims = last["answer"].get("claims") if isinstance(last["answer"].get("claims"), list) else []
-        out["annotations"] = _annotations(claims, last["check"], last["check"].get("entities") or [])
+        out["annotations"] = _annotations(claims, last["check"], last["check"].get("entities") or [], store)
         return out
 
     summary = []
@@ -161,9 +250,11 @@ def reverify(events: list[dict], store: Store) -> dict:
     out["recheck"] = {"status": "match" if same else "differs", "message": message,
                       "entities_recorded": all("entities" in r["check"] for r in checked),
                       "rounds": [{k: v for k, v in s.items() if not k.startswith("_")} for s in summary]}
-    last = summary[-1]
-    out["annotations"] = _annotations(last["_claims"], checked[-1]["check"], last["_now"]["entities"])
-    if len(summary) > 1:
-        out["first_round_annotations"] = _annotations(summary[0]["_claims"], checked[0]["check"],
-                                                      summary[0]["_now"]["entities"])
+    views = [{"claims": s["_claims"], "record": r["check"], "ann": _annotations(s["_claims"], r["check"],
+                                                                                s["_now"]["entities"], store)}
+             for s, r in zip(summary, checked)]
+    out["annotations"] = views[-1]["ann"]
+    if len(views) > 1:
+        out["first_round_annotations"] = views[0]["ann"]
+    out["repair"] = repair_view(events, views)
     return out

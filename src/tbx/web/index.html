@@ -196,10 +196,26 @@ details.trace[open] summary::before { content: "▾"; }
 .rj:last-child { border-bottom: 0; }
 .rj .claim { color: var(--text); }
 .reasons { list-style: none; margin: 8px 0 8px; padding: 0; }
-.reasons li { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 12.5px; padding: 2px 0; }
-.code { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--bad); background: var(--bad-bg);
-  border: 1px solid var(--bad-line); border-radius: 4px; padding: 0 6px; }
-.reasons .d { color: var(--muted); font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.reasons li { display: flex; gap: 2px 8px; align-items: baseline; flex-wrap: wrap; font-size: 13px; padding: 3px 0 3px 18px;
+  position: relative; }
+.reasons li::before { content: "✗"; position: absolute; left: 2px; top: 3px; color: var(--bad); font-weight: 700; font-size: 12px; }
+.reasons .plain { color: var(--text); overflow-wrap: anywhere; }
+.reasons .why { font-size: 11px; color: var(--faint); font-family: var(--mono); white-space: nowrap; }
+.code { font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--bad); background: var(--bad-bg);
+  border: 1px solid var(--bad-line); border-radius: 3px; padding: 0 4px; }
+.repair-sum { padding: 10px 16px 0; font-size: 13px; }
+.pairs { list-style: none; margin: 0; padding: 4px 0; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr); gap: 10px; padding: 12px 16px;
+  border-bottom: 1px solid var(--border); }
+.pair:last-child { border-bottom: 0; }
+.pair .arrow { color: var(--faint); font-size: 18px; text-align: center; padding-top: 18px; }
+.pair .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.outcome { border-radius: 999px; padding: 0 8px; font-weight: 700; border: 1px solid; letter-spacing: .04em; }
+.outcome.corrected { color: var(--ok); background: var(--ok-bg); border-color: var(--ok-line); }
+.outcome.dropped { color: var(--muted); background: var(--panel-2); border-color: var(--border-strong); }
+.outcome.still-rejected { color: var(--bad); background: var(--bad-bg); border-color: var(--bad-line); }
+@media (max-width: 700px) { .pair { grid-template-columns: minmax(0, 1fr); } .pair .arrow { padding: 0; transform: rotate(90deg); width: 22px; } }
 .note { padding: 10px 16px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
 .none { padding: 12px 16px; color: var(--faint); font-size: 13px; }
 .usage { font-family: var(--mono); font-size: 12px; }
@@ -390,7 +406,7 @@ function whyNotLive(p) {
   const c = state.case || {};
   const live = c.live_providers || [];
   if (STATIC || c.static) return [h("b", {}, `Recorded ${PROVIDER_NAMES[p] || p} runs`), " replay below, with no server and no model call."];
-  if (!live.includes(p)) return [`Live asks on this server go to ${live.length ? live.join(" and ") : "no provider"} only. `,
+  if (!live.includes(p)) return [live.length ? `Live asks on this server go to ${live.join(" and ")} only. ` : "Live asking is off on this server. ",
     h("b", {}, `Recorded ${PROVIDER_NAMES[p] || p} runs`), " replay below, with every claim as the checker judged it."];
   if (!(c.providers || {})[p]) return [`No ${p} key on this server. Replay a recorded run below.`];
   return ["Live asking is off on this server (hourly limit 0). Replay a recorded run below."];
@@ -477,11 +493,9 @@ function renderRun(run) {
   const ann = run.annotations || {};
   const parts = [head, renderTrace(run.events || [], run.status)];
   if (run.status !== "running" || (run.verified || []).length || (run.rejected || []).length) {
-    parts.push(renderVerified(run), renderRejected(run.rejected || [], "Rejected", "rejected", ann.rejected));
-    if (run.first_round) parts.push(renderRejected(run.first_round.rejected || [], "Rejected in round 1 (before the repair pass)", "rejected",
-      (run.first_round.annotations || {}).rejected));
+    parts.push(renderVerified(run), renderRepair(run.repair), renderRejected(run.rejected || [], "Rejected", "rejected", ann.rejected));
   }
-  $("#main").replaceChildren(h("div", { class: "stack" }, ...parts));
+  $("#main").replaceChildren(h("div", { class: "stack" }, ...parts.filter(Boolean)));
 }
 
 function renderTrace(events, status) {
@@ -601,11 +615,47 @@ function renderRejected(rejected, title, cls, ann) {
     rejected.length ? rejected.map((r, i) => {
       const badIdx = new Set((r.reasons || []).map((x) => x.citation_index).filter((x) => x != null));
       return h("div", { class: "rj" }, claimText(r.claim.text, ann && ann[i] && ann[i].entities),
-        h("ul", { class: "reasons" }, (r.reasons || []).map((x) => h("li", {}, h("span", { class: "code" }, x.code),
-          x.citation_index != null ? h("span", { class: "small" }, `citation [${x.citation_index}]`) : null,
-          h("span", { class: "d" }, x.detail)))),
+        reasonList(r.reasons, ann && ann[i] && ann[i].sentences),
         citeChips(r.claim.citations || [], badIdx));
     }) : h("div", { class: "none" }, "Nothing was rejected."));
+}
+function reasonList(reasons, sentences) {
+  // One line per distinct sentence: two citations of the same record give the same sentence, listed once.
+  const groups = [];
+  (reasons || []).forEach((x, k) => {
+    const text = (sentences && sentences[k]) || x.detail;
+    const g = groups.find((y) => y.text === text && y.code === x.code);
+    if (g) { if (x.citation_index != null) g.idx.push(x.citation_index); }
+    else groups.push({ text, code: x.code, detail: x.detail, idx: x.citation_index != null ? [x.citation_index] : [] });
+  });
+  return h("ul", { class: "reasons" }, groups.map((g) => h("li", {},
+    h("span", { class: "plain" }, g.text),
+    h("span", { class: "why" }, h("span", { class: "code", title: g.detail }, g.code),
+      g.idx.length ? ` citation${g.idx.length > 1 ? "s" : ""} ${g.idx.map((i) => `[${i}]`).join(" ")}` : null))));
+}
+function badIndexes(reasons) {
+  return new Set((reasons || []).map((x) => x.citation_index).filter((x) => x != null));
+}
+/* Repair view: each round-1 rejected claim next to what round 2 submitted for it. */
+function renderRepair(rep) {
+  if (!rep) return null;
+  const extra = [rep.kept ? `${rep.kept} verified claim${rep.kept === 1 ? " was" : "s were"} kept as they were` : "",
+    rep.new ? `${rep.new} new claim${rep.new === 1 ? "" : "s"} in round 2` : ""].filter(Boolean).join("; ");
+  return h("section", { class: "panel repair" },
+    h("h2", {}, "Repair pass", h("span", { class: "count" }, String(rep.items.length)), h("span", { class: "small" }, "round 1 → round 2")),
+    h("div", { class: "repair-sum" }, rep.summary, extra ? ` ${extra[0].toUpperCase()}${extra.slice(1)}.` : ""),
+    rep.items.length ? h("ol", { class: "pairs" }, rep.items.map((it) => h("li", { class: "pair", "data-outcome": it.outcome },
+      h("div", { class: "before" }, h("div", { class: "lbl" }, "Round 1 · rejected"),
+        claimText(it.before.claim.text, it.before.entities), reasonList(it.before.reasons, it.before.sentences),
+        citeChips(it.before.claim.citations || [], badIndexes(it.before.reasons))),
+      h("div", { class: "arrow", "aria-hidden": "true" }, "→"),
+      h("div", { class: "after" }, h("div", { class: "lbl" }, "Round 2", h("span", { class: `outcome ${it.outcome.replace(" ", "-")}` }, it.outcome)),
+        it.after ? [claimText(it.after.claim.text, it.after.entities),
+            it.after.verdict === "rejected" ? reasonList(it.after.reasons, it.after.sentences) : null,
+            citeChips(it.after.claim.citations || [], it.after.verdict === "rejected" ? badIndexes(it.after.reasons) : null)]
+          : h("div", { class: "small" }, it.outcome === "dropped" ? "Round 2 did not resubmit this claim."
+            : "The repair round failed, so this claim stays rejected.")))))
+      : h("div", { class: "none" }, "Round 1 had no rejected claims."));
 }
 function citeChips(cites, badIdx) {
   return h("div", { class: "cites" }, cites.map((c, i) => h("button", {
