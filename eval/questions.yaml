@@ -56,7 +56,7 @@
   question: "What do the photos taken on July 24, 2024 show?"
   window: {from: "2024-07-24 00:00", to: "2024-07-24 23:59"}
   expected_entities: ["cell phone", "laptop", "license plate"]
-  expected_artifact_ids: [med_8870c15ef4, med_3755e38c69, med_e48be04e20]
+  expected_artifact_ids: [tag_e60dd42e36, tag_0e3bf61852]   # labels live on tag rows: the laptop and license-plate tags
   tags: [photos, sam]
   truth: "12:05 PM: cell phone, person (an arm). 12:32 PM: two cell phones and a laptop. 3:57 PM: cars, license plate, signs; geotagged 38.8603361,-77.3032389."
 

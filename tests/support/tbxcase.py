@@ -100,11 +100,14 @@ LOC_SRC = "Google Location History/records.tsv"
 MEDIA_SRC = "Media/media_files.tsv"
 PHOTO_PATH = "DCIM/Camera/IMG_20230313_214500.jpg"
 VOICE_PATH = "WhatsApp/Media/WhatsApp Voice Notes/PTT-20230313-WA0003.opus"
+UHAUL_SRC = "_TSV Exports/Call logs .tsv"   # the real row from the committed sample (row 114)
+UHAUL_TRANSCRIPT = "Hi. Yes, this is Jaclyn from the U-Haul and Chapel Hill, see how the reservation this morning at 8:00. It is now going on 9:30. We're going to go ahead and cancel this reservation. If you can give us a call back, that would be great. Thank you."
 
 IDS: dict[str, str] = {
     "CALL_ALICE": "call_3f9a1c2b7d",
     "CALL_BOB": aid("call", CALLS_SRC, "2"),
     "CALL_VM": aid("call", CALLS_SRC, "3"),
+    "CALL_UHAUL": aid("call", UHAUL_SRC, "114"),   # == call_f777b490c2, the real ID
     "MSG_ALICE": aid("msg", SMS_SRC, "101"),
     "MSG_BOB": aid("msg", SMS_SRC, "102"),
     "MSG_CAROL": aid("msg", SMS_SRC, "95"),
@@ -142,6 +145,9 @@ ROWS: list[tuple[str, dict]] = [
     _row("calls", "CALL_VM", CALLS_SRC, "3", "2023-03-14T02:15:00Z", app="Phone", direction="voicemail",
          number="+1 (555) 030-4455", contact_name=None, duration_s=41,
          transcript="Hi, this is the storage office. Your reservation is ready for pickup tomorrow morning."),
+    # v1.4: the real U-Haul voicemail from the sample (Feb 10, 2024, 9:28:06 AM EST), copied from the store
+    _row("calls", "CALL_UHAUL", UHAUL_SRC, "114", "2024-02-10T14:28:06Z", app="Phone", direction="voicemail",
+         number="+19199291133", contact_name=None, duration_s=14, transcript=UHAUL_TRANSCRIPT),
     _row("messages", "MSG_ALICE", SMS_SRC, "101", "2023-03-14T01:30:12Z", app="SMS", thread_id="7", direction="incoming",
          sender="Alice", sender_number="+1 555 010 1234", recipient=None, recipient_number=None,
          body="Meet me at the Riverside garage at 9:45, bring the blue bag.", attachment_media_id=None),
