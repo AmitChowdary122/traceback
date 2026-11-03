@@ -133,6 +133,100 @@ def test_length_cutoff_without_tool_call_is_retryable(store, tmp_path):
     assert run(store, c, tmp_path).check.verified
 
 
+class MetaFakeClient(FakeClient):
+    """Records the per-request options a Meta LLMClient would get."""
+    provider, model = "meta", "muse-spark-1.3"
+
+    def chat(self, messages, tools, **opts):
+        self.opts = getattr(self, "opts", []) + [opts]
+        return super().chat(messages, tools)
+
+
+def _empty_assistant_turns(messages):
+    return [m for m in messages if m["role"] == "assistant" and not m.get("content") and not m.get("tool_calls")]
+
+
+def test_length_cutoff_is_not_echoed_and_gets_the_cutoff_nudge(store, tmp_path):
+    """Eval 1 q03/q10: the cut-off reply (no content, no tool calls) was sent back and Meta returned HTTP 400."""
+    c = FakeClient([tools_turn(("get_calls", {})), text_turn(None, finish="length"), tools_turn(("submit_answer", GOOD))])
+    res = run(store, c, tmp_path)
+    assert res.check.verified and len(c.requests) == 3
+    retry = c.requests[2]["messages"]
+    assert not _empty_assistant_turns(retry)
+    assert retry[-1] == {"role": "user", "content": agent.LENGTH_NUDGE}
+    assert agent.LENGTH_NUDGE == ("Your previous reply was cut off before you called submit_answer. Call "
+                                  "submit_answer now. Keep claims short and quote at most 200 characters.")
+    assert [m["role"] for m in retry[-3:]] == ["assistant", "tool", "user"]  # the get_calls turn, then the nudge
+    errors = [e for e in events(tmp_path, res.run_id) if e["type"] == "validation_error"]
+    assert len(errors) == 1 and "finish_reason=length" in errors[0]["payload"]["error"]
+
+
+def test_empty_stop_reply_is_not_echoed_and_gets_the_plain_nudge(store, tmp_path):
+    c = FakeClient([text_turn(None, finish="stop"), tools_turn(("submit_answer", GOOD))])
+    assert run(store, c, tmp_path).check.verified
+    retry = c.requests[1]["messages"]
+    assert not _empty_assistant_turns(retry) and retry[-1] == {"role": "user", "content": agent.NUDGE}
+
+
+def test_text_reply_is_still_echoed(store, tmp_path):
+    c = FakeClient([text_turn("No data found."), tools_turn(("submit_answer", GOOD))])
+    run(store, c, tmp_path)
+    assert c.requests[1]["messages"][-2] == {"role": "assistant", "content": "No data found."}
+
+
+def test_meta_cutoff_retry_uses_low_reasoning_effort_once(store, tmp_path):
+    c = MetaFakeClient([tools_turn(("get_calls", {})), text_turn(None, finish="length"),
+                        tools_turn(("submit_answer", GOOD))])
+    res = run(store, c, tmp_path)
+    assert res.check.verified
+    assert c.opts == [{}, {}, {"reasoning_effort": "low"}]
+    reqs = [e["payload"] for e in events(tmp_path, res.run_id) if e["type"] == "model_request"]
+    assert [r.get("reasoning_effort") for r in reqs] == [None, None, "low"]
+
+
+def test_meta_plain_nudge_keeps_default_reasoning_effort(store, tmp_path):
+    c = MetaFakeClient([text_turn("No data found."), tools_turn(("submit_answer", GOOD))])
+    run(store, c, tmp_path)
+    assert c.opts == [{}, {}]
+
+
+def test_cutoff_twice_is_a_validation_failure(store, tmp_path):
+    c = MetaFakeClient([text_turn(None, finish="length"), text_turn(None, finish="length")])
+    with pytest.raises(agent.AgentError, match="twice"):
+        run(store, c, tmp_path)
+    assert len(c.requests) == 2 and not _empty_assistant_turns(c.requests[1]["messages"])
+
+
+class _Recorder:
+    def __init__(self):
+        self.calls = []
+
+    def create(self, **kwargs):
+        from types import SimpleNamespace as NS
+        self.calls.append(kwargs)
+        msg = NS(content="hi", tool_calls=None, model_extra={})
+        return NS(choices=[NS(message=msg, finish_reason="stop")], usage=NS(prompt_tokens=1, completion_tokens=1,
+                                                                         prompt_tokens_details=None))
+
+
+@pytest.mark.parametrize("provider,env_effort,arg,expected", [
+    ("meta", None, None, None), ("meta", None, "low", "low"), ("meta", "high", None, "high"),
+    ("meta", "high", "low", "low"), ("baseten", None, "low", None)])
+def test_llm_client_reasoning_effort(monkeypatch, provider, env_effort, arg, expected):
+    from types import SimpleNamespace as NS
+    from tbx.llm import LLMClient
+    monkeypatch.setenv("META_API_KEY", "k"), monkeypatch.setenv("BASETEN_API_KEY", "k")
+    if env_effort:
+        monkeypatch.setenv("TBX_REASONING_EFFORT", env_effort)
+    else:
+        monkeypatch.delenv("TBX_REASONING_EFFORT", raising=False)
+    client = LLMClient(provider)
+    rec = _Recorder()
+    client._client = NS(chat=NS(completions=rec))
+    client.chat([{"role": "user", "content": "x"}], [], **({"reasoning_effort": arg} if arg else {}))
+    assert rec.calls[0].get("reasoning_effort") == expected
+
+
 def test_step_cap(store, tmp_path):
     c = FakeClient([tools_turn(("get_calls", {}))] * 30)
     with pytest.raises(agent.AgentError, match="step"):

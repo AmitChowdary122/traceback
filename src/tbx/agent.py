@@ -27,6 +27,9 @@ PRICE_PER_M = {"input": 1.25, "cached": 0.15, "output": 4.25}  # Meta and Basete
 
 NUDGE = ("Your reply was not a submit_answer tool call. Call submit_answer now. If there is no evidence, "
          "use an empty claims list and put the explanation in note.")
+LENGTH_NUDGE = ("Your previous reply was cut off before you called submit_answer. Call submit_answer now. "
+                "Keep claims short and quote at most 200 characters.")
+LENGTH_RETRY_EFFORT = "low"  # Meta only: the one retry after a cut-off asks for less reasoning (eval 1, q03/q10)
 LAST_STEP = "You have reached the step limit. Call submit_answer now with the evidence you already have."
 
 SYSTEM_PROMPT = """You are Traceback, an analysis agent working for a digital forensic examiner. You answer \
@@ -89,7 +92,8 @@ class ChatClient(Protocol):
     provider: str
     model: str
 
-    def chat(self, messages: list[dict], tools: list[dict]) -> ChatResponse: ...
+    def chat(self, messages: list[dict], tools: list[dict]) -> ChatResponse:
+        """Meta clients (LLMClient) also take reasoning_effort=...; only they are ever passed it."""
 
 
 def new_run_id() -> str:
@@ -142,7 +146,14 @@ def user_message(question: str, window: tu.Window | None, case_tz: str) -> str:
     return "\n".join(lines)
 
 
-def _assistant_message(resp: ChatResponse) -> dict:
+def _assistant_message(resp: ChatResponse) -> dict | None:
+    """The assistant turn to send back, or None for a reply with neither content nor tool calls.
+
+    Such a reply (e.g. cut off at max_tokens) must never be echoed: Meta answers it with HTTP 400
+    ("assistant message must have content or tool_calls"), which lost q03 and q10 in eval 1.
+    """
+    if not resp.content and not resp.tool_calls:
+        return None
     msg: dict[str, Any] = {"role": "assistant", "content": resp.content}
     if resp.tool_calls:
         msg["tool_calls"] = [{"id": tc.id, "type": "function", "function": {"name": tc.name, "arguments": tc.arguments}}
@@ -169,11 +180,12 @@ class _Run:
         self.usage = {"prompt_tokens": 0, "completion_tokens": 0, "cached_tokens": 0, "latency_ms": 0}
         self.last_submit_id: str | None = None
 
-    def _ask_model(self) -> ChatResponse:
+    def _ask_model(self, reasoning_effort: str | None = None) -> ChatResponse:
         self.step += 1
+        opts = {"reasoning_effort": reasoning_effort} if reasoning_effort and self.client.provider == "meta" else {}
         self.trace.emit("model_request", self.step, {"messages": len(self.messages),
-                                                     "tools": [t["function"]["name"] for t in ALL_TOOLS]})
-        resp = self.client.chat(self.messages, ALL_TOOLS)
+                                                     "tools": [t["function"]["name"] for t in ALL_TOOLS], **opts})
+        resp = self.client.chat(self.messages, ALL_TOOLS, **opts)
         resp.content, resp.reasoning = strip_reasoning(resp.content), None  # never parsed, sent back or traced
         from_text = False
         if not resp.tool_calls and resp.content:
@@ -189,7 +201,9 @@ class _Run:
             **({"tool_calls_from_text": True} if from_text else {}),
             "usage": {"prompt_tokens": resp.usage.get("prompt_tokens", 0),
                       "completion_tokens": resp.usage.get("completion_tokens", 0)}})
-        self.messages.append(_assistant_message(resp))
+        msg = _assistant_message(resp)
+        if msg is not None:
+            self.messages.append(msg)
         return resp
 
     def _tool_reply(self, call_id: str, content: str) -> None:
@@ -198,6 +212,7 @@ class _Run:
     def answer_round(self, cap: int) -> Answer:
         """Run the loop until a valid submit_answer, with one validation retry."""
         retried = False
+        effort: str | None = None  # set for the one retry after a reply cut off at max_tokens
         start = self.step
 
         def fail(error: str) -> None:
@@ -212,13 +227,15 @@ class _Run:
                 raise AgentError(f"step cap reached ({cap} model requests) without a valid submit_answer")
             if self.step - start == cap - 1:
                 self.messages.append({"role": "user", "content": LAST_STEP})
-            resp = self._ask_model()
+            resp = self._ask_model(effort)
+            effort = None
             submits = [tc for tc in resp.tool_calls if tc.name == "submit_answer"]
             if not resp.tool_calls:
-                why = "output cut off (finish_reason=length) before a tool call" if resp.finish_reason == "length" \
-                    else "reply was not a submit_answer tool call"
-                fail(why)
-                self.messages.append({"role": "user", "content": NUDGE})
+                cut_off = resp.finish_reason == "length"
+                fail("output cut off (finish_reason=length) before a tool call" if cut_off
+                     else "reply was not a submit_answer tool call")
+                self.messages.append({"role": "user", "content": LENGTH_NUDGE if cut_off else NUDGE})
+                effort = LENGTH_RETRY_EFFORT if cut_off else None
                 continue
             if submits:
                 tc = submits[0]

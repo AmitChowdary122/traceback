@@ -112,11 +112,13 @@ class LLMClient:
         self._openai = openai
         self._client = openai.OpenAI(base_url=base_url, api_key=api_key, timeout=timeout, max_retries=max_retries)
 
-    def chat(self, messages: list[dict], tools: list[dict]) -> ChatResponse:
+    def chat(self, messages: list[dict], tools: list[dict], reasoning_effort: str | None = None) -> ChatResponse:
+        """One chat completion. reasoning_effort overrides TBX_REASONING_EFFORT for this request (Meta only)."""
         kwargs: dict = {"model": self.model, "messages": messages, "tools": tools, "tool_choice": "auto",
                         "temperature": TEMPERATURE, "max_tokens": MAX_TOKENS}
-        if self.reasoning_effort:
-            kwargs["reasoning_effort"] = self.reasoning_effort
+        effort = (reasoning_effort or self.reasoning_effort) if self.provider == "meta" else None
+        if effort:
+            kwargs["reasoning_effort"] = effort
         t0 = time.monotonic()
         try:
             resp = self._client.chat.completions.create(**kwargs)
