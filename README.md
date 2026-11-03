@@ -91,8 +91,11 @@ window's ISO bounds) is rejected unless a cited artifact carries those times: th
 prompt also tells the model never to restate the window.
 
 On the page, each reason reads as one plain sentence built from the cited row, with the code in small type:
-"Cited direction = 'outgoing'; the record says 'incoming'.", "'9:15 PM' doesn't appear in any cited record.",
-"This record is from Thu Jun 27, 2024 9:45:55 AM (UTC-04:00), outside the question window." (`src/tbx/explain.py`).
+"Cited direction = 'outgoing'; the record says 'incoming'.", "'9:36 PM' doesn't match the cited record's time
+(9:06 PM).", "This record is from Thu Jun 27, 2024 9:45:55 AM (UTC-04:00), outside the question window."
+(`src/tbx/explain.py`). A wrong cited time is shown case-local on both sides ("The cited time (ts_local) is … 9:36:18
+PM (UTC-04:00); the record's time is … 9:06:18 PM (UTC-04:00)."), and when one of the claim's citations failed, an
+unbacked time or name reads "isn't backed by a correctly cited time" (or "value") instead.
 
 With `--repair 1`, rejected claims and their reasons go back to the model once; the final report is the check of
 its second answer, and the trace keeps both rounds. The page's repair view puts each round-1 rejected claim next to

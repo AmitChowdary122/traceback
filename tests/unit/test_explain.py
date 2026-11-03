@@ -53,11 +53,24 @@ def test_value_mismatch_quotes_the_stored_value(store):
         "Cited direction = 'incoming'; the record says 'outgoing'."]
 
 
-def test_value_mismatch_on_a_timestamp_shows_the_record_in_the_same_form(store):
+def test_value_mismatch_on_a_timestamp_shows_both_times_case_local(store):
     assert say(store, "A call.", (CALL, "ts_local", "2024-06-27T21:15:00-04:00")) == [
-        "Cited ts_local = '2024-06-27T21:15:00-04:00'; the record says '2024-06-27T21:42:07-04:00'."]
+        "The cited time (ts_local) is Thu Jun 27, 2024 9:15:00 PM (UTC-04:00); the record's time is "
+        "Thu Jun 27, 2024 9:42:07 PM (UTC-04:00)."]
     assert say(store, "A call.", (CALL, "ts_utc", "2024-06-28T01:15:00Z")) == [
-        "Cited ts_utc = '2024-06-28T01:15:00Z'; the record says '2024-06-28T01:42:07Z'."]
+        "The cited time (ts_utc) is Thu Jun 27, 2024 9:15:00 PM (UTC-04:00); the record's time is "
+        "Thu Jun 27, 2024 9:42:07 PM (UTC-04:00)."]
+    assert say(store, "A call.", (CALL, "ts_utc", "2024-06-28T01:15Z")) == [        # no seconds cited, none shown
+        "The cited time (ts_utc) is Thu Jun 27, 2024 9:15 PM (UTC-04:00); the record's time is "
+        "Thu Jun 27, 2024 9:42:07 PM (UTC-04:00)."]
+    assert say(store, "A call.", (CALL, "ts_local", "2024-06-27 21:15")) == [        # no offset: the case timezone
+        "The cited time (ts_local) is Thu Jun 27, 2024 9:15 PM (UTC-04:00); the record's time is "
+        "Thu Jun 27, 2024 9:42:07 PM (UTC-04:00)."]
+    assert say(store, "A call.", (CALL, "ts_local", "last night")) == [
+        "The cited ts_local 'last night' is not a valid time; the record's time is Thu Jun 27, 2024 9:42:07 PM "
+        "(UTC-04:00)."]
+    assert say(store, "A reply.", (NOTS, "ts_utc", "2024-06-28T01:15:00Z"), window=None) == [
+        "Cited ts_utc = '2024-06-28T01:15:00Z'; the record has no timestamp."]
 
 
 def test_value_mismatch_numbers_long_text_and_missing_values(store):
@@ -78,7 +91,7 @@ def test_outside_window_gives_the_case_local_time_or_says_there_is_none(store):
 
 def test_ungrounded_entity_quotes_the_red_span(store):
     assert say(store, "Liz Dehner called at 9:15 PM.", (CALL, "contact_name", "Liz Dehner")) == [
-        "'9:15 PM' doesn't appear in any cited record."]
+        "'9:15 PM' doesn't match the cited record's time (9:42 PM)."]
     assert say(store, "bob called.", (CALL, "direction", "outgoing")) == [
         "'bob' doesn't appear in any cited record."]          # the claim's own spelling of the contact Bob
 
@@ -88,8 +101,55 @@ def test_two_ungrounded_entities_of_one_type_keep_their_order(store):
                             (CALL, "direction", "outgoing"))
     assert [r["code"] for r in entry["reasons"]] == ["UNGROUNDED_ENTITY:clock_time"] * 2 + ["UNGROUNDED_ENTITY:contact"] * 2
     assert explain.sentences(entry, spans, store, NY) == [
-        "'9:01 PM' doesn't appear in any cited record.", "'9:02 PM' doesn't appear in any cited record.",
+        "'9:01 PM' doesn't match the cited record's time (9:42 PM).",
+        "'9:02 PM' doesn't match the cited record's time (9:42 PM).",
         "'Bob' doesn't appear in any cited record.", "'Liz Dehner' doesn't appear in any cited record."]
+
+
+# ------------------------------------------------------------------------------ F2: the true value
+def test_a_wrong_clock_time_names_the_cited_records_time(store):
+    # the citations pass (ts cited correctly); only the time written in the text is wrong
+    assert say(store, "Liz Dehner called at 9:36 PM.", (CALL, "contact_name", "Liz Dehner"),
+               (CALL, "ts_local", "2024-06-27T21:42:07-04:00")) == [
+        "'9:36 PM' doesn't match the cited record's time (9:42 PM)."]
+    assert say(store, "Liz Dehner called at 21:36.", (CALL, "contact_name", "Liz Dehner")) == [
+        "'21:36' doesn't match the cited record's time (21:42)."]                  # in the claim's own style
+
+
+def test_with_several_cited_records_the_nearest_time_is_named(store):
+    # the call is at 9:42:07 PM, the location fix at 9:50:00 PM
+    assert say(store, "Liz Dehner called at 9:48 PM from the gym.", (CALL, "contact_name", "Liz Dehner"),
+               (LOC, "source", "wifi")) == ["'9:48 PM' doesn't match the cited record's time (9:50 PM)."]
+    assert say(store, "Liz Dehner called at 9:30 PM from the gym.", (CALL, "contact_name", "Liz Dehner"),
+               (LOC, "source", "wifi")) == ["'9:30 PM' doesn't match the cited record's time (9:42 PM)."]
+
+
+def test_a_wrong_date_names_the_cited_records_date(store):
+    assert say(store, "On June 28 Liz Dehner called.", (CALL, "contact_name", "Liz Dehner")) == [
+        "'June 28' doesn't match the cited record's date (Thu Jun 27, 2024)."]
+
+
+def test_a_right_time_that_is_not_cited_says_so(store):
+    assert say(store, "Liz Dehner called at 9:42 PM.", (CALL, "contact_name", "Liz Dehner")) == [
+        "'9:42 PM' matches the cited record's time, but the claim doesn't cite that record's timestamp."]
+    assert say(store, "A reply at 9:15 PM.", (NOTS, "direction", "outgoing"), window=None) == [
+        "'9:15 PM' doesn't appear in any cited record; none of them has a timestamp."]
+
+
+def test_after_a_failed_citation_the_entity_is_not_backed_by_a_correctly_cited_value(store):
+    # the classic: a wrong time in the text, cited with the same wrong time
+    assert say(store, "Liz Dehner called at 9:15 PM.", (CALL, "contact_name", "Liz Dehner"),
+               (CALL, "ts_local", "2024-06-27T21:15:00-04:00")) == [
+        "The cited time (ts_local) is Thu Jun 27, 2024 9:15:00 PM (UTC-04:00); the record's time is "
+        "Thu Jun 27, 2024 9:42:07 PM (UTC-04:00).",
+        "'9:15 PM' isn't backed by a correctly cited time (the cited record's time is 9:42 PM)."]
+    assert say(store, "On June 28 at 9:15 PM.", ("call_ffffffffff", "ts_utc", "2024-06-29T01:15:00Z")) == [
+        "No record call_ffffffffff exists in this extraction.",
+        "'June 28' isn't backed by a correctly cited time.", "'9:15 PM' isn't backed by a correctly cited time."]
+    assert say(store, "bob wrote.", (MSG, "sender", "Alice"), window=None) == [
+        "Cited sender = 'Alice'; the record says 'Bob'.", "'bob' isn't backed by a correctly cited value."]
+    assert say(store, "Liz Dehner called.", (CALL, "raw_json", "{}")) == [
+        "raw_json can't be cited.", "'Liz Dehner' isn't backed by a correctly cited value."]
 
 
 def test_time_range_sentences(store):

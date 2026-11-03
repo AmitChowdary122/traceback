@@ -139,7 +139,7 @@ BOB_AGAIN = {"text": "Bob called.", "citations": [{"artifact_id": CALL, "field":
 def test_rejected_annotations_carry_one_sentence_per_reason(store):
     out = runview.reverify(trace(store, [BAD]), store)
     (ann,) = out["annotations"]["rejected"]
-    assert ann["sentences"] == ["'9:15 PM' doesn't appear in any cited record.",
+    assert ann["sentences"] == ["'9:15 PM' doesn't match the cited record's time (9:40 PM).",
                                 "'Bob' doesn't appear in any cited record."]
 
 
@@ -151,7 +151,7 @@ def test_repair_view_pairs_round_one_rejections_with_round_two(store):
     assert got == [(WRONG_TIME["text"], "corrected", FIXED["text"]), (GHOST["text"], "dropped", None),
                    (BOB["text"], "still rejected", BOB_AGAIN["text"])]
     assert rep["kept"] == 1 and rep["new"] == 0
-    assert rep["items"][0]["before"]["sentences"] == ["'9:15 PM' doesn't appear in any cited record."]
+    assert rep["items"][0]["before"]["sentences"] == ["'9:15 PM' doesn't match the cited record's time (9:40 PM)."]
     assert rep["items"][0]["after"]["verdict"] == "verified"
     assert [e["text"] for e in rep["items"][0]["after"]["entities"]] == ["Liz Dehner", "9:40 PM"]
     assert rep["items"][2]["after"]["sentences"][0] == "Cited direction = 'incoming'; the record says 'outgoing'."

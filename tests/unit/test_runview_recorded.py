@@ -6,7 +6,9 @@ import pathlib
 
 import pytest
 
-from tbx import cli, runview
+from tbx import cli, explain, runview
+from tbx.checker import check
+from tbx.models import Answer
 from tbx.store import Store
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
@@ -93,3 +95,48 @@ def test_every_recorded_run_still_rechecks_the_same_and_its_spans_are_well_forme
     for path in sorted(RUNS.glob("*.jsonl")):
         claims = verified(store, path.stem.rsplit("-", 1)[1])
         assert_well_formed(claims)
+
+
+# ------------------------------------------------------------------------------ F2 on real data (in memory only)
+def with_claim(ev, k, **change):
+    """A copy of a run's events whose answer has claim k changed (the recorded check is left as it was)."""
+    ev = copy.deepcopy(ev)
+    for e in ev:
+        if e["type"] == "final_answer":
+            claim = e["payload"]["claims"][k]
+            for key, value in change.items():
+                if key == "cite":
+                    i, v = value
+                    claim["citations"][i]["value"] = v
+                else:
+                    claim[key] = value
+    return ev
+
+
+def rechecked_rejections(store, ev):
+    """[(claim text, its sentences)] for the claims the checker rejects in the (changed) answer, under its window."""
+    answer = Answer.model_validate({"claims": next(e for e in ev if e["type"] == "final_answer")["payload"]["claims"]})
+    res = check(answer, store, runview.recorded_window(ev)).model_dump(mode="json")
+    spans = dict(zip((json.dumps(c, sort_keys=True) for c in answer.model_dump(mode="json")["claims"]), res["entities"]))
+    return [(r["claim"]["text"], explain.sentences(r, spans[json.dumps(r["claim"], sort_keys=True)], store, store.case_tz))
+            for r in res["rejected"]]
+
+
+def test_a_wrong_time_in_the_text_names_the_records_true_time(store):
+    ev = events("ae5039")
+    text = next(e for e in ev if e["type"] == "final_answer")["payload"]["claims"][0]["text"]
+    assert text.startswith("At 9:06 PM")
+    got = rechecked_rejections(store, with_claim(ev, 0, text=text.replace("9:06 PM", "9:36 PM")))
+    assert got == [(text.replace("9:06 PM", "9:36 PM"), ["'9:36 PM' doesn't match the cited record's time (9:06 PM)."])]
+
+
+def test_a_wrong_cited_time_is_shown_case_local_and_the_text_is_not_backed(store):
+    ev = events("ae5039")
+    text = next(e for e in ev if e["type"] == "final_answer")["payload"]["claims"][0]["text"]
+    got = rechecked_rejections(store, with_claim(ev, 0, text=text.replace("9:06 PM", "9:36 PM"),
+                                                 cite=(0, "2024-06-27T21:36:18-04:00")))
+    assert got[0][1] == [
+        "The cited time (ts_local) is Thu Jun 27, 2024 9:36:18 PM (UTC-04:00); the record's time is "
+        "Thu Jun 27, 2024 9:06:18 PM (UTC-04:00).",
+        "'June 27' isn't backed by a correctly cited time (the cited record's date is Thu Jun 27, 2024).",
+        "'9:36 PM' isn't backed by a correctly cited time (the cited record's time is 9:06 PM)."]
