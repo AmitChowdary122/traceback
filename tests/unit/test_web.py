@@ -212,3 +212,32 @@ def test_page_offers_recorded_runs_when_a_provider_is_not_live(setup):
     client, _ = setup
     page = client.get("/").text
     assert 'id="replays"' in page and "live_providers" in page
+
+
+def test_replay_rechecks_the_recorded_answer_and_carries_entity_spans(setup):
+    client, tmp = setup
+    rid = client.post("/api/ask", json={"question": "Who called?", "from": "2024-07-27 21:00",
+                                        "to": "2024-07-27 23:00"}).json()["run_id"]
+    run = _wait(client, rid)
+    assert run["recheck"]["status"] == "match" and "same result as recorded" in run["recheck"]["message"]
+    (ok,) = run["annotations"]["verified"]
+    assert ok["index"] == 0 and [(e["text"], e["grounded"]) for e in ok["entities"]] == [("Liz Dehner", True)]
+    (bad,) = run["annotations"]["rejected"]
+    assert bad["index"] == 1 and bad["entities"] == []           # "Bob" is not a known contact in this store
+    assert client.get("/api/runs").json()[0]["recheck"] == "match"
+
+
+def test_a_trace_whose_record_differs_from_the_recheck_is_flagged(setup):
+    client, tmp = setup
+    rid = client.post("/api/ask", json={"question": "Who called?"}).json()["run_id"]
+    _wait(client, rid)
+    path = tmp / "runs" / f"{rid}.jsonl"
+    lines = [json.loads(x) for x in path.read_text().splitlines()]
+    for e in lines:
+        if e["type"] == "check_result":   # pretend the recorded run had verified the rejected claim
+            e["payload"]["verified"].append(e["payload"]["rejected"].pop()["claim"])
+    path.write_text("".join(json.dumps(e) + "\n" for e in lines))
+    run = client.get(f"/api/runs/{rid}").json()
+    assert run["recheck"]["status"] == "differs"
+    assert "Claim 2 was recorded as verified; the re-check rejects it (VALUE_MISMATCH)" in run["recheck"]["message"]
+    assert client.get("/api/runs").json()[0]["recheck"] == "differs"

@@ -159,3 +159,30 @@ def test_cli_export_static(case, capsys):
     rc = cli.main(["export-static", "--out", str(tmp / "site"), "--db", str(db), "--runs-dir", str(runs)])
     assert rc == 0 and json.loads(capsys.readouterr().out)["runs"] == 1
     assert cli.main(["export-static", "--out", str(tmp / "s2"), "--db", str(tmp / "nope.db"), "--runs-dir", str(runs)]) == 1
+
+
+def test_export_rechecks_every_run_and_reports_differences(case):
+    """The fixture's recorded reason detail is hand-written ("not in store"), so its re-check differs; a run recorded
+    from the real checker matches. Both verdicts are baked into the exported run views."""
+    from tbx.checker import check
+    from tbx.models import Answer
+    tmp, db, runs, _ = case
+    answer = Answer.model_validate({"claims": [_claim("Liz Dehner placed a call.", (CALL, "contact_name", "Liz Dehner"))]})
+    s = Store(str(db))
+    result = check(answer, s, None).model_dump()
+    s.close()
+    good = "20261101T000001Z-def456"
+    events = [("run_start", {"question": "Who called?", "window": None, "provider": "meta", "model": "muse-spark-1.3",
+                             "repair": 0, "case_tz": NY}),
+              ("final_answer", {**answer.model_dump(), "round": 1}), ("check_result", {**result, "round": 1}),
+              ("run_end", {"status": "ok", "totals": {"tokens": 1, "latency_ms": 1, "est_cost_usd": 0}})]
+    (runs / f"{good}.jsonl").write_text("".join(
+        json.dumps({"ts": "2026-11-01T00:00:01Z", "run_id": good, "step": i, "type": t, "payload": p}) + "\n"
+        for i, (t, p) in enumerate(events)))
+    summary = export_static(str(tmp / "site"), str(db), str(runs))
+    assert summary["recheck"] == {"match": [good], "differs": [RUN], "error": []}
+    view = _load(tmp / f"site/api/runs/{good}.json")
+    assert view["recheck"]["status"] == "match"
+    assert [(e["text"], e["grounded"]) for e in view["annotations"]["verified"][0]["entities"]] == [("Liz Dehner", True)]
+    bad = _load(tmp / f"site/api/runs/{RUN}.json")
+    assert bad["recheck"]["status"] == "differs" and "reasons differ" in bad["recheck"]["message"]

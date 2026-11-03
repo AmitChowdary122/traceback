@@ -1,7 +1,9 @@
 """Traceback web app (CONTRACTS.md v1.2 section 10). Run it with `uvicorn tbx.web:app`.
 
 - POST /api/ask returns {run_id} at once and runs the same agent code as `tbx ask` in a background thread.
-- GET /api/runs and /api/runs/{id} read runs/*.jsonl, so recorded runs replay with no model call.
+- GET /api/runs and /api/runs/{id} read runs/*.jsonl, so recorded runs replay with no model call. Each recorded
+  answer is re-checked on load with the deterministic checker (tbx.runview): the view carries the re-check's verdict,
+  a warning when it differs from the recorded check_result, and the v1.3 entity spans of every claim it shows.
 - The page (index.html, next to this file) needs no build step.
 
 Environment: TBX_DB (store), TBX_RUNS_DIR (default ./runs), TBX_MEDIA_ROOT (default: the media root
@@ -26,6 +28,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from tbx import runview
 from tbx import timeutil as tu
 from tbx.store import Store
 
@@ -144,6 +147,7 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
     store_lock = threading.Lock()
     active: dict[str, dict] = {}       # run_id -> {"status", "error"} for runs started by this process
     active_lock = threading.Lock()
+    rechecked: dict[str, tuple[tuple, dict]] = {}   # run_id -> ((mtime_ns, size), runview.reverify(...))
 
     app = FastAPI(title="Traceback", docs_url=None, redoc_url=None)
 
@@ -177,6 +181,18 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
         if not RUN_ID.fullmatch(run_id or ""):
             raise HTTPException(404, "unknown run")
         return runs / f"{run_id}.jsonl"
+
+    def reverify(p: pathlib.Path, events: list[dict]) -> dict:
+        """Re-check a recorded run against the store (cached until its trace file changes)."""
+        st = p.stat()
+        key = (st.st_mtime_ns, st.st_size, len(events))
+        hit = rechecked.get(p.stem)
+        if hit and hit[0] == key:
+            return hit[1]
+        with store_lock:
+            out = runview.reverify(events, store())
+        rechecked[p.stem] = (key, out)
+        return out
 
     def artifacts_for(view: dict, tz: str) -> dict:
         claims = list(view.get("verified", [])) + [r.get("claim", {}) for r in view.get("rejected", [])]
@@ -286,14 +302,18 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             with active_lock:
                 is_active = active.get(run_id, {}).get("status") == "running"
             v = summarize(events, is_active, p.stat().st_mtime)
+            try:
+                recheck = reverify(p, events)["recheck"]["status"] if v["status"] != "running" else "none"
+            except HTTPException:  # no store: the list still works, the run view reports the store error
+                recheck = "unavailable"
             out.append({"run_id": run_id, "question": v["question"], "status": v["status"], "started": v["started"],
                         "provider": v["provider"], "model": v["model"], "verified": len(v["verified"]),
-                        "rejected": len(v["rejected"])})
+                        "rejected": len(v["rejected"]), "recheck": recheck})
         with active_lock:
             pending = [(k, v) for k, v in active.items() if not (runs / f"{k}.jsonl").exists()]
         for run_id, v in pending:
             out.append({"run_id": run_id, "question": None, "status": v["status"], "started": None,
-                        "provider": None, "model": None, "verified": 0, "rejected": 0})
+                        "provider": None, "model": None, "verified": 0, "rejected": 0, "recheck": "none"})
         out.sort(key=lambda r: (r["started"] or "9999", r["run_id"]), reverse=True)
         return out
 
@@ -313,6 +333,14 @@ def create_app(db_path: str | None = None, runs_dir: str | None = None, media_ro
             view["error"] = mine["error"]
         tz = view.get("case_tz") or case_tz()
         view.update(run_id=run_id, events=events, artifacts=artifacts_for(view, tz), case_tz=tz)
+        if view["status"] == "running":
+            view.update(recheck={"status": "none", "message": "", "rounds": [], "entities_recorded": False},
+                        annotations={"verified": [], "rejected": []})
+        else:
+            rv = reverify(p, events)
+            view.update(recheck=rv["recheck"], annotations=rv["annotations"])
+            if view.get("first_round") and rv["first_round_annotations"]:
+                view["first_round"]["annotations"] = rv["first_round_annotations"]
         return view
 
     @app.get("/api/runs/{run_id}/events")

@@ -6,7 +6,8 @@ the server would answer (api/case.json alone is edited, to turn live asking off)
     index.html                         the page, with a manifest in <script id="tbx-static"> (static mode)
     api/case.json                      GET /api/case, with live asking turned off
     api/runs.json                      GET /api/runs
-    api/runs/<run_id>.json             GET /api/runs/<run_id>, for every recorded run
+    api/runs/<run_id>.json             GET /api/runs/<run_id>, for every recorded run, re-checked against the store
+                                       at export time (its "recheck" says whether that matches the recorded result)
     api/artifacts/<id>.json            GET /api/artifacts/<id>, for every cited artifact and the media behind it
     api/media/<id>/tags.json           GET /api/media/<id>/tags
     api/media/<id>/transcripts.json    GET /api/media/<id>/transcripts
@@ -114,8 +115,13 @@ def export_static(out: str, db_path: str, runs_dir: str, media_root: str | None 
     # runs
     runs = save("api/runs.json", "/api/runs")
     cited: set[str] = set()
+    recheck: dict[str, list[str]] = {"match": [], "differs": [], "error": []}
     for r in runs:
-        cited |= _cited_ids(save(f"api/runs/{r['run_id']}.json", f"/api/runs/{r['run_id']}"))
+        view = save(f"api/runs/{r['run_id']}.json", f"/api/runs/{r['run_id']}")
+        cited |= _cited_ids(view)
+        status = (view.get("recheck") or {}).get("status")   # re-checked against the store now, at export time
+        if status in recheck:
+            recheck[status].append(r["run_id"])
 
     # artifacts: every cited row that exists (an unknown ID stays a 404, as on the server), plus the media behind it
     rows: dict[str, dict] = {}
@@ -174,7 +180,7 @@ def export_static(out: str, db_path: str, runs_dir: str, media_root: str | None 
         raise
     return {"out": str(root), "runs": len(runs), "artifacts": len(rows), "media_files": len(media_files),
             "unknown_cited_ids": missing, "featured_run": case["featured_run"],
-            "bytes": sum(p.stat().st_size for p in written)}
+            "recheck": {k: sorted(v) for k, v in recheck.items()}, "bytes": sum(p.stat().st_size for p in written)}
 
 
 def _assert_no_secrets(files: list[pathlib.Path]) -> None:

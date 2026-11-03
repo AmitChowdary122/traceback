@@ -211,6 +211,10 @@ def cmd_export_static(a) -> int:
                                 featured=a.featured or os.environ.get("TBX_FEATURED_RUN") or None)
     except ExportError as e:
         raise UsageError(str(e)) from None
+    flagged = summary["recheck"]["differs"] + summary["recheck"]["error"]
+    if flagged:
+        _err(f"warning: the re-check at export differs from the recorded result for {len(flagged)} run(s): "
+             f"{', '.join(flagged)} (the page shows a warning on each)")
     print(json.dumps(summary, indent=2))
     return EXIT_OK
 

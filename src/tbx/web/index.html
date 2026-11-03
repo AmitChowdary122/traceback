@@ -161,6 +161,22 @@ details.trace[open] summary::before { content: "▾"; }
 .tl .body { padding: 10px 0 12px; border-bottom: 1px solid var(--border); min-width: 0; }
 .tl:last-child .body { border-bottom: 0; }
 .claim { font-size: 14px; margin: 0 0 6px; }
+/* v1.3 entity spans: green = checked by code against the cited rows, red = not found in any cited row,
+   muted = the model's own words, not verified */
+.claim.spans { color: var(--muted); }
+.ent { border-radius: 3px; padding: 0 2px; margin: 0 -1px; font-weight: 600; }
+.ent.ok { color: var(--ok); background: var(--ok-bg); box-shadow: inset 0 -2px 0 var(--ok-line); }
+.ent.bad { color: var(--bad); background: var(--bad-bg); text-decoration: underline wavy var(--bad);
+  text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.span-legend { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; font-size: 12px; color: var(--muted);
+  margin-top: 8px; }
+.span-legend .prose { color: var(--muted); border-bottom: 1px dotted var(--border-strong); }
+.recheck { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; }
+.recheck.ok { color: var(--ok); }
+.recheck-warn { margin-top: 10px; padding: 8px 10px; border-radius: var(--radius); font-size: 12.5px; color: var(--warn);
+  background: var(--warn-bg); border: 1px solid var(--warn); }
+.recheck-warn b { color: var(--text); }
+.runs .warn-flag { color: var(--warn); font-weight: 700; }
 .span-note { font-size: 11.5px; color: var(--muted); margin: -2px 0 6px; font-family: var(--mono); }
 @media (max-width: 700px) { .tl { grid-template-columns: 84px 14px minmax(0, 1fr); padding: 0 10px; } }
 
@@ -414,7 +430,8 @@ async function loadRuns() {
     h("div", { class: "m" }, h("span", { class: `pill ${r.status}` }, r.status),
       h("span", {}, (r.started || "").replace("T", " ").replace("Z", " UTC")),
       h("span", {}, r.provider || ""),
-      h("span", { class: "n-ok" }, `✓ ${r.verified}`), h("span", { class: "n-bad" }, `✗ ${r.rejected}`))))));
+      h("span", { class: "n-ok" }, `✓ ${r.verified}`), h("span", { class: "n-bad" }, `✗ ${r.rejected}`),
+      r.recheck === "differs" || r.recheck === "error" ? h("span", { class: "warn-flag", title: "the re-check differs from the recorded result" }, "⚠ re-check") : null)))));
   return runs;
 }
 function markCurrent() {
@@ -452,12 +469,17 @@ function renderRun(run) {
       h("span", {}, `${run.provider || "?"} / ${run.model || "?"}`),
       run.repair ? h("span", {}, "repair pass on") : null,
       u.tokens != null ? h("span", { class: "usage" }, `${u.tokens.toLocaleString()} tokens · ${(u.latency_ms / 1000).toFixed(1)} s model time · ~$${(u.est_cost_usd || 0).toFixed(4)}`) : null,
-      h("span", { class: "mono small" }, run.run_id)),
-    run.error ? h("div", { class: "err" }, run.error) : null);
+      h("span", { class: "mono small" }, run.run_id),
+      recheckBadge(run.recheck)),
+    run.error ? h("div", { class: "err" }, run.error) : null,
+    recheckWarning(run.recheck),
+    run.status !== "running" ? spanLegend() : null);
+  const ann = run.annotations || {};
   const parts = [head, renderTrace(run.events || [], run.status)];
   if (run.status !== "running" || (run.verified || []).length || (run.rejected || []).length) {
-    parts.push(renderVerified(run), renderRejected(run.rejected || [], "Rejected", "rejected"));
-    if (run.first_round) parts.push(renderRejected(run.first_round.rejected || [], "Rejected in round 1 (before the repair pass)", "rejected"));
+    parts.push(renderVerified(run), renderRejected(run.rejected || [], "Rejected", "rejected", ann.rejected));
+    if (run.first_round) parts.push(renderRejected(run.first_round.rejected || [], "Rejected in round 1 (before the repair pass)", "rejected",
+      (run.first_round.annotations || {}).rejected));
   }
   $("#main").replaceChildren(h("div", { class: "stack" }, ...parts));
 }
@@ -502,6 +524,50 @@ function compactArgs(a) {
   return s || "(no arguments)";
 }
 
+/* ---- v1.3 entity spans: offsets are Python string offsets (code points), so index by code point ---- */
+function claimText(text, ents) {
+  if (!Array.isArray(ents)) return h("p", { class: "claim" }, text);   // no spans (re-check unavailable)
+  const chars = Array.from(text || "");
+  const cover = chars.map(() => []);
+  ents.forEach((e, k) => { for (let i = Math.max(0, e.start); i < Math.min(e.end, chars.length); i++) cover[i].push(k); });
+  const p = h("p", { class: "claim spans" });
+  let i = 0;
+  while (i < chars.length) {
+    const key = cover[i].join(",");
+    let j = i + 1;
+    while (j < chars.length && cover[j].join(",") === key) j++;
+    const piece = chars.slice(i, j).join("");
+    if (!cover[i].length) p.append(piece);
+    else {
+      const covering = cover[i].map((k) => ents[k]);
+      const bad = covering.some((e) => !e.grounded);
+      const types = [...new Set(covering.map((e) => e.type.replace("_", " ")))].join(", ");
+      p.append(h("span", { class: `ent ${bad ? "bad" : "ok"}`, "data-type": covering.map((e) => e.type).join(" "),
+        title: `${types}: ${bad ? "not found in any cited row" : "checked by code against the cited rows"}` }, piece));
+    }
+    i = j;
+  }
+  return p;
+}
+function spanLegend() {
+  return h("div", { class: "span-legend", "aria-label": "How to read the claims" },
+    h("span", { class: "ent ok" }, "green"), h("span", {}, "= checked by code against the cited rows ·"),
+    h("span", { class: "ent bad" }, "red"), h("span", {}, "= not found in any cited row ·"),
+    h("span", { class: "prose" }, "plain text"), h("span", {}, "= the model's own words, not verified"));
+}
+function recheckBadge(rc) {
+  if (!rc || rc.status !== "match") return null;
+  const when = STATIC ? "re-checked when this copy was exported" : "re-checked on load";
+  return h("span", { class: "recheck ok", title: rc.message }, `✓ ${when}: same result`);
+}
+function recheckWarning(rc) {
+  if (!rc || (rc.status !== "differs" && rc.status !== "error")) return null;
+  return h("div", { class: "recheck-warn", role: "alert" },
+    h("b", {}, rc.status === "differs" ? "Re-check differs from the recorded result. " : "Re-check failed. "),
+    rc.status === "differs" ? (rc.rounds || []).flatMap((r) => r.changes || []).join(" ") : rc.message,
+    " The verdicts shown are the recorded ones; the highlighting is today's re-check.");
+}
+
 function claimTime(claim) {
   let best = null;
   for (const c of claim.citations || []) {
@@ -511,14 +577,15 @@ function claimTime(claim) {
   return best;
 }
 function renderVerified(run) {
+  const ann = (run.annotations || {}).verified || [];
   const claims = (run.verified || []).map((c, i) => ({ c, i, t: claimTime(c) }));
   claims.sort((a, b) => (a.t ? a.t.ts_utc : "~").localeCompare(b.t ? b.t.ts_utc : "~") || a.i - b.i);
-  const list = claims.map(({ c, t }) => {
+  const list = claims.map(({ c, i, t }) => {
     const p = t ? parseLocal(t.ts_local) : null;
     return h("li", { class: "tl" },
       h("div", { class: "when" }, p ? [h("div", { class: "clock" }, p.clock), h("div", { class: "date" }, `${p.date}`)] : h("div", { class: "date" }, "undated")),
       h("div", { class: "rail" }),
-      h("div", { class: "body" }, h("p", { class: "claim" }, c.text),
+      h("div", { class: "body" }, claimText(c.text, ann[i] && ann[i].entities),
         (c.time_start || c.time_end) ? h("div", { class: "span-note" }, `span ${c.time_start || "…"} → ${c.time_end || "…"}`) : null,
         citeChips(c.citations || [], null)));
   });
@@ -527,13 +594,13 @@ function renderVerified(run) {
     list.length ? h("ol", { class: "timeline" }, list) : h("div", { class: "none" }, run.status === "running" ? "…" : "No verified claims."),
     run.note ? h("div", { class: "note" }, h("b", {}, "Model note (not a finding): "), run.note) : null);
 }
-function renderRejected(rejected, title, cls) {
+function renderRejected(rejected, title, cls, ann) {
   if (!rejected.length && cls === "rejected" && title !== "Rejected") return null;
   return h("section", { class: `panel ${cls}` },
     h("h2", {}, title, h("span", { class: "count" }, String(rejected.length))),
-    rejected.length ? rejected.map((r) => {
+    rejected.length ? rejected.map((r, i) => {
       const badIdx = new Set((r.reasons || []).map((x) => x.citation_index).filter((x) => x != null));
-      return h("div", { class: "rj" }, h("p", { class: "claim" }, r.claim.text),
+      return h("div", { class: "rj" }, claimText(r.claim.text, ann && ann[i] && ann[i].entities),
         h("ul", { class: "reasons" }, (r.reasons || []).map((x) => h("li", {}, h("span", { class: "code" }, x.code),
           x.citation_index != null ? h("span", { class: "small" }, `citation [${x.citation_index}]`) : null,
           h("span", { class: "d" }, x.detail)))),

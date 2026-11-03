@@ -1,7 +1,9 @@
-"""The deterministic citation checker (CONTRACTS.md v1.2 section 7).
+"""The deterministic citation checker (CONTRACTS.md v1.3 section 7).
 
 Pure: no network, no LLM, no clock. Same inputs give byte-identical model_dump_json().
 Strict: a claim with any reason is rejected, and every reason is listed.
+v1.3: CheckResult.entities lists the R4 entities of each claim as spans of its text, so a reader can tell the words
+code checked (grounded or not) from the model's own wording, which is not verified.
 """
 from __future__ import annotations
 
@@ -11,7 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from tbx import timeutil as tu
-from tbx.models import Answer, CheckResult, Claim, Reason, RejectedClaim
+from tbx.models import Answer, CheckResult, Claim, EntitySpan, Reason, RejectedClaim
 from tbx.store import CITABLE, Store
 
 UNKNOWN_ARTIFACT = "UNKNOWN_ARTIFACT"
@@ -98,8 +100,13 @@ def value_matches(field: str, cited: str, row: dict, case_tz: str) -> bool:
 # ------------------------------------------------------------------------------ entities (R4)
 @dataclass(frozen=True)
 class Entity:
+    """One R4 entity. text == the claim text[start:end], trimmed (v1.3); key is the value R4 grounds: the cleaned
+    match for most types (as in v1.2), the known contact's name for contacts."""
     type: str
     text: str
+    start: int
+    end: int
+    key: str
 
 
 _URL = re.compile(r"https?://[^\s<>\"'`]+", re.I)
@@ -118,48 +125,107 @@ _PHONE = re.compile(r"\+?\(?\d[\d\s().\-]{5,}\d\)?")
 _DECIMAL = re.compile(r"-?\d+\.\d+")
 _BLANK = "\x00"
 ORDER = ("url", "email", "timestamp", "date", "clock_time", "coordinate", "phone")
+_RANK = {t: i for i, t in enumerate((*ORDER, "contact"))}
 _PATTERNS = {"url": _URL, "email": _EMAIL, "timestamp": _TIMESTAMP, "date": _DATE, "clock_time": _CLOCK,
              "coordinate": _COORD, "phone": _PHONE}
 
 
-def _clean(etype: str, s: str) -> str | None:
-    s = s.strip()
+def _trim(s: str, a: int, b: int, chars: str | None = None, left: bool = True) -> tuple[int, int]:
+    """The bounds of s[a:b] after str.strip(chars) (str.rstrip(chars) when left is False); None means whitespace."""
+    out = str.isspace if chars is None else chars.__contains__
+    while left and a < b and out(s[a]):
+        a += 1
+    while b > a and out(s[b - 1]):
+        b -= 1
+    return a, b
+
+
+SPAN_TRAILING = ".,;:!?"   # v1.3: a span never ends with these (nor with whitespace)
+
+
+def _span_end(s: str, a: int, b: int) -> int:
+    while b > a and (s[b - 1] in SPAN_TRAILING or s[b - 1].isspace()):
+        b -= 1
+    return b
+
+
+def _clean(etype: str, s: str) -> tuple[int, int, str] | None:
+    """A raw match -> (start, end, key): the trimmed span's bounds within s and the value R4 grounds, or None."""
+    a, b = _trim(s, 0, len(s))
     if etype in ("url", "email"):
-        s = s.rstrip(".,;:!?)]}'\"")
+        a, b = _trim(s, a, b, ".,;:!?)]}'\"", left=False)
     if etype == "phone":
-        s = s.strip(" .-")
-        if len(digits(s)) < 7 or _DECIMAL.fullmatch(s.lstrip("+")):
-            return None
-    if etype == "clock_time" and parse_clock(s) is None:
+        a, b = _trim(s, a, b, " .-")
+    key = s[a:b]
+    if etype == "phone" and (len(digits(key)) < 7 or _DECIMAL.fullmatch(key.lstrip("+"))):
         return None
-    if etype == "date" and parse_date(s) is None:
+    if etype == "clock_time" and parse_clock(key) is None:
+        return None
+    if etype == "date" and parse_date(key) is None:
         return None
     if etype == "coordinate":
-        lat, lon = (float(x) for x in s.split(","))
+        lat, lon = (float(x) for x in key.split(","))
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
             return None
-    return s or None
+    b = _span_end(s, a, b)
+    return (a, b, key) if key and b > a else None
 
 
 def contact_pattern(name: str) -> re.Pattern:
     return re.compile(rf"(?<!\w){re.escape(fold(name))}(?!\w)")
 
 
+def _fold_map(text: str) -> tuple[str, list[int], list[int]]:
+    """fold(text), plus the [start, end) in text of the characters each folded character came from.
+
+    A character is normalized together with the combining marks after it, so offsets map back to whole characters."""
+    out: list[str] = []
+    starts: list[int] = []
+    ends: list[int] = []
+    gap = False
+    i, n = 0, len(text)
+    while i < n:
+        j = i + 1
+        while j < n and unicodedata.combining(text[j]):
+            j += 1
+        for ch in unicodedata.normalize("NFKC", text[i:j]).casefold():
+            if ch.isspace():
+                gap = True
+                continue
+            if gap and out:
+                out.append(" ")
+                starts.append(i)
+                ends.append(i)
+            gap = False
+            out.append(ch)
+            starts.append(i)
+            ends.append(j)
+        i = j
+    return "".join(out), starts, ends
+
+
 def extract_entities(text: str, contacts: set[str]) -> list[Entity]:
-    """C1 order; a span taken by an earlier type is blanked before later types scan."""
+    """C1 order; a span taken by an earlier type is blanked before later types scan. Contacts come last, matched
+    against the original text, by name (sorted), with one entity per whole-word occurrence (v1.3)."""
     out: list[Entity] = []
     work = text
     for etype in ORDER:
         for m in _PATTERNS[etype].finditer(work):
-            val = _clean(etype, m.group(0))
-            if val is None:
+            cleaned = _clean(etype, m.group(0))
+            if cleaned is None:
                 continue
-            out.append(Entity(etype, val))
+            a, b, key = cleaned
+            out.append(Entity(etype, text[m.start() + a:m.start() + b], m.start() + a, m.start() + b, key))
             work = work[:m.start()] + _BLANK * (m.end() - m.start()) + work[m.end():]
-    folded = fold(text)
+    folded, starts, ends = _fold_map(text)
     for name in sorted(contacts):
-        if len(name.strip()) >= 3 and contact_pattern(name).search(folded):
-            out.append(Entity("contact", name))
+        if len(name.strip()) < 3:
+            continue
+        for m in contact_pattern(name).finditer(folded):
+            a, b = _trim(text, starts[m.start()], ends[m.end() - 1])
+            b = _span_end(text, a, b)
+            if b > a:
+                out.append(Entity("contact", text[a:b], a, b, name))
     return out
 
 
@@ -209,30 +275,30 @@ def _grounded(e: Entity, pool: _Pool, case_tz: str) -> bool:
         for v in pool.values:
             cands.append(v)
             cands += [m.group(0) for m in _PHONE.finditer(v)]
-        return any(phones_match(e.text, c) for c in cands)
+        return any(phones_match(e.key, c) for c in cands)
     if e.type == "contact":
-        pat = contact_pattern(e.text)
+        pat = contact_pattern(e.key)
         return any(pat.search(fold(v)) for v in pool.values)
     if e.type == "date":
-        y, mo, d = parse_date(e.text)  # type: ignore[misc]
+        y, mo, d = parse_date(e.key)  # type: ignore[misc]
         for ts in pool.timestamps:
             loc = tu.utc_to_local(ts, case_tz)
             if loc.month == mo and loc.day == d and (y is None or loc.year == y):
                 return True
         return False
     if e.type == "clock_time":
-        hm = parse_clock(e.text)
+        hm = parse_clock(e.key)
         return any(tu.case_hhmm(ts, case_tz) == hm for ts in pool.timestamps)
     if e.type == "coordinate":
-        lat, lon = (float(x) for x in e.text.split(","))
+        lat, lon = (float(x) for x in e.key.split(","))
         return any(abs(lat - a) <= 1e-4 and abs(lon - b) <= 1e-4 for a, b in pool.coords)
-    needle = fold(e.text)  # url, email, timestamp: general rule (containment after folding)
+    needle = fold(e.key)  # url, email, timestamp: general rule (containment after folding)
     return any(needle in fold(v) for v in pool.values)
 
 
 # ------------------------------------------------------------------------------ the check
 def _check_claim(claim: Claim, store: Store, window: tu.Window | None, case_tz: str,
-                 contacts: set[str]) -> list[Reason]:
+                 contacts: set[str]) -> tuple[list[Reason], list[EntitySpan]]:
     reasons: list[Reason] = []
     pool = _Pool([], [], [])
     support: list[datetime] = []
@@ -275,13 +341,22 @@ def _check_claim(claim: Claim, store: Store, window: tu.Window | None, case_tz: 
                                              f"..{tu.fmt_utc(window.end_utc)}"))
     pool.coords = [(p["lat"], p["lon"]) for p in coord_parts.values() if {"lat", "lon"} <= set(p)]
 
+    spans: list[EntitySpan] = []
+    named: set[str] = set()
     for e in extract_entities(claim.text, contacts):
-        if not _grounded(e, pool, case_tz):
+        grounded = _grounded(e, pool, case_tz)
+        spans.append(EntitySpan(type=e.type, text=e.text, start=e.start, end=e.end, grounded=grounded))
+        if e.type == "contact":       # one reason per contact name, however often it occurs (as in v1.2)
+            if e.key in named:
+                continue
+            named.add(e.key)
+        if not grounded:
             reasons.append(Reason(code=f"UNGROUNDED_ENTITY:{e.type}", citation_index=None,
-                                  detail=f"{e.type} {e.text!r} is not supported by the claim's cited values"))
+                                  detail=f"{e.type} {e.key!r} is not supported by the claim's cited values"))
+    spans.sort(key=lambda x: (x.start, x.end, _RANK[x.type], x.text))
 
     reasons += _check_range(claim, support, case_tz)
-    return reasons
+    return reasons, spans
 
 
 def _check_range(claim: Claim, support: list[datetime], case_tz: str) -> list[Reason]:
@@ -318,7 +393,8 @@ def check(answer: Answer, store: Store, window: tu.Window | None) -> CheckResult
     contacts = store.known_contacts()
     result = CheckResult()
     for claim in answer.claims:
-        reasons = _check_claim(claim, store, window, case_tz, contacts)
+        reasons, spans = _check_claim(claim, store, window, case_tz, contacts)
+        result.entities.append(spans)
         if reasons:
             result.rejected.append(RejectedClaim(claim=claim.model_copy(deep=True), reasons=reasons))
         else:

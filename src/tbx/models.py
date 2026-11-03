@@ -1,4 +1,4 @@
-"""Answer and check-result models (CONTRACTS.md v1.1 sections 6 and 7)."""
+"""Answer and check-result models (CONTRACTS.md v1.3 sections 6 and 7)."""
 from __future__ import annotations
 
 from pydantic import BaseModel, field_validator
@@ -43,6 +43,17 @@ class RejectedClaim(BaseModel):
     reasons: list[Reason]
 
 
+class EntitySpan(BaseModel):
+    """v1.3: one R4 entity in a claim's text. text == claim.text[start:end]; grounded is false exactly when this
+    entity produced UNGROUNDED_ENTITY:<type>. Words outside every span are the model's own, not verified."""
+    type: str
+    text: str
+    start: int
+    end: int
+    grounded: bool
+
+
 class CheckResult(BaseModel):
     verified: list[Claim] = []
     rejected: list[RejectedClaim] = []
+    entities: list[list[EntitySpan]] = []   # one list per answer claim, in answer order (v1.3)

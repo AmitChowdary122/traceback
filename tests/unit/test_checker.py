@@ -138,3 +138,75 @@ def test_transcript_follows_the_text_rule(tmp_path):
     short = run(s, "A voicemail mentioned a reservation.", (vm, "transcript", "U-Haul"))
     assert codes(short) == ["VALUE_MISMATCH"]                  # substrings need >= 8 characters
     assert codes(run(s, "A call was missed.", (vm, "direction", "missed"))) == ["VALUE_MISMATCH"]
+
+
+# ------------------------------------------------------------------------------ v1.3 entities (spans)
+def spans(res, i=0):
+    return [(e.type, e.text, e.start, e.end, e.grounded) for e in res.entities[i]]
+
+
+def test_entity_spans_are_trimmed_offsets_into_the_claim_text(store):
+    text = "Liz Dehner called at 12:05 a.m. on March 14."
+    res = run(store, text, (CALL, "ts_local", "2023-03-14T00:05:00-04:00"), (CALL, "contact_name", "Liz Dehner"))
+    assert res.verified
+    got = spans(res)
+    assert got == [("contact", "Liz Dehner", 0, 10, True), ("clock_time", "12:05 a.m", 21, 30, True),
+                   ("date", "March 14", 35, 43, True)]
+    for _, t, a, b, _ in got:
+        assert text[a:b] == t
+
+
+def test_contact_span_maps_back_through_case_and_whitespace_folding(store):
+    text = "Then LIZ   DEHNER called."
+    res = run(store, text, (CALL, "contact_name", "Liz Dehner"))
+    assert res.verified
+    assert spans(res) == [("contact", "LIZ   DEHNER", 5, 17, True)]
+
+
+def test_one_reason_per_contact_name_but_every_occurrence_is_a_span(store):
+    res = run(store, "Liz Dehner called; Liz Dehner hung up.", (CALL, "direction", "incoming"))
+    assert [r.code for r in res.rejected[0].reasons] == ["UNGROUNDED_ENTITY:contact"]  # unchanged from v1.2
+    assert spans(res) == [("contact", "Liz Dehner", 0, 10, False), ("contact", "Liz Dehner", 19, 29, False)]
+
+
+def test_entities_follow_answer_order_across_verified_and_rejected(store):
+    a = Answer.model_validate({"claims": [
+        {"text": "Bob called at 9:15 PM.", "citations": [{"artifact_id": CALL, "field": "direction", "value": "incoming"}]},
+        {"text": "Liz Dehner called.", "citations": [{"artifact_id": CALL, "field": "contact_name", "value": "Liz Dehner"}]},
+        {"text": "No entities here.", "citations": []}]})
+    res = checker.check(a, store, None)
+    assert [len(x) for x in res.entities] == [1, 1, 0]
+    assert spans(res, 0) == [("clock_time", "9:15 PM", 14, 21, False)]
+    assert spans(res, 1) == [("contact", "Liz Dehner", 0, 10, True)]
+
+
+def test_overlapping_contact_spans_sort_by_start_then_end(store):
+    prov = {"ts_original": "x", "tz_basis": "utc_string", "raw_json": "{}"}
+    store.insert("calls", {"artifact_id": artifact_id("calls", "calls.tsv", "2"), "source_path": "calls.tsv",
+                           "source_row": "2", "ts_utc": None, **prov, "contact_name": "Liz"})
+    res = run(store, "Liz Dehner called.", (CALL, "contact_name", "Liz Dehner"))
+    assert spans(res) == [("contact", "Liz", 0, 3, True), ("contact", "Liz Dehner", 0, 10, True)]
+
+
+def test_entities_round_trip_and_old_results_still_load(store):
+    from tbx.models import CheckResult
+    res = run(store, "Liz Dehner called 919-555-1234.", (CALL, "number", "9195551234"))
+    again = CheckResult.model_validate(json.loads(res.model_dump_json()))
+    assert again == res and again.model_dump_json() == res.model_dump_json()
+    assert CheckResult.model_validate({"verified": [], "rejected": []}).entities == []   # traces recorded before v1.3
+
+
+@pytest.mark.parametrize("s", ["Liz  Dehner", "\tLiz Dehner\n", "ﬁle Straße", "José Ñuñez", "ＬＩＺ dehner",
+                               "İstanbul", "a​b", "", "   ", "x — y", "📞 Liz Dehner called"])
+def test_offset_tracking_fold_equals_fold(s):
+    folded, starts, ends = checker._fold_map(s)
+    assert folded == checker.fold(s)
+    assert len(starts) == len(ends) == len(folded)
+    assert all(0 <= a <= b <= len(s) for a, b in zip(starts, ends))
+
+
+def test_contact_span_after_an_emoji_uses_code_point_offsets(store):
+    text = "📞 Liz Dehner called."
+    res = run(store, text, (CALL, "contact_name", "Liz Dehner"))
+    (e,) = res.entities[0]
+    assert (e.start, e.end, text[e.start:e.end]) == (2, 12, "Liz Dehner")

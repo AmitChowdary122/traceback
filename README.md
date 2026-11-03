@@ -91,8 +91,19 @@ window's ISO bounds) is rejected unless a cited artifact carries those times: th
 prompt also tells the model never to restate the window.
 
 With `--repair 1`, rejected claims and their reasons go back to the model once; the final report is the check of
-its second answer, and the trace keeps both rounds. The red-team suite (`tests/redteam/`, 76 cases) pins every rule,
+its second answer, and the trace keeps both rounds. The red-team suite (`tests/redteam/`, 149 tests) pins every rule,
 including real model claims recorded in the API spikes.
+
+**What exactly was checked (contract v1.3).** The checker also returns `entities`: for every claim, each R4 entity it
+found in the text, with its character span and whether it is grounded. The page colors the claim text with them:
+green = checked by code against the cited rows, red = not found in any cited row, plain text = the model's own words,
+which are not verified. So "the phone was at a gas station" stays plain: only the cited values and the extracted
+entities are checked, and the page says so.
+
+**Recorded runs are re-checked on load.** When the web app (or `tbx export-static`) loads a recorded run, it runs
+`check()` again on the recorded answer, with the recorded window, against the store, and compares the result with the
+trace's `check_result`. The run header says "re-checked: same result"; any difference is shown as a warning on that
+run, and `tbx export-static` lists it on stderr. Runs recorded before v1.3 get their highlighting from this re-check.
 
 ## Meta tooling used
 
@@ -146,7 +157,8 @@ TBX_DB=data/tbx.db uvicorn tbx.web:app --port 8000   # then open http://127.0.0.
 - **Replay:** every trace in `runs/*.jsonl` (or `TBX_RUNS_DIR`) is listed and replays with no model call. The newest
   good run (or `TBX_FEATURED_RUN`) opens by default. `TBX_RUNS_DIR=deploy/runs` replays the committed demo runs.
 - **Run view:** status, the tool calls from the trace, a VERIFIED timeline in case-local time, and a REJECTED panel
-  with each claim's reason codes and details.
+  with each claim's reason codes and details. Claim text is colored by what code checked (green), what failed (red)
+  and what is the model's own wording (plain); the header shows the re-check made on load.
 - **Evidence drawer:** click any citation for the raw row (`raw_json`), `source_path` and `source_row`. Photos show
   their SAM 3.1 boxes scaled to the displayed size; videos show the Muse Voice Transcribe transcript; MMS rows show
   their attachment.
@@ -273,6 +285,7 @@ record: the archive's SHA-256, the extraction path inside it, the ALEAPP version
 | `src/tbx/ingest.py` | ALEAPP report → store, with deterministic artifact IDs |
 | `src/tbx/tools.py` | the six typed tools the agent calls |
 | `src/tbx/checker.py` | the deterministic citation checker |
+| `src/tbx/runview.py` | recorded runs re-checked on load: the re-check verdict and the entity spans the page colors |
 | `src/tbx/enrich.py` | `tbx enrich`: Muse Voice Transcribe and SAM 3.1, cached in `data/sample/derived/enrich_cache.jsonl` |
 | `src/tbx/agent.py` | the tool loop, `submit_answer` validation and the JSONL trace |
 | `src/tbx/web/` | `tbx.web`: the FastAPI app and its single HTML page (no build step) |
