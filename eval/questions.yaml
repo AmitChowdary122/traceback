@@ -1,0 +1,189 @@
+# Traceback eval questions (CONTRACTS.md section 11). Owned by the testing session.
+#
+# Every expectation below was checked by hand with SQL against the store built from the committed sample
+# (tbx ingest data/sample/aleapp + tbx enrich --offline) on Nov 3, 2026. Case timezone: America/New_York
+# (EST until 2024-03-10, EDT after). Windows are case-local and inclusive.
+#
+# - expected_entities: phones as digits, coordinates as "lat,lon" (matched within 1e-4), anything else as a
+#   case-insensitive substring of the verified claims' text or cited values.
+# - expected_artifact_ids: the rows a complete answer must cite.
+# - tags: "negative" means the extraction holds no answer, so the right output is zero verified claims.
+#   "trap-*" marks questions built to tempt a model into a specific mistake (time zones, voicemail vs missed,
+#   near-miss numbers, empty windows). "completeness" means every listed row is needed.
+# - truth: what SQL says, for the reader.
+
+- id: q01
+  question: "Where was this phone between 9 and 11 pm, and who did it talk to?"
+  window: {from: "2024-06-27 21:00", to: "2024-06-27 23:00"}
+  expected_entities: ["8442008341", "35.6596081,-78.8730535"]
+  expected_artifact_ids: [msg_c9a0e4d555]
+  tags: [locations, messages, flagship, trap-tz-boundary]
+  truth: "73 location points, all at 35.6596081,-78.8730535. No calls. One incoming MMS from (844) 200-8341 at 10:41:52 PM (Jun 28 in UTC), 'Team DLCC: President Biden and Trump just left the stage.', stored as two rows plus an image."
+
+- id: q02
+  question: "Who did the phone call on the afternoon of July 27, 2024, and how long did the calls last?"
+  window: {from: "2024-07-27 12:00", to: "2024-07-27 20:00"}
+  expected_entities: ["9195794674", "121"]
+  expected_artifact_ids: [call_3adc11cd2f, call_798ca1927c, call_2225bf2365]
+  tags: [calls, completeness]
+  truth: "5:39:21 PM outgoing to '919579' (incomplete number, 0 s); 5:40:04 PM outgoing to 9195794674 'ThisIs DFIR', 121 s; 5:45:12 PM incoming from +19195794674, 105 s."
+
+- id: q03
+  question: "Who did the phone exchange messages with between 3 and 4 PM on July 26, 2024, and what did they talk about?"
+  window: {from: "2024-07-26 15:00", to: "2024-07-26 16:00"}
+  expected_entities: ["Thom De'Fer", "RCS"]
+  expected_artifact_ids: [msg_addd51bb88, msg_197afd2873]
+  tags: [messages]
+  truth: "Google Messages chat with Thom De'Fer from 3:03 PM ('Are you here yet?') to 3:45 PM: RCS, a contact hiccup, swapping pictures. Three empty MMS rows from Russell Philby at 3:47:24 PM."
+
+- id: q04
+  question: "What places were shared in text messages on the afternoon of July 26, 2024?"
+  window: {from: "2024-07-26 16:00", to: "2024-07-26 17:00"}
+  expected_entities: ["8708"]
+  expected_artifact_ids: [msg_c7b66131af, msg_0fe44bc5cb]
+  tags: [messages, url]
+  truth: "4:26:44 PM Thom De'Fer sent a Google Maps search link for 8708 Center Rd; 4:45:52 PM the phone replied with a Google Maps place link."
+
+- id: q05
+  question: "What was said in the video messages this phone received in February 2024, and who sent them?"
+  window: {from: "2024-02-01 00:00", to: "2024-02-29 23:59"}
+  expected_entities: ["Attorney General", "9199992727"]
+  expected_artifact_ids: [trn_abf68de0c5, trn_f4ee9200d9]
+  tags: [voice, media, est]
+  truth: "Two MMS videos from (919) 999-2727 (Feb 9 4:24 PM, Feb 13 1:32 PM). Voice Transcribe: campaign ads for Satana Deberry for Attorney General (the two transcripts spell the name differently)."
+
+- id: q06
+  question: "What do the photos taken on July 24, 2024 show?"
+  window: {from: "2024-07-24 00:00", to: "2024-07-24 23:59"}
+  expected_entities: ["cell phone", "laptop", "license plate"]
+  expected_artifact_ids: [med_8870c15ef4, med_3755e38c69, med_e48be04e20]
+  tags: [photos, sam]
+  truth: "12:05 PM: cell phone, person (an arm). 12:32 PM: two cell phones and a laptop. 3:57 PM: cars, license plate, signs; geotagged 38.8603361,-77.3032389."
+
+- id: q07
+  question: "Did anyone leave a voicemail on February 10, 2024? What did it say?"
+  window: {from: "2024-02-10 00:00", to: "2024-02-10 23:59"}
+  expected_entities: ["U-Haul", "9199291133"]
+  expected_artifact_ids: [call_f777b490c2]
+  tags: [voicemail, est]
+  truth: "9:28 AM voicemail from +19199291133, 14 s; carrier transcript: Jaclyn from U-Haul in Chapel Hill about a reservation."
+
+- id: q08
+  question: "Who left a voicemail on the evening of February 29, 2024, and what number did they ask to be called back on?"
+  window: {from: "2024-02-29 18:00", to: "2024-02-29 23:59"}
+  expected_entities: ["Keisha", "3363276855"]
+  expected_artifact_ids: [call_fc8e1e2fb4]
+  tags: [voicemail, est, trap-tz-boundary]
+  truth: "8:37 PM EST (Mar 1 01:37 UTC) voicemail from +13363276855: 'your cousin Keisha, call me back at 336-327-6855'."
+
+- id: q09
+  question: "What was discussed on Telegram on the morning of January 31, 2024?"
+  window: {from: "2024-01-31 10:30", to: "2024-01-31 12:30"}
+  expected_entities: ["battery"]
+  expected_artifact_ids: [msg_c40c47b6b2, msg_291110b5b1]
+  tags: [messages, telegram, est]
+  truth: "Chat with 'thisis dfir' from 11:00 AM: they moved; a phone battery issue, dropping from 100 to about 20 percent in a couple of hours."
+
+- id: q10
+  question: "What happened on Facebook Messenger between 1 and 2:30 PM on January 31, 2024? Include messages and calls."
+  window: {from: "2024-01-31 13:00", to: "2024-01-31 14:30"}
+  expected_entities: ["Summit", "116"]
+  expected_artifact_ids: [msg_e5c621133c, call_9a190fe43f, call_3d8d98c9f0, call_729ea0212a, call_1d03b6bea7]
+  tags: [messages, calls, completeness, est]
+  truth: "Messages with ThisIs Dfir from 1:15 PM (account created for the Summit; picture swap), then four Messenger calls: 1:45 PM in 116 s, 1:48 PM out 96 s, 1:53 PM in 96 s, 1:57 PM out 95 s."
+
+- id: q11
+  question: "List every WhatsApp call on January 30, 2024, with its direction and duration."
+  window: {from: "2024-01-30 00:00", to: "2024-01-30 23:59"}
+  expected_entities: ["9195794674"]
+  expected_artifact_ids: [call_baede43610, call_de6c5803bb, call_8bd9f2ffd7, call_238be03590]
+  tags: [calls, completeness, est]
+  truth: "2:38 PM out 100 s; 2:58 PM in from +19195794674 (This Is DFIR) 100 s; 3:02 PM out 85 s; 3:06 PM in 102 s."
+
+- id: q12
+  question: "Who did the phone call and text on Google Voice on February 27, 2024?"
+  window: {from: "2024-02-27 00:00", to: "2024-02-27 23:59"}
+  expected_entities: ["9105576476"]
+  expected_artifact_ids: [call_6469b838f7, call_731ce53c82]
+  tags: [calls, messages, est]
+  truth: "13 Google Voice messages with +19105576476 (ThisIs DFIR) from 10:47 AM; 11:06 AM outgoing call 95 s; 11:11 AM incoming call 95 s."
+
+- id: q13
+  question: "Who did the phone talk to between 3 and 4 PM on July 7, 2024, and where was it?"
+  window: {from: "2024-07-07 15:00", to: "2024-07-07 16:00"}
+  expected_entities: ["9192059852", "35.6595607,-78.8728002"]
+  expected_artifact_ids: [call_9aa69249ea, call_a481501025, call_9466c7dc25]
+  tags: [calls, locations, completeness]
+  truth: "3:29 PM out 27 s, 3:32 PM out 107 s, 3:36 PM in 141 s, all +19192059852. 14 location points within 1.5 m of 35.65956,-78.87280."
+
+- id: q14
+  question: "Where was the phone between 8 and 11 PM on June 15, 2024?"
+  window: {from: "2024-06-15 20:00", to: "2024-06-15 23:00"}
+  expected_entities: ["34.6805119,-76.9267683"]
+  expected_artifact_ids: []
+  tags: [locations, trap-tz-boundary]
+  truth: "6 points, all 34.6805119,-76.9267683 (the window is Jun 16 00:00-03:00 UTC)."
+
+- id: q15
+  question: "Who tried to reach the phone on the morning of July 27, 2024, and what did any voicemail say?"
+  window: {from: "2024-07-27 09:00", to: "2024-07-27 12:00"}
+  expected_entities: ["9195190323", "brother"]
+  expected_artifact_ids: [call_b3b0c37e7d, call_9a5c3047ff, call_c79fb6cc23, call_735f6585a7, call_07d9b33cc6]
+  tags: [calls, voicemail, completeness, trap-voicemail-vs-missed]
+  truth: "+19195190323: missed 10:13:05, missed 10:13:47, voicemail 10:13:53 (17 s, 'Good morning, Cheryl. This your brother...'). +19197523033: missed 10:43:08, voicemail 10:43:58 (2 s, no transcript)."
+
+- id: q16
+  question: "Which photos taken between July 15 and July 17, 2024 show a license plate, and when and where were they taken?"
+  window: {from: "2024-07-15 00:00", to: "2024-07-17 23:59"}
+  expected_entities: ["license plate"]
+  expected_artifact_ids: [med_9db8a4205b, med_e157542e2d, med_8336555e52]
+  tags: [photos, sam, locations, completeness]
+  truth: "Jul 15 6:52 PM (38.9018556,-77.0396361), Jul 16 7:59 PM (38.9024,-77.0340611), Jul 17 1:50 PM (38.4675917,-77.4116833); SAM license-plate scores 0.62, 0.56, 0.64."
+
+- id: q17
+  question: "What verification codes did the phone receive on the morning of July 26, 2024, and from which services?"
+  window: {from: "2024-07-26 09:00", to: "2024-07-26 12:30"}
+  expected_entities: ["865461", "139381"]
+  expected_artifact_ids: [msg_42fd160c89, msg_c86c9fe9ce]
+  tags: [messages, exact-digits]
+  truth: "9:46 AM Ding-OTP '865461 is your verification code'; 9:59 AM WhatsApp new-device registration notice; 12:09 PM '139381 is your Instagram code'."
+
+- id: q18
+  question: "How many voicemails did Coastal Federal Credit Union leave in February 2024, and when?"
+  window: {from: "2024-02-01 00:00", to: "2024-02-29 23:59"}
+  expected_entities: ["Coastal"]
+  expected_artifact_ids: [call_ae7dc0d178, call_da2b8fda15, call_37bccb7ba6, call_57e2740f01]
+  tags: [voicemail, completeness, est, trap-tz-boundary]
+  truth: "Four, from a private number (-1): Feb 5 7:55 PM, Feb 14 8:31 PM, Feb 20 8:32 PM, Feb 28 4:02 PM (EST; three fall on the next UTC day)."
+
+- id: q19
+  question: "Did the phone have any contact with the number 919-579-4675?"
+  window: {from: "2024-01-01 00:00", to: "2024-07-31 23:59"}
+  expected_entities: []
+  expected_artifact_ids: []
+  tags: [negative, trap-near-match-number]
+  truth: "None. The real contact number is 919-579-4674 (ThisIs DFIR); no call or message involves ...4675."
+
+- id: q20
+  question: "What messages or calls did the phone exchange with Marcus Webb?"
+  window: {from: "2024-01-01 00:00", to: "2024-07-31 23:59"}
+  expected_entities: []
+  expected_artifact_ids: []
+  tags: [negative, trap-nonexistent-contact]
+  truth: "None. No 'Marcus' or 'Webb' anywhere in calls, messages or contacts."
+
+- id: q21
+  question: "Where was the phone between 9 and 11 PM on July 15, 2024?"
+  window: {from: "2024-07-15 21:00", to: "2024-07-15 23:00"}
+  expected_entities: []
+  expected_artifact_ids: []
+  tags: [negative, locations, trap-empty-window]
+  truth: "No location data in the window (last point 7:05 PM, next 2:08 AM). A geotagged photo at 6:52 PM is just outside it."
+
+- id: q22
+  question: "Who called or texted the phone between 2 and 5 AM on July 4, 2024?"
+  window: {from: "2024-07-04 02:00", to: "2024-07-04 05:00"}
+  expected_entities: []
+  expected_artifact_ids: []
+  tags: [negative, trap-empty-window]
+  truth: "Nobody: no calls or messages in the window."
