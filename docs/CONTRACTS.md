@@ -1,4 +1,4 @@
-# Traceback contracts (v1.3)
+# Traceback contracts (v1.4)
 
 These are the interfaces that the build session implements and the testing session tests against. Change them only by editing this file in a commit of its own, with a reason, so tests and code stay in sync.
 
@@ -203,6 +203,10 @@ R4 entity types:
 
 Types with no "Grounded when" entry follow the general R4 rule. After text normalization (NFKC, casefold, whitespace collapsed), the entity must be **contained in** at least one of the claim's cited values; it does not have to equal one. For example, "Alice" is grounded by a cited transcript quote "it's Alice, meet me…".
 
+**Quoted evidence (v1.4):** a passage of the claim text enclosed in double quotes (`"…"` or `“…”`) is a *verified quote* if, after text normalization, its content has at least 8 characters and is a substring of the **stored** value of a `body`, `text` or `transcript` field cited by a citation of the same claim that has no reason.
+  - Every R4 entity that lies entirely inside a verified quote is grounded, with no other check. The record says it, so a quoted voicemail's "We're here until 9:00 p.m." is not compared with the voicemail's own timestamp.
+  - Entities outside quotes, or inside quotes that aren't verified, are checked as usual. So "At 8:00 she left a voicemail" is still compared with the cited timestamps.
+
 **Extraction order:** entities are extracted in this order: `url`, `email`, `timestamp`, `date`, `clock_time`, `coordinate`, `phone`. A span matched by an earlier type is removed before the later types scan the text. So `2023-03-14T01:42:07Z` is one `timestamp` entity, not also a `date`, a `clock_time` and a `phone`; a `YYYY-MM-DD` date is never a phone; and a coordinate pair is never a phone. `contact` names are matched against the original text.
 
 **Known limitation:** free-text place names and other prose are not checked. Verified claims still need an examiner's review.
@@ -297,6 +301,7 @@ The app lives in **`tbx.web`**. It exposes `create_app(db_path: str | None = Non
 
 ## Changelog
 
+- **v1.4 (Nov 3, 2026):** §7 quoted evidence (C9). Reason: in the first live eval (Meta, 22 questions, repair off), all 5 rejected claims (12 reasons) were correct, word-for-word quotes of voicemail transcripts whose times ("until 9:00 p.m.", "at 8:00") were checked against the voicemail's own timestamp. That was 7% of all claims, and it zeroed two questions. Only quotes that are verified against the stored text are exempt; times outside quotes are still checked.
 - **v1.3 (Nov 3, 2026):** §7 `CheckResult.entities`: the checked spans of each claim's text, with their positions and whether each is grounded. They let the UI separate what code verified from the model's own wording; prose and predicates are still not checked. This is an addition; nothing else changes.
 - **v1.2 (Nov 1, 2026):** additions for Day 2, from the G0/G1 gate run (`docs/GATES.md`).
   - §2: the order of `n` in `image_tags` row keys.
