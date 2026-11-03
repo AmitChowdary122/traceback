@@ -140,6 +140,7 @@ details.trace[open] summary::before { content: "▾"; }
 .steps .s { color: var(--faint); font-family: var(--mono); font-size: 11.5px; }
 .steps .t { font-family: var(--mono); font-weight: 600; }
 .steps .a { font-family: var(--mono); color: var(--muted); overflow-wrap: anywhere; font-size: 12px; }
+.steps .a .tz-hint { font-family: var(--sans); color: var(--faint); font-size: 11.5px; }
 .steps .r { font-family: var(--mono); font-size: 12px; white-space: nowrap; color: var(--muted); }
 .steps li.sys .t { color: var(--accent); }
 .steps li.bad .t, .steps li.bad .r { color: var(--bad); }
@@ -608,8 +609,23 @@ function renderCoverage(cov) {
 }
 function compactArgs(a) {
   if (!a || typeof a !== "object") return String(a ?? "");
-  const s = Object.entries(a).map(([k, v]) => `${k}=${typeof v === "string" ? JSON.stringify(v) : JSON.stringify(v)}`).join("  ");
-  return s || "(no arguments)";
+  const parts = Object.entries(a).flatMap(([k, v], i) => {
+    const hint = typeof v === "string" ? caseLocalHint(v) : null;
+    return [i ? "  " : "", `${k}=${JSON.stringify(v)}`,
+      hint ? h("span", { class: "tz-hint", title: `${v} in the case timezone (${state.caseTz})` }, ` (${hint})`) : null];
+  });
+  return parts.length ? parts : "(no arguments)";
+}
+/* A tool argument in UTC ("2024-06-28T01:00:00Z" or +00:00) gets its case-local wall time next to it. */
+function caseLocalHint(v) {
+  if (!/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]00:?00)$/.test(v)) return null;
+  const d = new Date(v.replace(" ", "T"));
+  if (isNaN(d)) return null;
+  try {
+    const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: state.caseTz, month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit", timeZoneName: "short" }).formatToParts(d).map((x) => [x.type, x.value]));
+    return `${p.month} ${p.day}, ${p.hour}:${p.minute} ${p.dayPeriod} ${p.timeZoneName} case-local`;
+  } catch (_) { return null; }
 }
 
 /* ---- v1.3 entity spans: offsets are Python string offsets (code points), so index by code point ---- */
@@ -1093,10 +1109,12 @@ $("#ask").addEventListener("submit", async (e) => {
   const runs = await loadRuns();
   const m = /#run=([^&]+)/.exec(location.hash);
   const featured = state.case && state.case.featured_run;
+  const hasFeatured = !!featured && runs.some((r) => r.run_id === featured);
   const pick = m ? decodeURIComponent(m[1])
-    : (featured || (runs.find((r) => r.status === "ok") || runs[0] || {}).run_id);
-  // Opening the page on its default run plays it step by step (U5); a link to a run (#run=...) opens it as is.
-  if (pick) openRun(pick, { animate: !m });
+    : (hasFeatured ? featured : (runs.find((r) => r.status === "ok") || runs[0] || {}).run_id);
+  // Only the featured run plays step by step, and only when the page first opens on it (U5, F4). Any other run, a
+  // link to a run (#run=...) and every later click open as is; "Replay steps" plays a run on demand.
+  if (pick) openRun(pick, { animate: !m && hasFeatured && pick === featured });
 })();
 </script>
 </body>
