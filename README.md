@@ -53,7 +53,8 @@ flowchart LR
   retries once on a failure, and caps the loop at 12 steps. `tool_choice` is always `"auto"`. Reasoning text is
   stripped and never sent back or traced.
 - **The checker** decides what counts as a finding. Only verified claims reach the VERIFIED timeline; rejected claims
-  are shown apart, with their reasons, and the model's `note` is labelled "not a finding".
+  are shown apart, with their reasons, and the model's `note` is labelled "Model note (not verified, not a finding)":
+  the checker never looks at it.
 
 ## How verification works
 
@@ -308,6 +309,14 @@ record: the archive's SHA-256, the extraction path inside it, the ALEAPP version
   checked against audio. The only recorded audio is the soundtrack of the two MMS videos.
 - **Phone numbers compare on the last 10 digits**, so two numbers that differ only in their country code match.
 - **Photo coordinates are rounded to 7 decimals** at ingest (about 1 cm); the EXIF rationals stay in `raw_json`.
+- **WhatsApp system messages have no direction.** ALEAPP labels every WhatsApp "System Message" row (group created,
+  member joined, security code changed) "Outgoing", though the phone's user sent none of them. In the sample that is
+  120 group rows (spam-group creations and joins, e.g. "Crypto market9") and 45 one-to-one rows. Ingest stores their
+  `direction` as `unknown`, so "the phone sent 'Crypto market9'" can't verify; their IDs are unchanged and ALEAPP's own
+  label stays in `raw_json`.
+- **One Google Voice message body is undecoded.** ALEAPP exported the body of the incoming Google Voice message of
+  Feb 27, 2024, 10:47 AM (`msg_a77990bad4`) as a raw protobuf dict, `{'9': 7214873393859748128, '12': …}`, not as
+  text. Traceback stores it as found; whatever the message said is not in the extraction we parse.
 
 ## Layout
 

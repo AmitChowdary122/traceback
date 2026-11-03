@@ -291,3 +291,52 @@ def test_received_attachment_uses_message_time_not_sender_exif(report, media, tm
     assert m["ts_utc"] == "2024-07-26T19:41:16Z" and m["app"] == "Google Messages" and m["kind"] == "image"
     msg = next(r for r in rows(db, "messages") if r["app"] == "Google Messages")
     assert msg["attachment_media_id"] == m["artifact_id"]
+
+
+WA_COMMON = ["Message Timestamp", "Received Timestamp", "Final Location Timestamp", "Message Direction"]
+WA_GROUP = WA_COMMON + ["Sending Party", "Conversation Name", "Message", "Media", "Sending Party JID", "Message Type",
+                        "Local Path To Media", "Media File Size", "Group JID"]
+WA_1TO1 = WA_COMMON + ["Other Participant WA User Name", "Message", "Media", "Sending Party JID", "Message Type",
+                       "Local Path To Media", "Media File Size", "Other Participant JID"]
+
+
+def test_whatsapp_system_messages_have_unknown_direction_and_the_same_ids(tmp_path):
+    """ALEAPP labels WhatsApp system messages (group created, member joined...) "Outgoing"; the sample has 120 such
+    group rows and 45 one-to-one rows. "The phone sent 'Crypto market9'" must not verify, and IDs must not change."""
+    root = tmp_path / "ALEAPP_Output"
+    ts = "2024-03-01 12:00:00+00:00"
+    write_tsv(root, "WhatsApp - Group Messages.tsv", WA_GROUP, [
+        [ts, ts, "", "Outgoing", "Self", "Crypto market9", "Crypto market9", "", "", "System Message", "", "", "1@g.us"],
+        [ts, ts, "", "Incoming", "Ann Lee", "Crypto market9", "Join now", "", "15551234567@s.whatsapp.net", "Text",
+         "", "", "1@g.us"],
+        [ts, ts, "", "Outgoing", "Self", "Crypto market9", "hello all", "", "", "Text", "", "", "1@g.us"]])
+    write_tsv(root, "WhatsApp - One To One Messages.tsv", WA_1TO1, [
+        [ts, ts, "", "Outgoing", "Bo Day", "", "", "", "System Message", "", "", "15557654321@s.whatsapp.net"],
+        [ts, ts, "", "Outgoing", "Bo Day", "see you", "", "", "Text", "", "", "15557654321@s.whatsapp.net"]])
+    db = tmp_path / "w.db"
+    ingest.ingest_report(str(root), str(db))
+    got = {(r["source_path"].rsplit("/", 1)[1], r["source_row"]): r for r in rows(db, "messages")}
+    group, one = "WhatsApp - Group Messages.tsv", "WhatsApp - One To One Messages.tsv"
+    assert [got[(group, k)]["direction"] for k in ("1", "2", "3")] == ["unknown", "incoming", "outgoing"]
+    assert [got[(one, k)]["direction"] for k in ("1", "2")] == ["unknown", "outgoing"]
+    assert got[(group, "1")]["body"] == "Crypto market9"           # the row itself is kept as found
+    assert json.loads(got[(group, "1")]["raw_json"])["Message Direction"] == "Outgoing"
+    for (name, key), r in got.items():                              # IDs from source_path|row_key, as before
+        assert r["artifact_id"] == "msg_" + hashlib.sha1(f"{TSV}/{name}|{key}".encode()).hexdigest()[:10]
+
+
+def test_whatsapp_system_messages_in_the_committed_sample(tmp_path):
+    import pathlib
+    sample = pathlib.Path(__file__).resolve().parents[2] / "data/sample/aleapp"
+    db = tmp_path / "s.db"
+    ingest.ingest_report(str(sample), str(db))
+    wa = [r for r in rows(db, "messages") if r["app"] == "WhatsApp"]
+    system = [r for r in wa if json.loads(r["raw_json"]).get("Message Type") == "System Message"]
+    by_file = {}
+    for r in system:
+        by_file[r["source_path"].rsplit("/", 1)[1]] = by_file.get(r["source_path"].rsplit("/", 1)[1], 0) + 1
+    assert by_file == {"WhatsApp - Group Messages.tsv": 120, "WhatsApp - One To One Messages.tsv": 45}
+    assert {r["direction"] for r in system} == {"unknown"}
+    assert all(json.loads(r["raw_json"])["Message Direction"] == "Outgoing" for r in system)
+    group_out = [r for r in wa if r["direction"] == "outgoing" and "Group" in r["source_path"]]
+    assert group_out == []                                          # all 120 "outgoing" group rows were system rows

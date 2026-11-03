@@ -161,8 +161,16 @@ def m_google_messages(r: dict, ctx: Ctx) -> dict:
     return out
 
 
+def _whatsapp_direction(r: dict) -> str:
+    """ALEAPP labels every WhatsApp "System Message" row (group created, member joined, security code changed...)
+    "Outgoing", though the phone's user sent none of them. Those rows get "unknown"; their IDs are unchanged."""
+    if (r.get("Message Type") or "").strip().casefold() == "system message":
+        return "unknown"
+    return _direction(r.get("Message Direction"), MSG_DIR)
+
+
 def m_whatsapp_1to1(r: dict, ctx: Ctx) -> dict:
-    d = _direction(r.get("Message Direction"), MSG_DIR)
+    d = _whatsapp_direction(r)
     name, _ = _party(r.get("Other Participant WA User Name"), None)
     num = jid_number(r.get("Other Participant JID"))
     out = {"thread_id": _clean(r.get("Other Participant JID")), "direction": d, "body": r.get("Message") or None}
@@ -174,7 +182,7 @@ def m_whatsapp_1to1(r: dict, ctx: Ctx) -> dict:
 
 
 def m_whatsapp_group(r: dict, ctx: Ctx) -> dict:
-    d = _direction(r.get("Message Direction"), MSG_DIR)
+    d = _whatsapp_direction(r)
     name, _ = _party(r.get("Sending Party"), None)
     out = {"thread_id": _clean(r.get("Conversation Name")) or _clean(r.get("Group JID")), "direction": d,
            "body": r.get("Message") or None}

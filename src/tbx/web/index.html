@@ -700,7 +700,7 @@ function renderVerified(run) {
   return h("section", { class: "panel verified" },
     h("h2", {}, "Verified", h("span", { class: "count" }, String(claims.length)), h("span", { class: "small" }, `timeline in case-local time (${state.caseTz})`)),
     list.length ? h("ol", { class: "timeline" }, list) : h("div", { class: "none" }, run.status === "running" ? "…" : "No verified claims."),
-    run.note ? h("div", { class: "note" }, h("b", {}, "Model note (not a finding): "), run.note) : null);
+    run.note ? h("div", { class: "note" }, h("b", {}, "Model note (not verified, not a finding): "), run.note) : null);
 }
 function renderRejected(rejected, title, cls, ann) {
   if (!rejected.length && cls === "rejected" && title !== "Rejected") return null;
@@ -910,7 +910,7 @@ table.fields td:first-child { width: 170px; color: #5a6472; } footer { margin-to
 <dt>Run started</dt><dd>${esc(run.started || "?")}</dd></dl>
 <h2>Verified claims (${(run.verified || []).length})</h2>
 ${verified ? `<ol class="claims">${verified}</ol>` : `<p>No verified claims.</p>`}
-${run.note ? `<p class="muted"><b>Model note (not a finding):</b> ${esc(run.note)}</p>` : ""}
+${run.note ? `<p class="muted"><b>Model note (not verified, not a finding):</b> ${esc(run.note)}</p>` : ""}
 <h2>Rejected claims (${(run.rejected || []).length})</h2>
 ${rejected ? `<ol class="claims">${rejected}</ol>` : `<p>Nothing was rejected.</p>`}
 ${run.repair ? `<p class="muted"><b>Repair pass:</b> ${esc(run.repair.summary)}</p>` : ""}
