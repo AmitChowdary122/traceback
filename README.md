@@ -124,6 +124,25 @@ entities are checked, and the page says so.
 trace's `check_result`. The run header says "re-checked: same result"; any difference is shown as a warning on that
 run, and `tbx export-static` lists it on stderr. Runs recorded before v1.3 get their highlighting from this re-check.
 
+## How we know the checker works
+
+- **Injected faults on real answers.** Every recorded answer in `deploy/runs/` (12 real runs; every claim
+  verifies) is broken in one controlled way at a time and re-checked against the store: a cited value altered (a
+  timestamp +1 minute, one phone digit, lat/lon +0.001, a quote cut to 5 characters, a label typo, a measure +2), a
+  near-miss artifact ID, a `raw_json` citation, a wrong clock time, day or invented phone number in the text, or a time
+  range on a day no cited row covers. Result: **508/508 injected faults rejected**, and every original still verifies
+  (`TBX_STRICT_TESTS=1 pytest tests/acceptance/test_acceptance_fault_injection.py -s`). These are injected faults,
+  labeled as such, not model errors. The testing session got the same 508/508 with a separate v1.4 reference checker.
+- **The live eval found 0 real hallucinations.** In Eval 1 (Nov 3: 26 live runs, Meta on 22 questions and open
+  weights on 4 traps, repair off), all 5 rejected claims (12 reasons) were the checker's own false positives:
+  word-for-word voicemail quotes whose times ("until 9:00 p.m.") were compared with the voicemail's timestamp.
+  Contract v1.4 (quoted evidence, above) fixed that; across every recorded answer and injected fault, the only verdicts
+  it changes are those 5 claims. So the eval shows correct answers getting through. It can't show the checker catching
+  a real model error, because none turned up; the injected faults show that. (One open-weights *note* did get a fact
+  wrong; notes are never findings, and the page labels them "not verified".)
+- **The red-team suite** (`tests/redteam/`, 160 tests) pins every rule, with real model claims from the API spikes
+  and from Eval 1 (case A24 is the q07 voicemail claim, verbatim).
+
 ## Meta tooling used
 
 | Model | Where | What Traceback uses it for |
@@ -286,8 +305,10 @@ abstention accuracy, latency p50/p95, tokens, cost).
 ## Eval results
 
 <!-- eval-results:start -->
-No results yet. The testing session writes `eval/questions.yaml` and runs the eval; `python eval/report.py --write`
-then renders the table here from `eval/results/*.json`.
+No published results yet. Eval 1 ran on an earlier build: it lost 2 of 22 questions to an agent bug (a reply cut off at
+`max_tokens` was echoed back and Meta returned HTTP 400) and hit the 5 checker false positives above; both are fixed
+in this build. The eval is being re-run on it, and `python eval/report.py --write` then renders the table here from
+`eval/results/*.json`.
 <!-- eval-results:end -->
 
 ## Data provenance
