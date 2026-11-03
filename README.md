@@ -100,8 +100,10 @@ what round 2 submitted for it: **corrected** (now verified), **dropped**, or **s
 including real model claims recorded in the API spikes.
 
 **What exactly was checked (contract v1.3).** The checker also returns `entities`: for every claim, each R4 entity it
-found in the text, with its character span and whether it is grounded. The page colors the claim text with them:
-green = checked by code against the cited rows, red = not found in any cited row, plain text = the model's own words,
+found in the text, with its character span and whether it is grounded. The page colors the claim text with them,
+and also with the words that match the value of a citation that passed (a cited label or name, a cited lat/lon or
+measure within its tolerance, or a quoted passage of 8+ characters from a cited body, text or transcript; R4 entities
+take precedence). Green = checked by code: a time, number or name that matches a cited row, or text quoted from one; red = not found in any cited row; plain text = the model's own words,
 which are not verified. So "the phone was at a gas station" stays plain: only the cited values and the extracted
 entities are checked, and the page says so.
 

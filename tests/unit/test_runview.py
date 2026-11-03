@@ -177,3 +177,61 @@ def test_a_failed_repair_round_keeps_round_one(store):
 
 def test_no_repair_view_without_a_repair_round(store):
     assert runview.reverify(trace(store, [BAD, GOOD]), store)["repair"] is None
+
+
+# ------------------------------------------------------------------------------ F1: cited-value spans
+def cv(text, cites, reasons=(), entities=()):
+    claim = {"text": text, "citations": [{"artifact_id": CALL, "field": f, "value": v} for f, v in cites]}
+    return [(e["text"], e["field"], e["citation_index"])
+            for e in runview.cited_spans(claim, [dict(r) for r in reasons], [dict(e) for e in entities])]
+
+
+def test_cited_text_values_quotes_and_numbers_are_spans():
+    assert cv("A photo shows a Cell Phone.", [("label", "cell phone")]) == [("Cell Phone", "label", 0)]
+    assert cv("It said “meet me at the north gate.” Then nothing.",
+              [("body", "Meet me at the north gate after the game")]) == [("meet me at the north gate", "body", 0)]
+    assert cv("At 35.65961, -78.8730535 and lat 35.6596081.", [("lat", "35.6596081"), ("lon", "-78.8730535")]) == [
+        ("35.65961", "lat", 0), ("-78.8730535", "lon", 1), ("35.6596081", "lat", 0)]
+    assert cv("It lasted 121 seconds, scored 0.9004.", [("duration_s", "121.0"), ("score", "0.9")]) == [
+        ("121", "duration_s", 0), ("0.9004", "score", 1)]
+    assert cv("Quoted 'the north gate' and “north…after the game”.", [("body", "Meet me at the north gate after the game")]) == [
+        ("the north gate", "body", 0), ("after the game", "body", 0)]   # "north" alone is too short for a quote
+
+
+def test_cited_value_spans_need_a_passing_citation_whole_words_and_minimum_lengths():
+    assert cv("A photo shows a car.", [("label", "car")], reasons=[{"code": "VALUE_MISMATCH", "citation_index": 0}]) == []
+    assert cv("A photo shows a car.", [("label", "car")], reasons=[{"code": "OUTSIDE_WINDOW", "citation_index": 0}]) == []
+    assert cv("A photo shows a car.", [("label", "car")], reasons=[{"code": "UNGROUNDED_ENTITY:date",
+                                                                     "citation_index": None}]) == [("car", "label", 0)]
+    assert cv("The card was scanned.", [("label", "car")]) == []          # whole words only
+    assert cv("It was an ox.", [("label", "ox")]) == []                    # shorter than 3
+    assert cv('He said "hi you".', [("body", "hi you there")]) == []      # a quote shorter than 8
+    assert cv("Direction: outgoing.", [("direction", "outgoing")]) == []  # not a text-like field
+    assert cv("At 35.6598 it stopped.", [("lat", "35.6596081")]) == []   # outside 1e-4
+    assert cv("At 35.6596081, -78.8730535.", [("body", "35.6596081")]) == [("35.6596081", "body", 0)]
+
+
+def test_r4_spans_take_precedence_over_cited_value_spans():
+    quote = 'It said "Liz Dehner will call at 9:15 PM tonight".'
+    ents = [{"type": "contact", "start": quote.index("Liz"), "end": quote.index("Liz") + 10},
+            {"type": "clock_time", "start": quote.index("9:15"), "end": quote.index("9:15") + 7}]
+    assert cv(quote, [("body", "Liz Dehner will call at 9:15 PM tonight, ok?")], entities=ents) == [
+        ("will call at", "body", 0), ("tonight", "body", 0)]
+
+
+def test_annotations_carry_cited_value_spans_for_verified_and_rejected_claims(store):
+    good = {"text": "Liz Dehner placed an outgoing Phone call at 9:40 PM.",
+            "citations": [{"artifact_id": CALL, "field": "app", "value": "Phone"},
+                          {"artifact_id": CALL, "field": "ts_local", "value": "2024-07-27T21:40:00-04:00"},
+                          {"artifact_id": CALL, "field": "contact_name", "value": "Liz Dehner"}]}
+    bad = {"text": "The Phone call to Liz Dehner lasted 99 seconds.",
+           "citations": [{"artifact_id": CALL, "field": "app", "value": "Phone"},
+                         {"artifact_id": CALL, "field": "duration_s", "value": "99"}]}
+    ann = runview.reverify(trace(store, [good, bad]), store)["annotations"]
+    (v,) = ann["verified"]
+    assert [(e["type"], e["text"]) for e in v["entities"]] == [
+        ("contact", "Liz Dehner"), ("cited_value", "Phone"), ("clock_time", "9:40 PM")]
+    (r,) = ann["rejected"]
+    assert [(e["type"], e["text"], e["grounded"]) for e in r["entities"]] == [
+        ("cited_value", "Phone", True), ("contact", "Liz Dehner", False)]      # "99" failed: VALUE_MISMATCH
+    assert r["sentences"][0].startswith("Cited duration_s = '99'")

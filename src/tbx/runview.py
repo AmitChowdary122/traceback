@@ -1,8 +1,10 @@
 """Recorded runs, re-verified on load: the extra fields of the run view.
 
 `reverify(events, store)` re-runs the deterministic checker on each recorded final_answer, with the run's recorded
-window, against the store, and compares the result with the recorded check_result. It also gives the v1.3 entity
-spans for every claim the page shows, including runs recorded before v1.3. No model is called.
+window, against the store, and compares the result with the recorded check_result. It also gives the spans the page
+colors for every claim it shows: the v1.3 entity spans (including for runs recorded before v1.3), plus "cited_value"
+spans for the words that match the value of a citation that passed (display only; the checker is unchanged). No model
+is called.
 
 The web app calls it for GET /api/runs/{id}; `tbx export-static` saves that response, so a static copy carries the
 re-check made at export time.
@@ -11,17 +13,29 @@ from __future__ import annotations
 
 import difflib
 import json
+import re
 from typing import Any
 
 from tbx import explain
 from tbx import timeutil as tu
-from tbx.checker import check, fold
+from tbx.checker import MEASURE_FIELDS, MIN_QUOTE, TEXT_FIELDS, _float, _fold_map, check, contact_pattern, fold
 from tbx.models import Answer
 from tbx.store import Store
 
 MAX_CHANGES = 8
 PAIR_TEXT = 0.5          # a round-2 claim this similar to a round-1 rejected claim is its repair...
 PAIR_TEXT_SAME_ROW = 0.3  # ...or this similar when it also cites one of the same records
+
+# Cited-value spans: the words of a claim that match the value of a citation that passed. Display only: the checker
+# and CheckResult are unchanged (contract v1.3); these spans are added to the R4 spans the page colors green.
+VALUE_FIELDS = frozenset({"body", "text", "transcript", "label", "contact_name", "sender", "recipient", "app", "kind",
+                          "source", "mime_type", "file_path"})
+NUMBER_TOL = {"lat": 1e-4, "lon": 1e-4, "score": 1e-3, **{f: 1e-6 for f in MEASURE_FIELDS}}   # CONTRACTS section 7
+MIN_VALUE = 3
+_QUOTED = re.compile(r"\"([^\"]+)\"|“([^”]+)”|„([^“”]+)[“”]|‘([^’]+)’|«([^»]+)»|(?<!\w)'([^']+)'(?!\w)")
+_ELLIPSIS = re.compile(r"\s*(?:…|\.\.\.)\s*")
+_NUMBER = re.compile(r"(?<![\w.])[-−]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?!\w|\.\d)")
+_LEAD = " \t\n,;:"
 
 
 def _canon(x: Any) -> str:
@@ -110,18 +124,115 @@ def _compare(claims: list[dict], record: dict, now: dict) -> list[str]:
     return changes[:MAX_CHANGES]
 
 
+# ------------------------------------------------------------------------------ cited-value spans
+def _quotes(text: str) -> list[tuple[int, int]]:
+    """The [start, end) of each quoted passage (inside the quotes, trimmed); a passage with an ellipsis gives one
+    piece per fragment."""
+    out = []
+    for m in _QUOTED.finditer(text):
+        g = next(k for k in range(1, len(m.groups()) + 1) if m.group(k) is not None)
+        a, b = m.start(g), m.end(g)
+        for part in _ELLIPSIS.split(text[a:b]):
+            if not part.strip():
+                continue
+            at = text.index(part, a)
+            x, y = at + len(part) - len(part.lstrip()), at + len(part.rstrip())
+            out.append((x, y))
+            a = at + len(part)
+    return out
+
+
+def _number(s: str) -> float | None:
+    return _float(s.replace(",", "").replace("−", "-"))
+
+
+def cited_spans(claim: dict, reasons: list[dict], entities: list[dict]) -> list[dict]:
+    """Spans of the claim text that match the value of a citation that passed (no reason carries its index):
+
+    - a text-like field (VALUE_FIELDS): a whole-word, NFKC-folded, case-insensitive occurrence of the value (>= 3);
+    - body/text/transcript: a quoted passage (>= 8 characters) that is a substring of the cited value;
+    - lat/lon/score/measures: a number equal to the cited value within the field's tolerance.
+
+    Overlapping matches merge; R4 entity spans take precedence, so they are cut out. Each span: {"type":
+    "cited_value", "text", "start", "end", "grounded": True, "field", "citation_index"} (Python string offsets)."""
+    text = claim.get("text") or ""
+    cites = claim.get("citations") or []
+    failed = {r.get("citation_index") for r in reasons or [] if isinstance(r.get("citation_index"), int)}
+    found: list[tuple[int, int, str, int]] = []
+    fmap = None
+    quotes = None
+    for i, c in enumerate(cites):
+        field, value = c.get("field"), str(c.get("value") if c.get("value") is not None else "")
+        if i in failed or not field:
+            continue
+        if field in VALUE_FIELDS and len(fold(value)) >= MIN_VALUE:
+            if fmap is None:
+                fmap = _fold_map(text)
+            folded, starts, ends = fmap
+            found += [(starts[m.start()], ends[m.end() - 1], field, i)
+                      for m in contact_pattern(value).finditer(folded)]
+        if field in TEXT_FIELDS:
+            quotes = _quotes(text) if quotes is None else quotes
+            v = fold(value)
+            for a, b in quotes:
+                q = fold(text[a:b])
+                while b > a and len(q) >= MIN_QUOTE and q not in v and text[b - 1] in ".,;:!?":
+                    b -= 1      # punctuation the claim put inside the quotes
+                    q = fold(text[a:b])
+                if len(q) >= MIN_QUOTE and q in v:
+                    found.append((a, b, field, i))
+        if field in NUMBER_TOL and (x := _number(value)) is not None:
+            for m in _NUMBER.finditer(text):
+                y = _number(m.group(0))
+                if y is not None and abs(x - y) <= NUMBER_TOL[field]:
+                    found.append((m.start(), m.end(), field, i))
+    merged: list[list] = []
+    for a, b, field, i in sorted(found):
+        if merged and a < merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], b)
+        else:
+            merged.append([a, b, field, i])
+    taken = sorted((e["start"], e["end"]) for e in entities or [])
+    out = []
+    for a, b, field, i in merged:
+        pieces = [(a, b)]
+        for s, e in taken:
+            pieces = [p for x, y in pieces for p in ((x, min(y, s)), (max(x, e), y)) if p[0] < p[1]]
+        for x, y in pieces:
+            while x < y and text[x] in _LEAD:
+                x += 1
+            while y > x and text[y - 1].isspace():
+                y -= 1
+            if any(ch.isalnum() for ch in text[x:y]):
+                out.append({"type": "cited_value", "text": text[x:y], "start": x, "end": y, "grounded": True,
+                            "field": field, "citation_index": i})
+    return out
+
+
+def _spans(claim: dict, reasons: list[dict], entities: list[dict]) -> list[dict]:
+    """The page's spans for one claim: its R4 entities plus its cited-value spans, by start."""
+    try:
+        extra = cited_spans(claim, reasons, entities)
+    except Exception:  # noqa: BLE001 - highlighting is a display aid; never lose the R4 spans over it
+        extra = []
+    return sorted([*entities, *extra], key=lambda e: (e["start"], e["end"], e["type"] == "cited_value"))
+
+
 def _annotations(claims: list[dict], record: dict, entities: list[list[dict]], store: Store) -> dict:
     """For the claims the page shows, aligned with record["verified"] and record["rejected"]: each claim's answer
-    index and entity spans, plus one plain-English sentence per reason for the rejected ones."""
+    index and spans (R4 entities + cited values), plus one plain-English sentence per reason for the rejected ones."""
     out: dict[str, list[dict]] = {"verified": [{"index": None, "entities": []} for _ in record.get("verified", [])],
                                   "rejected": [{"index": None, "entities": []} for _ in record.get("rejected", [])]}
     for i, spot in enumerate(place(claims, record)):
         if spot is not None:
-            out[spot[0]][spot[1]] = {"index": i, "entities": entities[i] if i < len(entities) else []}
+            ents = entities[i] if i < len(entities) else []
+            reasons = (record["rejected"][spot[1]] or {}).get("reasons", []) if spot[0] == "rejected" else []
+            out[spot[0]][spot[1]] = {"index": i, "entities": _spans(claims[i], reasons, ents)}
     tz = store.case_tz
     for entry, ann in zip(record.get("rejected", []), out["rejected"]):
         try:
-            ann["sentences"] = explain.sentences(entry, ann["entities"], store, tz)
+            ann["sentences"] = explain.sentences(entry, [e for e in ann["entities"] if e["type"] != "cited_value"],
+                                                 store, tz)
         except Exception:  # noqa: BLE001 - never lose the codes over a sentence; fall back to the details
             ann["sentences"] = [r.get("detail") or r.get("code", "") for r in entry.get("reasons", [])]
     return out
