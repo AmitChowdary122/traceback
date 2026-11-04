@@ -1,4 +1,4 @@
-"""Shared helpers for tests/redteam and tests/acceptance (owned by the testing session).
+"""Shared helpers for tests/redteam and tests/acceptance.
 
 Two jobs:
 1. Load the contract API from the modules CONTRACTS.md v1.1 names: tbx.store.Store,

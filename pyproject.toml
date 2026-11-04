@@ -21,9 +21,6 @@ dependencies = [
     "pytest>=8.0",
 ]
 
-[project.optional-dependencies]
-deploy = ["modal>=1.0"]
-
 [project.scripts]
 tbx = "tbx.cli:main"
 

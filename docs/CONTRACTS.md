@@ -1,6 +1,6 @@
 # Traceback contracts (v1.4)
 
-These are the interfaces that the build session implements and the testing session tests against. Change them only by editing this file in a commit of its own, with a reason, so tests and code stay in sync.
+These are the interfaces that the code implements and the tests check. Change them only by editing this file in a commit of its own, with a reason, so tests and code stay in sync.
 
 The ALEAPP column names are not fixed here. Ingest maps whatever the real sample output contains onto the store columns below.
 
@@ -303,7 +303,7 @@ The app lives in **`tbx.web`**. It exposes `create_app(db_path: str | None = Non
 
 - **v1.4 (Nov 3, 2026):** §7 quoted evidence (C9). Reason: in the first live eval (Meta, 22 questions, repair off), all 5 rejected claims (12 reasons) were correct, word-for-word quotes of voicemail transcripts whose times ("until 9:00 p.m.", "at 8:00") were checked against the voicemail's own timestamp. That was 7% of all claims, and it zeroed two questions. Only quotes that are verified against the stored text are exempt; times outside quotes are still checked.
 - **v1.3 (Nov 3, 2026):** §7 `CheckResult.entities`: the checked spans of each claim's text, with their positions and whether each is grounded. They let the UI separate what code verified from the model's own wording; prose and predicates are still not checked. This is an addition; nothing else changes.
-- **v1.2 (Nov 1, 2026):** additions for Day 2, from the G0/G1 gate run (`docs/GATES.md`).
+- **v1.2 (Nov 1, 2026):** additions for Day 2, from the G0/G1 gate run.
   - §2: the order of `n` in `image_tags` row keys.
   - §3: new `tz_basis` value `offset_string` (EXIF times carry an explicit offset).
   - §4, §5, §7: `calls.direction` gains `voicemail`. 2,154 voicemail records had been stored as `missed`.
@@ -311,7 +311,7 @@ The app lives in **`tbx.web`**. It exposes `create_app(db_path: str | None = Non
   - §9: `tbx enrich` behavior, prompt set `v1`, the committed cache and `--offline`.
   - §10: the app lives in `tbx.web`; runs are replayable from `runs/*.jsonl`; `GET /api/runs`; SSE becomes optional; the shape of the tags response.
   - §11: `eval/run.py` flags and result fields.
-- **v1.1 (Nov 1, 2026):** clarifications from the Day-0 spikes and the red-team suite. The IDs C1–C13 refer to `docs/SPIKES.md`.
+- **v1.1 (Nov 1, 2026):** clarifications from the Day-0 spikes and the red-team suite, numbered C1–C13.
   - §1: the Baseten model ID is `meta-models/muse-spark-open` (C10).
   - §2: `source_row` stores the `row_key` (C11).
   - §3, §6: `Window` lives in `tbx.timeutil` and takes UTC datetimes; the models live in `tbx.models` (C3).

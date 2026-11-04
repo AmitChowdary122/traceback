@@ -11,9 +11,8 @@ verified claim opens to the raw source row and its source path.
 
 Built for the Meta Global AI Developer Hackathon, indie track ("Build for Your World").
 
-> Status: Day 2. The core loop (ingest, tools, checker, agent, CLI) plus `tbx enrich` (voice transcripts and SAM 3.1
-> image tags), the web app, the eval harness, the Modal deploy prep and a replay-only static site.
-> See `docs/GAMEPLAN.md` and `docs/CONTRACTS.md`.
+> What's here: the core loop (ingest, tools, checker, agent, CLI), `tbx enrich` (voice transcripts and SAM 3.1 image
+> tags), the web app, the eval harness and a replay-only static site. The full spec is `docs/CONTRACTS.md`.
 
 ## Architecture
 
@@ -134,8 +133,7 @@ run, and `tbx export-static` lists it on stderr. Runs recorded before v1.3 get t
   wrong clock time, day or invented phone number in the text, or a time range on a day no cited row covers.
   Result: **577/577 injected faults rejected** (`TBX_STRICT_TESTS=1 pytest
   tests/acceptance/test_acceptance_fault_injection.py -s`). These are injected faults, labeled as such, not model
-  errors. The testing session measured the same 577/577; on the first 12 runs it also got 508/508 with a separate
-  v1.4 reference checker.
+  errors.
 - **The live evals.** Eval 2 (Nov 3, this build, Meta on all 22 questions, repair off): 0 errors, 92 claims verified,
   12 rejected, and no rejection was a mistake. All 12 are from one answer (q10): the model wrote "Liz Dehner sent: …"
   but cited only the message's time and body, never its sender field. The names were right, but a claim its cited
@@ -173,7 +171,7 @@ the trace's tool calls, the verified timeline, the rejected panel, and the evide
 with its SAM boxes, or the video with its transcript. `tbx check answer.json --db data/tbx.db` re-runs the checker on
 any saved answer, and `TBX_STRICT_TESTS=1 pytest -q` runs all the suites offline.
 
-The 13 recorded runs in `deploy/runs/` are real, unedited traces (`docs/gates/` keeps the originals). Each one
+The 13 recorded runs in `deploy/runs/` are real, unedited traces. Each one
 re-checks to the same result against the store built from the committed sample.
 
 | Run | Model | Question | Result |
@@ -268,31 +266,6 @@ To publish it on GitHub Pages (the repository must be public, or on a plan that 
    git -C ../tbx-pages push -u origin gh-pages
    ```
 
-## Deploy on Modal (prepared, not deployed)
-
-`deploy/modal_app.py` serves `tbx.web` as an ASGI app. Its image copies this repo (never `.env` files, the local store
-or local runs) and runs `tbx ingest` + `tbx enrich --offline` at build time, so the hosted store is built from the
-same committed inputs as a local one, with the same artifact IDs, and the build needs no API key. Keys come only from a
-Modal secret. The page replays a recorded run by default (`deploy/runs/*.jsonl`, copied into the `traceback-runs`
-volume on start). Live asks go to Meta only (`TBX_LIVE_PROVIDERS=meta`) and are capped at `TBX_ASK_LIMIT_PER_HOUR`
-(default 30 per hour, then HTTP 429); the baseten toggle replays the recorded Muse Spark Open runs.
-
-Steps, once a Modal token exists (only the account owner can create one):
-
-1. Create a token at modal.com (Settings → API tokens). On a laptop, `modal token new` stores it. For the Claude Code
-   cloud environment, open the environment menu in the session's title bar → Edit, add `MODAL_TOKEN_ID` and
-   `MODAL_TOKEN_SECRET` under Network secrets (or as environment variables where that section is not offered), and
-   under Network access add `api.modal.com` (plus `modal.run` to open the deployed URL from there) to Allowed domains
-   ([steps](https://code.claude.com/docs/en/cloud-environments#network-access)). A new session picks both up.
-2. Install the CLI: `pip install -e '.[deploy]'` (or `pip install modal`).
-3. Store the Meta key as a Modal secret (it is never baked into the image; no Baseten key is needed, since live asks
-   are Meta-only): `modal secret create traceback-keys META_API_KEY=...`
-4. Try it: `modal serve deploy/modal_app.py` prints a temporary URL with hot reload.
-5. Deploy: `modal deploy deploy/modal_app.py` prints the stable `https://<workspace>--traceback-web.modal.run` URL.
-
-To change the ask cap or the featured run, edit `TBX_ASK_LIMIT_PER_HOUR` / `FEATURED_RUN` in `deploy/modal_app.py` and
-deploy again; `TBX_ASK_LIMIT_PER_HOUR=0` makes the site replay-only. `max_containers=1` keeps the cap global.
-
 ## Eval
 
 ```bash
@@ -386,7 +359,7 @@ record: the archive's SHA-256, the extraction path inside it, the ALEAPP version
 | `src/tbx/web/` | `tbx.web`: the FastAPI app and its single HTML page (no build step) |
 | `src/tbx/export_static.py` | `tbx export-static`: the replay-only static site |
 | `src/tbx/cli.py` | `tbx ingest`, `tbx enrich`, `tbx ask`, `tbx check`, `tbx export-static` |
-| `deploy/` | `modal_app.py` (hosted web app) and `runs/` (recorded demo runs it replays) |
+| `deploy/runs/` | the recorded demo runs the site replays |
 | `src/tbx/evaluation.py`, `eval/` | the eval harness (`eval/run.py`) and the README table (`eval/report.py`) |
 | `data/sample/` | cut-down ALEAPP output from a public reference image (see `data/sample/SOURCE.md`) |
 

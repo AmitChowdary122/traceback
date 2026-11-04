@@ -1,6 +1,7 @@
 """tbx.runview on the real recorded runs in deploy/runs, against the store built from the committed sample (offline:
 `tbx ingest` + `tbx enrich --offline`, no model, no network)."""
 import copy
+import hashlib
 import json
 import pathlib
 
@@ -143,7 +144,7 @@ def test_a_wrong_cited_time_is_shown_case_local_and_the_text_is_not_backed(store
 
 
 # ------------------------------------------------------------------------------ B3: a re-check that differs (real trace)
-# Eval 1, q07 on Meta (docs/gates/eval1/runs_meta/20261103T113123Z-eb2773.jsonl, unedited): the recorded check rejected
+# Eval 1, q07 on Meta (the unedited trace 20261103T113123Z-eb2773): the recorded check rejected
 # a word-for-word voicemail quote for the times inside it ("at 8:00", "9:30"); under contract v1.4 it verifies.
 # It is a test fixture only, never a demo run in deploy/runs.
 Q07 = pathlib.Path(__file__).parent / "fixtures" / "eval1_q07_20261103T113123Z-eb2773.jsonl"
@@ -154,7 +155,8 @@ def q07_events():
 
 
 def test_q07_fixture_is_the_unedited_eval_trace():
-    assert Q07.read_bytes() == (REPO / "docs/gates/eval1/runs_meta/20261103T113123Z-eb2773.jsonl").read_bytes()
+    # The SHA-256 of the trace file the eval wrote for q07: the fixture is that file, byte for byte.
+    assert hashlib.sha256(Q07.read_bytes()).hexdigest() == "acb7f047fdb508e3e2aa4640a0e1bb25ba6a4c4e82411950410b907a1ea91234"
     assert not (RUNS / "20261103T113123Z-eb2773.jsonl").exists()
 
 

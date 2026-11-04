@@ -8,7 +8,7 @@ Each case is one claim, checked alone against the case store in tests/support/tb
   (strict rule: every reason is listed, and nothing else).
 
 `note` names the rule being pinned down. Notes tagged [Cn] pin a rule added in CONTRACTS.md
-v1.1 (clarification n in docs/SPIKES.md; see the contract's changelog).
+v1.1 (clarification n; see the contract's changelog).
 Cases tagged REAL use model output recorded verbatim in tests/fixtures/spikes/.
 """
 from __future__ import annotations
@@ -46,7 +46,7 @@ ACCEPT: list[Case] = [
          note="REAL muse-spark-open output, with time_start/time_end equal to the cited ts. [C1]"),
 ]
 
-# Phone-format variants must still pass (GAMEPLAN): (cited value, phone as written in the text).
+# Phone-format variants must still pass: (cited value, phone as written in the text).
 # Stored number is "+1 (555) 010-1234".
 PHONE_VARIANTS = [
     ("5550101234", "555-010-1234"),

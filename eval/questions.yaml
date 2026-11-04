@@ -1,4 +1,4 @@
-# Traceback eval questions (CONTRACTS.md section 11). Owned by the testing session.
+# Traceback eval questions (CONTRACTS.md section 11).
 #
 # Every expectation below was checked by hand with SQL against the store built from the committed sample
 # (tbx ingest data/sample/aleapp + tbx enrich --offline) on Nov 3, 2026. Case timezone: America/New_York

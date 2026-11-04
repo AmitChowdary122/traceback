@@ -2,7 +2,7 @@
 
 Offline only: everything comes from the committed cache data/sample/derived/enrich_cache.jsonl,
 so these tests make no API calls. The cache itself is produced once, live, by the builder.
-Facts below come from the testing session's probes on the real sample (Nov 1):
+Facts below come from probes on the real sample (Nov 1):
 - both MMS videos have speech: campaign ads ("… Attorney General …"), 15 s and 30 s of audio
 - PXL_20240724_163225*.jpg shows two phones and a laptop (SAM: cell phone x2 at 0.98, laptop 0.96)
 """
