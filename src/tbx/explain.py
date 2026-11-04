@@ -14,13 +14,18 @@ from datetime import date
 
 from tbx import timeutil as tu
 from tbx.checker import (NO_CITATIONS, OUTSIDE_WINDOW, TIME_RANGE_UNSUPPORTED, TIMESTAMP_FIELDS, UNKNOWN_ARTIFACT,
-                         UNKNOWN_FIELD, VALUE_MISMATCH, fold, parse_clock, parse_date)
-from tbx.store import Store
+                         UNKNOWN_FIELD, VALUE_MISMATCH, Entity, _grounded, _Pool, fold, parse_clock, parse_date)
+from tbx.store import CITABLE, FAMILY, Store
 
 MAX_VALUE = 160
 FAILED_CITATION = (VALUE_MISMATCH, UNKNOWN_ARTIFACT, UNKNOWN_FIELD)   # a citation that grounds nothing
 _ENTITY_DETAIL = re.compile(r"(\w+) (.+) is not supported by the claim's cited values", re.S)
 _NOT_ISO = re.compile(r"(time_start|time_end) (.+) is not an ISO time", re.S)
+UNCITED_TYPES = ("contact", "phone", "email", "url")   # value types an uncited field can hold (R3)
+# Citable fields in the order they are searched: the table's own columns in contract order (CONTRACTS §4), then
+# ts_utc, ts_local and source_path. Never raw_json, tz_basis or ts_original.
+FIELD_ORDER = {t: tuple(f for f in (*cols, "ts_utc", "ts_local", "source_path") if f in CITABLE[t])
+               for t, cols in FAMILY.items()}
 _DOW = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 _MON = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
@@ -168,10 +173,35 @@ def _nearest_date(text: str, times: list[datetime], tz: str) -> tuple[str, bool]
     return _day(best[1]), best[0] == 0
 
 
+def _uncited_field(etype: str, key: str, claim: dict, store: Store, tz: str) -> tuple[str, str] | None:
+    """(artifact_id, field) of the first cited record (citation order) that holds the entity in a citable field
+    (FIELD_ORDER) this claim doesn't cite for that record, matched exactly the way R4 grounds the type (the checker's
+    own rule: a contact as a whole word after normalization, a phone by the phone rule including phone-shaped runs
+    inside the value, an email or url by containment after folding). None when there is no such field."""
+    cited: dict[str, set[str]] = {}
+    for c in claim.get("citations") or []:
+        cited.setdefault(c.get("artifact_id", ""), set()).add(c.get("field", ""))
+    entity = Entity(etype, key, 0, len(key), key)
+    for aid, fields in cited.items():
+        row = store.get(aid)
+        if row is None:
+            continue
+        for field in FIELD_ORDER.get(row["table"], ()):
+            if field in fields:
+                continue
+            v = _stored(row, field, tz)
+            if v is None:
+                continue
+            if _grounded(entity, _Pool([str(v)], [], []), tz):
+                return aid, field
+    return None
+
+
 def _ungrounded(reason: dict, spans: list[dict], seen: dict[str, int], claim: dict | None = None,
                 store: Store | None = None, tz: str = "UTC", failed: bool = False) -> str:
-    """'<red span>' and why: the cited record's true time or date when there is one, or that the claim's citations
-    that failed (VALUE_MISMATCH / UNKNOWN_*) leave it unbacked."""
+    """'<red span>' and why: the cited record's true time or date when there is one, the cited record's field that
+    holds the value when the claim doesn't cite that field, or that the claim's citations that failed
+    (VALUE_MISMATCH / UNKNOWN_*) leave it unbacked. Display only: the checker's verdict and reasons are unchanged."""
     etype = reason["code"].split(":", 1)[1]
     nth = seen.get(etype, 0)
     seen[etype] = nth + 1
@@ -202,6 +232,11 @@ def _ungrounded(reason: dict, spans: list[dict], seen: dict[str, int], claim: di
             return f"{said} doesn't match the cited record's {what} ({near[0]})."
     if failed:
         return f"{said} isn't backed by a correctly cited {'time' if etype == 'timestamp' else 'value'}."
+    if etype in UNCITED_TYPES and claim is not None and store is not None:
+        hit = _uncited_field(etype, key if key is not None else text, claim, store, tz)
+        if hit is not None:
+            return (f"{said} isn't in any cited value; record {hit[0]} has it in {hit[1]}, "
+                    "which this claim doesn't cite.")
     return f"{said} doesn't appear in any cited record."
 
 

@@ -103,7 +103,8 @@ def test_two_ungrounded_entities_of_one_type_keep_their_order(store):
     assert explain.sentences(entry, spans, store, NY) == [
         "'9:01 PM' doesn't match the cited record's time (9:42 PM).",
         "'9:02 PM' doesn't match the cited record's time (9:42 PM).",
-        "'Bob' doesn't appear in any cited record.", "'Liz Dehner' doesn't appear in any cited record."]
+        "'Bob' doesn't appear in any cited record.",
+        f"'Liz Dehner' isn't in any cited value; record {CALL} has it in contact_name, which this claim doesn't cite."]
 
 
 # ------------------------------------------------------------------------------ F2: the true value
@@ -190,3 +191,87 @@ def test_every_reason_gets_a_sentence_in_order(store):
 def test_an_unknown_code_falls_back_to_its_detail(store):
     entry = {"claim": {"text": "x", "citations": []}, "reasons": [{"code": "NEW_RULE", "detail": "why", "citation_index": None}]}
     assert explain.sentences(entry, [], store, NY) == ["why"]
+
+
+# ------------------------------------------------------------------------------ R3: the value is in a field not cited
+IN_WINDOW = {"ts_original": "x", "tz_basis": "utc_string", "ts_utc": "2024-06-28T01:30:00Z", "source_row": "9"}
+
+
+def add_message(store, row_key, raw_json="{}", **cols):
+    aid = artifact_id("messages", "chat.tsv", row_key)
+    store.insert("messages", {"artifact_id": aid, "source_path": "chat.tsv", **IN_WINDOW, "source_row": row_key,
+                              "raw_json": raw_json, "app": "Chat", "thread_id": "1", **cols})
+    return aid
+
+
+def uncited(aid, field, said):
+    return f"'{said}' isn't in any cited value; record {aid} has it in {field}, which this claim doesn't cite."
+
+
+def test_a_contact_in_an_uncited_field_names_the_record_and_the_field(store):
+    body = "Meet me at the north gate after the game tonight, around ten or so."
+    assert say(store, "Bob wrote it.", (MSG, "body", body), window=None) == [uncited(MSG, "sender", "Bob")]
+    assert say(store, "bob wrote it.", (MSG, "body", body), window=None) == [uncited(MSG, "sender", "bob")]
+    # a whole word after normalization, as R4 grounds a contact: "Bobby" is not Bob, "BOB," is
+    part = add_message(store, "1", sender="Carol", body="Bobby is late again tonight")
+    assert say(store, "Bob wrote it.", (part, "sender", "Carol")) == ["'Bob' doesn't appear in any cited record."]
+    word = add_message(store, "2", sender="Carol", body="Tell BOB, the usual place")
+    assert say(store, "Bob was told.", (word, "sender", "Carol")) == [uncited(word, "body", "Bob")]
+
+
+def test_the_first_uncited_field_in_field_order_is_named(store):
+    both = add_message(store, "1", sender="Carol", recipient="Bob", body="Bob, call me")
+    assert say(store, "Bob got a text.", (both, "sender", "Carol")) == [uncited(both, "recipient", "Bob")]
+    # a field the claim cites is never named: here the cited body is a quote that leaves the name out
+    quote = add_message(store, "3", body="Hello there my friend, Bob says hi")
+    assert say(store, "Bob says hello.", (quote, "body", "Hello there my friend")) == [
+        "'Bob' doesn't appear in any cited record."]
+    other = add_message(store, "2", sender="Bob", body="hi there")
+    assert say(store, "Bob got a text.", (both, "sender", "Carol"), (other, "body", "hi there")) == [
+        uncited(both, "recipient", "Bob")]                                     # citation order, then field order
+
+
+def test_a_phone_in_an_uncited_field_follows_the_phone_rule(store):
+    assert say(store, "Liz Dehner called +1 919 555 0134.", (CALL, "contact_name", "Liz Dehner")) == [
+        uncited(CALL, "number", "+1 919 555 0134")]                            # the last 10 digits, not the raw text
+    assert say(store, "Bob wrote from 919-555-0199.", (MSG, "sender", "Bob"), window=None) == [
+        uncited(MSG, "sender_number", "919-555-0199")]
+    # a phone-shaped run inside a value counts, as in R4
+    run = add_message(store, "1", sender="Carol", body="Call me back at (919) 555-0177 tonight please")
+    assert say(store, "Carol shared 919.555.0177.", (run, "sender", "Carol")) == [uncited(run, "body", "919.555.0177")]
+    assert say(store, "Carol shared 919.555.0178.", (run, "sender", "Carol")) == [
+        "'919.555.0178' doesn't appear in any cited record."]
+
+
+def test_an_email_or_url_in_an_uncited_field(store):
+    m = add_message(store, "1", sender="Carol", body="see https://example.org/x or write to a.b@example.org")
+    assert say(store, "Carol sent https://example.org/x.", (m, "sender", "Carol")) == [
+        uncited(m, "body", "https://example.org/x")]
+    assert say(store, "Carol wrote from A.B@example.org.", (m, "sender", "Carol")) == [
+        uncited(m, "body", "A.B@example.org")]
+    assert say(store, "Carol sent https://example.org/y.", (m, "sender", "Carol")) == [
+        "'https://example.org/y' doesn't appear in any cited record."]
+
+
+def test_raw_json_is_never_searched(store):
+    m = add_message(store, "1", raw_json='{"Sender": "Bob", "Number": "9195550111"}', sender="Carol", body="hello")
+    assert say(store, "Bob texted from 919-555-0111.", (m, "sender", "Carol")) == [
+        "'919-555-0111' doesn't appear in any cited record.", "'Bob' doesn't appear in any cited record."]
+
+
+def test_times_dates_and_failed_citations_keep_their_sentences(store):
+    # the call's time is in ts_utc, which the claim doesn't cite: the clock-time sentence is unchanged
+    assert say(store, "Liz Dehner called at 9:42 PM.", (CALL, "contact_name", "Liz Dehner")) == [
+        "'9:42 PM' matches the cited record's time, but the claim doesn't cite that record's timestamp."]
+    # after a failed citation the entity "isn't backed by a correctly cited value", as before
+    assert say(store, "Liz Dehner called.", (CALL, "direction", "incoming")) == [
+        "Cited direction = 'incoming'; the record says 'outgoing'.",
+        "'Liz Dehner' isn't backed by a correctly cited value."]
+
+
+def test_the_uncited_field_sentence_is_display_only(store):
+    entry, spans = rejected(store, "Bob wrote it.", (MSG, "body", "Meet me at the north gate after the game"),
+                            window=None)
+    assert [r["code"] for r in entry["reasons"]] == ["UNGROUNDED_ENTITY:contact"]
+    assert entry["reasons"][0]["detail"] == "contact 'Bob' is not supported by the claim's cited values"
+    assert [(e["text"], e["grounded"]) for e in spans] == [("Bob", False)]

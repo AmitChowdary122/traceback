@@ -201,3 +201,36 @@ def test_q07_run_view_and_list_use_the_rechecked_verdicts(store, tmp_path):
     assert len(view["annotations"]["verified"]) == 4
     (row,) = client.get("/api/runs").json()
     assert (row["recheck"], row["verified"], row["rejected"]) == ("differs", 4, 0)
+
+
+# ------------------------------------------------------------------------------ R3: a name in a field the claim doesn't cite
+# Eval 2, q10 on Meta (deploy/runs/20261103T193235Z-57a8b2.jsonl, unedited): every rejected claim names the sender
+# but cites only the message's ts_local and body. The record has the name in sender; the page says so.
+def test_q10_rejection_names_the_uncited_sender_field(store):
+    ev = events("57a8b2")
+    out = runview.reverify(ev, store)
+    assert out["recheck"]["status"] == "match"
+    rejected = out["verdicts"]["rejected"]
+    assert len(rejected) == 12 and len(out["verdicts"]["verified"]) == 7
+    (k,) = [i for i, r in enumerate(rejected) if r["claim"]["text"].startswith("At 1:28 PM on January 31, Liz Dehner")]
+    assert [(c["artifact_id"], c["field"]) for c in rejected[k]["claim"]["citations"]] == [
+        ("msg_e5c621133c", "ts_local"), ("msg_e5c621133c", "body")]
+    assert out["annotations"]["rejected"][k]["sentences"] == [
+        "'Liz Dehner' isn't in any cited value; record msg_e5c621133c has it in sender, which this claim doesn't cite."]
+    # the three spellings of one contact give three reasons and one sentence, so the page lists it once
+    for r, a in zip(rejected, out["annotations"]["rejected"]):
+        assert len(set(a["sentences"])) == 1, a["sentences"]
+        assert "which this claim doesn't cite" in a["sentences"][0]
+        assert " has it in sender, " in a["sentences"][0]
+
+
+def test_q10_an_invented_name_still_does_not_appear_in_any_cited_record(store):
+    ev = events("57a8b2")
+    claims = next(e for e in ev if e["type"] == "final_answer")["payload"]["claims"]
+    k = next(i for i, c in enumerate(claims) if c["text"].startswith("At 1:28 PM on January 31, Liz Dehner"))
+    text = claims[k]["text"].replace("Liz Dehner", "Russell Philby")
+    got = dict(rechecked_rejections(store, with_claim(ev, k, text=text)))
+    assert set(got[text]) == {"'Russell Philby' doesn't appear in any cited record."}
+    # the recorded run itself is untouched: the checker's verdicts and codes are what was recorded
+    rec = [e["payload"] for e in ev if e["type"] == "check_result"][-1]
+    assert all(r["code"] == "UNGROUNDED_ENTITY:contact" for x in rec["rejected"] for r in x["reasons"])
