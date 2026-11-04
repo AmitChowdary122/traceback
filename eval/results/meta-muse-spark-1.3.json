@@ -1,0 +1,3286 @@
+{
+ "provider": "meta",
+ "model": "muse-spark-1.3",
+ "repair": 0,
+ "case_tz": "America/New_York",
+ "started": "2026-11-03T19:27:21Z",
+ "finished": "2026-11-03T19:38:54Z",
+ "commit": "26fe454",
+ "totals": {
+  "questions": 22,
+  "errors": 0,
+  "fact_recall": 0.9333,
+  "artifact_recall": 0.9773,
+  "citation_precision": 0.8846,
+  "verified_claims": 92,
+  "rejected_claims": 12,
+  "uncited_in_report": 0,
+  "rejected_by_reason": {
+   "UNGROUNDED_ENTITY:contact": 22
+  },
+  "rejected_by_reason_round1": {},
+  "abstention_accuracy": 1.0,
+  "negative_questions": 4,
+  "latency_p50_s": 24.401,
+  "latency_p95_s": 73.806,
+  "tokens": 1037161,
+  "est_cost_usd": 1.14416
+ },
+ "questions": [
+  {
+   "id": "q01",
+   "run_id": "20261103T192721Z-643eaf",
+   "status": "ok",
+   "error": null,
+   "question": "Where was this phone between 9 and 11 pm, and who did it talk to?",
+   "tags": [
+    "locations",
+    "messages",
+    "flagship",
+    "trap-tz-boundary"
+   ],
+   "verified": [
+    {
+     "text": "At 9:06 PM on June 27 the phone was at 35.6596081, -78.8730535.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_3f4397b779",
+       "field": "ts_local",
+       "value": "2024-06-27T21:06:18-04:00"
+      },
+      {
+       "artifact_id": "loc_3f4397b779",
+       "field": "lat",
+       "value": "35.6596081"
+      },
+      {
+       "artifact_id": "loc_3f4397b779",
+       "field": "lon",
+       "value": "-78.8730535"
+      }
+     ]
+    },
+    {
+     "text": "At 10:12 PM on June 27 the phone was still at 35.6596081, -78.8730535.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_edd64d2d58",
+       "field": "ts_local",
+       "value": "2024-06-27T22:12:00-04:00"
+      },
+      {
+       "artifact_id": "loc_edd64d2d58",
+       "field": "lat",
+       "value": "35.6596081"
+      },
+      {
+       "artifact_id": "loc_edd64d2d58",
+       "field": "lon",
+       "value": "-78.8730535"
+      }
+     ]
+    },
+    {
+     "text": "At 10:41 PM on June 27 the phone received one MMS from (844) 200-8341 with text \"Team DLCC: President Biden and Trump just left the stage.\" and an image attachment.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_c9a0e4d555",
+       "field": "ts_local",
+       "value": "2024-06-27T22:41:52-04:00"
+      },
+      {
+       "artifact_id": "msg_c9a0e4d555",
+       "field": "sender_number",
+       "value": "(844) 200-8341"
+      },
+      {
+       "artifact_id": "msg_c9a0e4d555",
+       "field": "body",
+       "value": "Team DLCC: President Biden and Trump just left the stage. \n\nHere’s what we learned: we must build Democratic power in the states to block abortion bans, protect the LGBTQ+ community, and safeguard our democracy against Trump’s allies.\n\nState Democrats are falling behind the GOP, so can you make a 5X-matched donation ahead of Sunday’s end-of-quarter deadline? https://dlcc.fund/jun24-deb-2?t=RIFWgj \n\nStop2Quit"
+      },
+      {
+       "artifact_id": "msg_67f029fc70",
+       "field": "ts_local",
+       "value": "2024-06-27T22:41:52-04:00"
+      },
+      {
+       "artifact_id": "msg_67f029fc70",
+       "field": "attachment_media_id",
+       "value": "med_d28d3ce02d"
+      },
+      {
+       "artifact_id": "med_d28d3ce02d",
+       "field": "mime_type",
+       "value": "image/gif"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 1,
+   "found_artifacts": 1,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 39.904,
+   "tokens": 36810,
+   "est_cost_usd": 0.044496
+  },
+  {
+   "id": "q02",
+   "run_id": "20261103T192800Z-216330",
+   "status": "ok",
+   "error": null,
+   "question": "Who did the phone call on the afternoon of July 27, 2024, and how long did the calls last?",
+   "tags": [
+    "calls",
+    "completeness"
+   ],
+   "verified": [
+    {
+     "text": "At 5:39 PM on July 27 the phone placed an outgoing call to 919579 lasting 0 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_3adc11cd2f",
+       "field": "ts_local",
+       "value": "2024-07-27T17:39:21-04:00"
+      },
+      {
+       "artifact_id": "call_3adc11cd2f",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_3adc11cd2f",
+       "field": "number",
+       "value": "919579"
+      },
+      {
+       "artifact_id": "call_3adc11cd2f",
+       "field": "duration_s",
+       "value": "0"
+      }
+     ]
+    },
+    {
+     "text": "At 5:40 PM on July 27 the phone placed an outgoing call to 9195794674 to ThisIs DFIR lasting 121 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_798ca1927c",
+       "field": "ts_local",
+       "value": "2024-07-27T17:40:04-04:00"
+      },
+      {
+       "artifact_id": "call_798ca1927c",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_798ca1927c",
+       "field": "number",
+       "value": "9195794674"
+      },
+      {
+       "artifact_id": "call_798ca1927c",
+       "field": "contact_name",
+       "value": "ThisIs DFIR"
+      },
+      {
+       "artifact_id": "call_798ca1927c",
+       "field": "duration_s",
+       "value": "121"
+      }
+     ]
+    },
+    {
+     "text": "At 5:45 PM on July 27 the phone received an incoming call from +19195794674 from ThisIs DFIR lasting 105 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_2225bf2365",
+       "field": "ts_local",
+       "value": "2024-07-27T17:45:12-04:00"
+      },
+      {
+       "artifact_id": "call_2225bf2365",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "call_2225bf2365",
+       "field": "number",
+       "value": "+19195794674"
+      },
+      {
+       "artifact_id": "call_2225bf2365",
+       "field": "contact_name",
+       "value": "ThisIs DFIR"
+      },
+      {
+       "artifact_id": "call_2225bf2365",
+       "field": "duration_s",
+       "value": "105"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 3,
+   "found_artifacts": 3,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 12.184,
+   "tokens": 7970,
+   "est_cost_usd": 0.014189
+  },
+  {
+   "id": "q03",
+   "run_id": "20261103T192813Z-2aaeef",
+   "status": "ok",
+   "error": null,
+   "question": "Who did the phone exchange messages with between 3 and 4 PM on July 26, 2024, and what did they talk about?",
+   "tags": [
+    "messages"
+   ],
+   "verified": [
+    {
+     "text": "The phone exchanged messages with Thom De'Fer at (984) 291-5610.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_addd51bb88",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_addd51bb88",
+       "field": "sender_number",
+       "value": "(984) 291-5610"
+      }
+     ]
+    },
+    {
+     "text": "At 3:03 PM on July 26, Thom De'Fer asked \"Are you here yet?\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_addd51bb88",
+       "field": "ts_local",
+       "value": "2024-07-26T15:03:11-04:00"
+      },
+      {
+       "artifact_id": "msg_addd51bb88",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_addd51bb88",
+       "field": "body",
+       "value": "Are you here yet?"
+      }
+     ]
+    },
+    {
+     "text": "The phone replied to Thom De'Fer \"Yes I am.  I had a small hiccup with your contact but I'm good now. \"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_3d49f89969",
+       "field": "recipient",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_3d49f89969",
+       "field": "body",
+       "value": "Yes I am.  I had a small hiccup with your contact but I'm good now. "
+      }
+     ]
+    },
+    {
+     "text": "Thom De'Fer said \"Good. And we are on RCS, which is good. \"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_197afd2873",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_197afd2873",
+       "field": "body",
+       "value": "Good. And we are on RCS, which is good. "
+      }
+     ]
+    },
+    {
+     "text": "The phone replied to Thom De'Fer \"Yep, this is great. I wish more people used it. \"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_4753156244",
+       "field": "recipient",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_4753156244",
+       "field": "body",
+       "value": "Yep, this is great. I wish more people used it. "
+      }
+     ]
+    },
+    {
+     "text": "Thom De'Fer joked \"Well, that depends on how long Google keeps it around. They like killing off messenging apps. 🤣\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_f75df628eb",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_f75df628eb",
+       "field": "body",
+       "value": "Well, that depends on how long Google keeps it around. They like killing off messenging apps. 🤣"
+      }
+     ]
+    },
+    {
+     "text": "Thom De'Fer asked \"It does. Want to send me a picture?\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_efdd15cf10",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_efdd15cf10",
+       "field": "body",
+       "value": "It does. Want to send me a picture?"
+      }
+     ]
+    },
+    {
+     "text": "The phone answered Thom De'Fer \"Sure. Let me find one. Standby. \"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_15737798d3",
+       "field": "recipient",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_15737798d3",
+       "field": "body",
+       "value": "Sure. Let me find one. Standby. "
+      }
+     ]
+    },
+    {
+     "text": "The phone sent an image to Thom De'Fer.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_d5665caae3",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_d5665caae3",
+       "field": "recipient",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_d5665caae3",
+       "field": "attachment_media_id",
+       "value": "med_c029bc2e4e"
+      }
+     ]
+    },
+    {
+     "text": "Thom De'Fer said \"Lol. I guess I'm neither because I see Predator, too. Hang on and I'll send one to you. \"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_fdb4f0e803",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_fdb4f0e803",
+       "field": "body",
+       "value": "Lol. I guess I'm neither because I see Predator, too. Hang on and I'll send one to you. "
+      }
+     ]
+    },
+    {
+     "text": "Thom De'Fer sent an image to the phone.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_c45be892aa",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_c45be892aa",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_c45be892aa",
+       "field": "attachment_media_id",
+       "value": "med_4d461de940"
+      }
+     ]
+    },
+    {
+     "text": "The phone replied to Thom De'Fer \"Got it. \"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_c3143d6855",
+       "field": "recipient",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_c3143d6855",
+       "field": "body",
+       "value": "Got it. "
+      }
+     ]
+    },
+    {
+     "text": "The phone received one MMS from Russell Philby at (919) 903-7779 consisting of three image parts.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_447d4e2d35",
+       "field": "sender",
+       "value": "Russell Philby"
+      },
+      {
+       "artifact_id": "msg_447d4e2d35",
+       "field": "sender_number",
+       "value": "(919) 903-7779"
+      },
+      {
+       "artifact_id": "msg_447d4e2d35",
+       "field": "thread_id",
+       "value": "175"
+      },
+      {
+       "artifact_id": "msg_447d4e2d35",
+       "field": "ts_utc",
+       "value": "2024-07-26T19:47:24Z"
+      },
+      {
+       "artifact_id": "msg_447d4e2d35",
+       "field": "attachment_media_id",
+       "value": "med_21d4ee329d"
+      },
+      {
+       "artifact_id": "msg_5d1a74194f",
+       "field": "thread_id",
+       "value": "175"
+      },
+      {
+       "artifact_id": "msg_5d1a74194f",
+       "field": "ts_utc",
+       "value": "2024-07-26T19:47:24Z"
+      },
+      {
+       "artifact_id": "msg_5d1a74194f",
+       "field": "attachment_media_id",
+       "value": "med_fd95a591ab"
+      },
+      {
+       "artifact_id": "msg_73278f8a4f",
+       "field": "thread_id",
+       "value": "175"
+      },
+      {
+       "artifact_id": "msg_73278f8a4f",
+       "field": "ts_utc",
+       "value": "2024-07-26T19:47:24Z"
+      },
+      {
+       "artifact_id": "msg_73278f8a4f",
+       "field": "attachment_media_id",
+       "value": "med_2aef4a7aec"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 2,
+   "found_artifacts": 2,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 94.269,
+   "tokens": 61768,
+   "est_cost_usd": 0.100077
+  },
+  {
+   "id": "q04",
+   "run_id": "20261103T192947Z-c78cb6",
+   "status": "ok",
+   "error": null,
+   "question": "What places were shared in text messages on the afternoon of July 26, 2024?",
+   "tags": [
+    "messages",
+    "url"
+   ],
+   "verified": [
+    {
+     "text": "At 4:26 PM on July 26, Thom De'Fer sent a text containing \"https://www.google.com/maps/search/?api=1&query=8708+Center+Rd++West+Springfield++VA+22152++USA\".",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_c7b66131af",
+       "field": "ts_local",
+       "value": "2024-07-26T16:26:44-04:00"
+      },
+      {
+       "artifact_id": "msg_c7b66131af",
+       "field": "sender",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_c7b66131af",
+       "field": "body",
+       "value": "https://www.google.com/maps/search/?api=1&query=8708+Center+Rd++West+Springfield++VA+22152++USA"
+      }
+     ]
+    },
+    {
+     "text": "At 4:45 PM on July 26, a text to Thom De'Fer contained \"https://www.google.com/maps/place/@/data=!4m2!3m1!1s0x89b65309dfe8928b:0x6f6d8b87a15ef942\".",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_0fe44bc5cb",
+       "field": "ts_local",
+       "value": "2024-07-26T16:45:52-04:00"
+      },
+      {
+       "artifact_id": "msg_0fe44bc5cb",
+       "field": "recipient",
+       "value": "Thom De'Fer"
+      },
+      {
+       "artifact_id": "msg_0fe44bc5cb",
+       "field": "body",
+       "value": "https://www.google.com/maps/place/@/data=!4m2!3m1!1s0x89b65309dfe8928b:0x6f6d8b87a15ef942"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 1,
+   "found_entities": 1,
+   "missing_entities": [],
+   "expected_artifacts": 2,
+   "found_artifacts": 2,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 17.122,
+   "tokens": 12103,
+   "est_cost_usd": 0.020322
+  },
+  {
+   "id": "q05",
+   "run_id": "20261103T193004Z-e3050e",
+   "status": "ok",
+   "error": null,
+   "question": "What was said in the video messages this phone received in February 2024, and who sent them?",
+   "tags": [
+    "voice",
+    "media",
+    "est"
+   ],
+   "verified": [
+    {
+     "text": "The phone received an incoming video at 4:24 PM on February 9 from (919) 999-2727.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_8530438dfc",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_8530438dfc",
+       "field": "sender_number",
+       "value": "(919) 999-2727"
+      },
+      {
+       "artifact_id": "msg_8530438dfc",
+       "field": "ts_local",
+       "value": "2024-02-09T16:24:35-05:00"
+      },
+      {
+       "artifact_id": "med_48b85ddfb0",
+       "field": "kind",
+       "value": "video"
+      }
+     ]
+    },
+    {
+     "text": "The 4:24 PM on February 9 video said \"Satana Dewberry is running for Attorney General to change the system as Durham District Attorney, she worked to end inequity in racial bias in the system. As Attorney General, she will fight to make the system more transparent, lower incarceration rates and break the cycle of crime\".",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "trn_abf68de0c5",
+       "field": "text",
+       "value": "Satana Dewberry is running for Attorney General to change the system as Durham District Attorney, she worked to end inequity in racial bias in the system. As Attorney General, she will fight to make the system more transparent, lower incarceration rates and break the cycle of crime"
+      },
+      {
+       "artifact_id": "trn_abf68de0c5",
+       "field": "ts_local",
+       "value": "2024-02-09T16:24:35-05:00"
+      },
+      {
+       "artifact_id": "trn_abf68de0c5",
+       "field": "media_id",
+       "value": "med_48b85ddfb0"
+      }
+     ]
+    },
+    {
+     "text": "At 4:24 PM on February 9 the same (919) 999-2727 text said \"Attn NC Democrats: There is only one true progressive running for Attorney General: Satana Deberry.\" and \"-AND JUSTICE FOR ALL PAC\".",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_ace6f2a9bd",
+       "field": "sender_number",
+       "value": "(919) 999-2727"
+      },
+      {
+       "artifact_id": "msg_ace6f2a9bd",
+       "field": "ts_local",
+       "value": "2024-02-09T16:24:35-05:00"
+      },
+      {
+       "artifact_id": "msg_ace6f2a9bd",
+       "field": "body",
+       "value": "Attn NC Democrats: There is only one true progressive running for Attorney General: Satana Deberry.\r\n\r\n-AND JUSTICE FOR ALL PAC\r\nSTOP2END"
+      }
+     ]
+    },
+    {
+     "text": "The phone received an incoming video at 1:32 PM on February 13 from (919) 999-2727.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_ed81ceede4",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_ed81ceede4",
+       "field": "sender_number",
+       "value": "(919) 999-2727"
+      },
+      {
+       "artifact_id": "msg_ed81ceede4",
+       "field": "ts_local",
+       "value": "2024-02-13T13:32:24-05:00"
+      },
+      {
+       "artifact_id": "med_7fcf45e44f",
+       "field": "kind",
+       "value": "video"
+      }
+     ]
+    },
+    {
+     "text": "The 1:32 PM on February 13 video said \"North Carolina has the opportunity to elect a true progressive as Attorney General. Satana Deberry. Satana would be the first black female to be elected as Attorney General. As Durham District Attorney, Attorney, she fought for racial equity. As Attorney General, she will protect the rights of criminal defendants and will fight to lower incarceration rates. Satana Deberry is the true progressive for Attorney General. Paid for by and Justice for All PAC, not authorized by any candidate or candidates committee. www.andjusticeforallpac.com\".",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "trn_f4ee9200d9",
+       "field": "text",
+       "value": "North Carolina has the opportunity to elect a true progressive as Attorney General. Satana Deberry. Satana would be the first black female to be elected as Attorney General. As Durham District Attorney, Attorney, she fought for racial equity. As Attorney General, she will protect the rights of criminal defendants and will fight to lower incarceration rates. Satana Deberry is the true progressive for Attorney General. Paid for by and Justice for All PAC, not authorized by any candidate or candidates committee. www.andjusticeforallpac.com"
+      },
+      {
+       "artifact_id": "trn_f4ee9200d9",
+       "field": "ts_local",
+       "value": "2024-02-13T13:32:24-05:00"
+      },
+      {
+       "artifact_id": "trn_f4ee9200d9",
+       "field": "media_id",
+       "value": "med_7fcf45e44f"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 2,
+   "found_artifacts": 2,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 38.061,
+   "tokens": 119087,
+   "est_cost_usd": 0.12604
+  },
+  {
+   "id": "q06",
+   "run_id": "20261103T193042Z-48abbc",
+   "status": "ok",
+   "error": null,
+   "question": "What do the photos taken on July 24, 2024 show?",
+   "tags": [
+    "photos",
+    "sam"
+   ],
+   "verified": [
+    {
+     "text": "A photo taken at 12:05 PM on July 24 shows a person.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_8870c15ef4",
+       "field": "ts_local",
+       "value": "2024-07-24T12:05:30-04:00"
+      },
+      {
+       "artifact_id": "tag_3d63963ab2",
+       "field": "label",
+       "value": "person"
+      }
+     ]
+    },
+    {
+     "text": "A photo taken at 12:05 PM on July 24 shows a cell phone.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_8870c15ef4",
+       "field": "ts_local",
+       "value": "2024-07-24T12:05:30-04:00"
+      },
+      {
+       "artifact_id": "tag_735fb27cd7",
+       "field": "label",
+       "value": "cell phone"
+      }
+     ]
+    },
+    {
+     "text": "A photo taken at 12:32 PM on July 24 shows a laptop and a cell phone.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_3755e38c69",
+       "field": "ts_local",
+       "value": "2024-07-24T12:32:25-04:00"
+      },
+      {
+       "artifact_id": "tag_e60dd42e36",
+       "field": "label",
+       "value": "laptop"
+      },
+      {
+       "artifact_id": "tag_d78bdb0e6c",
+       "field": "label",
+       "value": "cell phone"
+      }
+     ]
+    },
+    {
+     "text": "A photo taken at 3:57 PM on July 24 shows a car, a license plate and a sign.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_e48be04e20",
+       "field": "ts_local",
+       "value": "2024-07-24T15:57:34-04:00"
+      },
+      {
+       "artifact_id": "tag_f9b27ebd05",
+       "field": "label",
+       "value": "car"
+      },
+      {
+       "artifact_id": "tag_0e3bf61852",
+       "field": "label",
+       "value": "license plate"
+      },
+      {
+       "artifact_id": "tag_57d2d9c244",
+       "field": "label",
+       "value": "sign"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 3,
+   "found_entities": 3,
+   "missing_entities": [],
+   "expected_artifacts": 2,
+   "found_artifacts": 2,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 18.693,
+   "tokens": 9640,
+   "est_cost_usd": 0.018641
+  },
+  {
+   "id": "q07",
+   "run_id": "20261103T193101Z-702634",
+   "status": "ok",
+   "error": null,
+   "question": "Did anyone leave a voicemail on February 10, 2024? What did it say?",
+   "tags": [
+    "voicemail",
+    "est"
+   ],
+   "verified": [
+    {
+     "text": "A voicemail lasting 14 seconds was left at 9:28 AM on February 10 from +19199291133.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_f777b490c2",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_f777b490c2",
+       "field": "number",
+       "value": "+19199291133"
+      },
+      {
+       "artifact_id": "call_f777b490c2",
+       "field": "duration_s",
+       "value": "14"
+      },
+      {
+       "artifact_id": "call_f777b490c2",
+       "field": "ts_local",
+       "value": "2024-02-10T09:28:06-05:00"
+      }
+     ]
+    },
+    {
+     "text": "That voicemail said \"Hi. Yes, this is Jaclyn from the U-Haul and Chapel Hill, see how the reservation this morning at 8:00. It is now going on 9:30. We're going to go ahead and cancel this reservation. If you can give us a call back, that would be great. Thank you.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_f777b490c2",
+       "field": "transcript",
+       "value": "Hi. Yes, this is Jaclyn from the U-Haul and Chapel Hill, see how the reservation this morning at 8:00. It is now going on 9:30. We're going to go ahead and cancel this reservation. If you can give us a call back, that would be great. Thank you."
+      }
+     ]
+    },
+    {
+     "text": "A voicemail lasting 41 seconds was left at 11:45 AM on February 10 from +19192992584.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_faa9e8203a",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_faa9e8203a",
+       "field": "number",
+       "value": "+19192992584"
+      },
+      {
+       "artifact_id": "call_faa9e8203a",
+       "field": "duration_s",
+       "value": "41"
+      },
+      {
+       "artifact_id": "call_faa9e8203a",
+       "field": "ts_local",
+       "value": "2024-02-10T11:45:54-05:00"
+      }
+     ]
+    },
+    {
+     "text": "A voicemail lasting 3 seconds was left at 3:36 PM on February 10 from +19109989566.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_bfe3f7a172",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_bfe3f7a172",
+       "field": "number",
+       "value": "+19109989566"
+      },
+      {
+       "artifact_id": "call_bfe3f7a172",
+       "field": "duration_s",
+       "value": "3"
+      },
+      {
+       "artifact_id": "call_bfe3f7a172",
+       "field": "ts_local",
+       "value": "2024-02-10T15:36:49-05:00"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 1,
+   "found_artifacts": 1,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 27.78,
+   "tokens": 14216,
+   "est_cost_usd": 0.025303
+  },
+  {
+   "id": "q08",
+   "run_id": "20261103T193129Z-53d6ac",
+   "status": "ok",
+   "error": null,
+   "question": "Who left a voicemail on the evening of February 29, 2024, and what number did they ask to be called back on?",
+   "tags": [
+    "voicemail",
+    "est",
+    "trap-tz-boundary"
+   ],
+   "verified": [
+    {
+     "text": "A voicemail from +13363276855 was left at 8:37 PM on February 29.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "number",
+       "value": "+13363276855"
+      },
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "ts_local",
+       "value": "2024-02-29T20:37:26-05:00"
+      }
+     ]
+    },
+    {
+     "text": "The voicemail states \"Cuz this your cousin Keisha call me back at 336-327-6855. Love you. Bye.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_fc8e1e2fb4",
+       "field": "transcript",
+       "value": "Cuz this your cousin Keisha call me back at 336-327-6855. Love you. Bye."
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 1,
+   "found_artifacts": 1,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 20.254,
+   "tokens": 12871,
+   "est_cost_usd": 0.022703
+  },
+  {
+   "id": "q09",
+   "run_id": "20261103T193149Z-53853b",
+   "status": "ok",
+   "error": null,
+   "question": "What was discussed on Telegram on the morning of January 31, 2024?",
+   "tags": [
+    "messages",
+    "telegram",
+    "est"
+   ],
+   "verified": [
+    {
+     "text": "An incoming Telegram message from thisis dfir stated \"Hi there. I moved.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_1d14f98a72",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_1d14f98a72",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_1d14f98a72",
+       "field": "sender",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_1d14f98a72",
+       "field": "body",
+       "value": "Hi there. I moved."
+      }
+     ]
+    },
+    {
+     "text": "An outgoing Telegram message to thisis dfir stated \"I totally missed this. Hey, what's up!\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_3c5de1a18a",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_3c5de1a18a",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_3c5de1a18a",
+       "field": "recipient",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_3c5de1a18a",
+       "field": "body",
+       "value": "I totally missed this. Hey, what's up!"
+      }
+     ]
+    },
+    {
+     "text": "An incoming Telegram message from thisis dfir stated \"Not much. I’m trying to diagnose a battery issue at the moment.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_c40c47b6b2",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_c40c47b6b2",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_c40c47b6b2",
+       "field": "sender",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_c40c47b6b2",
+       "field": "body",
+       "value": "Not much. I’m trying to diagnose a battery issue at the moment."
+      }
+     ]
+    },
+    {
+     "text": "An outgoing Telegram message to thisis dfir stated \"What's wrong with it?\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_802f14b910",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_802f14b910",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_802f14b910",
+       "field": "recipient",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_802f14b910",
+       "field": "body",
+       "value": "What's wrong with it?"
+      }
+     ]
+    },
+    {
+     "text": "An incoming Telegram message from thisis dfir stated \"It dropped from 100 to about 20 percent in a couple of hours. I have no idea why.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_291110b5b1",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_291110b5b1",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_291110b5b1",
+       "field": "sender",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_291110b5b1",
+       "field": "body",
+       "value": "It dropped from 100 to about 20 percent in a couple of hours. I have no idea why."
+      }
+     ]
+    },
+    {
+     "text": "An outgoing Telegram message to thisis dfir stated \"What were you doing?\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_e6b39a6d69",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_e6b39a6d69",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_e6b39a6d69",
+       "field": "recipient",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_e6b39a6d69",
+       "field": "body",
+       "value": "What were you doing?"
+      }
+     ]
+    },
+    {
+     "text": "An incoming Telegram message from thisis dfir stated \"Nothing unusual.  I was only using Signal.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_ddf405e7d5",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_ddf405e7d5",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_ddf405e7d5",
+       "field": "sender",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_ddf405e7d5",
+       "field": "body",
+       "value": "Nothing unusual.  I was only using Signal."
+      }
+     ]
+    },
+    {
+     "text": "An outgoing Telegram message to thisis dfir stated \"That is odd. You were on WiFi, right?\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_ae9a5cf77f",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_ae9a5cf77f",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_ae9a5cf77f",
+       "field": "recipient",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_ae9a5cf77f",
+       "field": "body",
+       "value": "That is odd. You were on WiFi, right?"
+      }
+     ]
+    },
+    {
+     "text": "An incoming Telegram message from thisis dfir stated \"Yes. I’m completely stumped.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_ca4f684e61",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_ca4f684e61",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_ca4f684e61",
+       "field": "sender",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_ca4f684e61",
+       "field": "body",
+       "value": "Yes. I’m completely stumped."
+      }
+     ]
+    },
+    {
+     "text": "An outgoing Telegram message to thisis dfir stated \"Interesting. I'll send a picturen let me find one.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_dc08b8879c",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_dc08b8879c",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_dc08b8879c",
+       "field": "recipient",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_dc08b8879c",
+       "field": "body",
+       "value": "Interesting. I'll send a picturen let me find one."
+      }
+     ]
+    },
+    {
+     "text": "An additional outgoing Telegram message to thisis dfir contained no text.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_4861d27d4f",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_4861d27d4f",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_4861d27d4f",
+       "field": "recipient",
+       "value": "thisis dfir"
+      }
+     ]
+    },
+    {
+     "text": "An incoming Telegram message from thisis dfir stated \"lol. That’s great. 😃\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_ca6cf99440",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_ca6cf99440",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_ca6cf99440",
+       "field": "sender",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_ca6cf99440",
+       "field": "body",
+       "value": "lol. That’s great. 😃"
+      }
+     ]
+    },
+    {
+     "text": "An incoming Telegram message from thisis dfir stated \"I’ll send a picture.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_8f14037230",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_8f14037230",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_8f14037230",
+       "field": "sender",
+       "value": "thisis dfir"
+      },
+      {
+       "artifact_id": "msg_8f14037230",
+       "field": "body",
+       "value": "I’ll send a picture."
+      }
+     ]
+    },
+    {
+     "text": "An additional incoming Telegram message from thisis dfir contained no text.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_179caec361",
+       "field": "app",
+       "value": "Telegram"
+      },
+      {
+       "artifact_id": "msg_179caec361",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_179caec361",
+       "field": "sender",
+       "value": "thisis dfir"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 1,
+   "found_entities": 1,
+   "missing_entities": [],
+   "expected_artifacts": 2,
+   "found_artifacts": 2,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 46.019,
+   "tokens": 27117,
+   "est_cost_usd": 0.050785
+  },
+  {
+   "id": "q10",
+   "run_id": "20261103T193235Z-57a8b2",
+   "status": "ok",
+   "error": null,
+   "question": "What happened on Facebook Messenger between 1 and 2:30 PM on January 31, 2024? Include messages and calls.",
+   "tags": [
+    "messages",
+    "calls",
+    "completeness",
+    "est"
+   ],
+   "verified": [
+    {
+     "text": "At 1:15 PM on January 31, Liz Dehner sent via Facebook Messenger: \"Are your here?\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_a6e8471436",
+       "field": "ts_local",
+       "value": "2024-01-31T13:15:14-05:00"
+      },
+      {
+       "artifact_id": "msg_a6e8471436",
+       "field": "sender",
+       "value": "Liz Dehner"
+      },
+      {
+       "artifact_id": "msg_a6e8471436",
+       "field": "body",
+       "value": "Are your here?"
+      },
+      {
+       "artifact_id": "msg_a6e8471436",
+       "field": "app",
+       "value": "Facebook Messenger"
+      }
+     ]
+    },
+    {
+     "text": "At 1:17 PM on January 31, ThisIs Dfir sent: \"I am!  Welcome to Meta.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_d23ce3909a",
+       "field": "ts_local",
+       "value": "2024-01-31T13:17:05-05:00"
+      },
+      {
+       "artifact_id": "msg_d23ce3909a",
+       "field": "sender",
+       "value": "ThisIs Dfir"
+      },
+      {
+       "artifact_id": "msg_d23ce3909a",
+       "field": "body",
+       "value": "I am!  Welcome to Meta."
+      }
+     ]
+    },
+    {
+     "text": "At 1:21 PM on January 31, Liz Dehner sent: \"Lol. Thanks. I've had this account for a bit, though.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_bd51cafb62",
+       "field": "ts_local",
+       "value": "2024-01-31T13:21:09-05:00"
+      },
+      {
+       "artifact_id": "msg_bd51cafb62",
+       "field": "sender",
+       "value": "Liz Dehner"
+      },
+      {
+       "artifact_id": "msg_bd51cafb62",
+       "field": "body",
+       "value": "Lol. Thanks. I've had this account for a bit, though."
+      }
+     ]
+    },
+    {
+     "text": "At 1:45 PM on January 31, an incoming Facebook Messenger call with ThisIs Dfir lasted 116 seconds",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_9a190fe43f",
+       "field": "ts_local",
+       "value": "2024-01-31T13:45:43-05:00"
+      },
+      {
+       "artifact_id": "call_9a190fe43f",
+       "field": "contact_name",
+       "value": "ThisIs Dfir"
+      },
+      {
+       "artifact_id": "call_9a190fe43f",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "call_9a190fe43f",
+       "field": "duration_s",
+       "value": "116"
+      },
+      {
+       "artifact_id": "call_9a190fe43f",
+       "field": "app",
+       "value": "Facebook Messenger"
+      }
+     ]
+    },
+    {
+     "text": "At 1:48 PM on January 31, an outgoing call with ThisIs Dfir lasted 96 seconds",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_3d8d98c9f0",
+       "field": "ts_local",
+       "value": "2024-01-31T13:48:46-05:00"
+      },
+      {
+       "artifact_id": "call_3d8d98c9f0",
+       "field": "contact_name",
+       "value": "ThisIs Dfir"
+      },
+      {
+       "artifact_id": "call_3d8d98c9f0",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_3d8d98c9f0",
+       "field": "duration_s",
+       "value": "96"
+      }
+     ]
+    },
+    {
+     "text": "At 1:53 PM on January 31, an incoming call with ThisIs Dfir lasted 96 seconds",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_729ea0212a",
+       "field": "ts_local",
+       "value": "2024-01-31T13:53:22-05:00"
+      },
+      {
+       "artifact_id": "call_729ea0212a",
+       "field": "contact_name",
+       "value": "ThisIs Dfir"
+      },
+      {
+       "artifact_id": "call_729ea0212a",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "call_729ea0212a",
+       "field": "duration_s",
+       "value": "96"
+      }
+     ]
+    },
+    {
+     "text": "At 1:57 PM on January 31, an outgoing call with ThisIs Dfir lasted 95 seconds",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_1d03b6bea7",
+       "field": "ts_local",
+       "value": "2024-01-31T13:57:41-05:00"
+      },
+      {
+       "artifact_id": "call_1d03b6bea7",
+       "field": "contact_name",
+       "value": "ThisIs Dfir"
+      },
+      {
+       "artifact_id": "call_1d03b6bea7",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_1d03b6bea7",
+       "field": "duration_s",
+       "value": "95"
+      }
+     ]
+    }
+   ],
+   "rejected": [
+    {
+     "claim": {
+      "text": "At 1:17 PM on January 31, ThisIs Dfir sent: \"You can now message and call each other and see info like Active Status and when you've read messages.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_d00a04bf82",
+        "field": "ts_local",
+        "value": "2024-01-31T13:17:06-05:00"
+       },
+       {
+        "artifact_id": "msg_d00a04bf82",
+        "field": "body",
+        "value": "You can now message and call each other and see info like Active Status and when you've read messages."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs DFIR' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs Dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'thisis dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:23 PM on January 31, ThisIs Dfir sent: \"Really?  I didn’t think you had one at all.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_3937caf065",
+        "field": "ts_local",
+        "value": "2024-01-31T13:23:16-05:00"
+       },
+       {
+        "artifact_id": "msg_3937caf065",
+        "field": "body",
+        "value": "Really?  I didn’t think you had one at all."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs DFIR' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs Dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'thisis dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:28 PM on January 31, Liz Dehner sent: \"I did. Almost two years. I created it for the Summit.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_e5c621133c",
+        "field": "ts_local",
+        "value": "2024-01-31T13:28:49-05:00"
+       },
+       {
+        "artifact_id": "msg_e5c621133c",
+        "field": "body",
+        "value": "I did. Almost two years. I created it for the Summit."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'Liz Dehner' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:32 PM on January 31, Liz Dehner sent: \"Want to send me a picture? 😀\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_9363ffcf44",
+        "field": "ts_local",
+        "value": "2024-01-31T13:32:13-05:00"
+       },
+       {
+        "artifact_id": "msg_9363ffcf44",
+        "field": "body",
+        "value": "Want to send me a picture? 😀"
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'Liz Dehner' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:33 PM on January 31, ThisIs Dfir sent: \"Sure. Give me a minute.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_5264c2c4f9",
+        "field": "ts_local",
+        "value": "2024-01-31T13:33:12-05:00"
+       },
+       {
+        "artifact_id": "msg_5264c2c4f9",
+        "field": "body",
+        "value": "Sure. Give me a minute."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs DFIR' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs Dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'thisis dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:37 PM on January 31, Liz Dehner sent: \"Got it. I'll send you one.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_baf702c900",
+        "field": "ts_local",
+        "value": "2024-01-31T13:37:04-05:00"
+       },
+       {
+        "artifact_id": "msg_baf702c900",
+        "field": "body",
+        "value": "Got it. I'll send you one."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'Liz Dehner' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:41 PM on January 31, ThisIs Dfir sent: \"I will audio call you.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_4b87f9de75",
+        "field": "ts_local",
+        "value": "2024-01-31T13:41:30-05:00"
+       },
+       {
+        "artifact_id": "msg_4b87f9de75",
+        "field": "body",
+        "value": "I will audio call you."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs DFIR' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs Dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'thisis dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:49 PM on January 31, Liz Dehner sent: \"Please video call me.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_44e2290eb2",
+        "field": "ts_local",
+        "value": "2024-01-31T13:49:29-05:00"
+       },
+       {
+        "artifact_id": "msg_44e2290eb2",
+        "field": "body",
+        "value": "Please video call me."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'Liz Dehner' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 1:53 PM on January 31, Liz Dehner sent: \"Here comes your video call.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_d90992594f",
+        "field": "ts_local",
+        "value": "2024-01-31T13:53:53-05:00"
+       },
+       {
+        "artifact_id": "msg_d90992594f",
+        "field": "body",
+        "value": "Here comes your video call."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'Liz Dehner' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 2:03 PM on January 31, Liz Dehner sent: \"I've removed it.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_09c6aaa27d",
+        "field": "ts_local",
+        "value": "2024-01-31T14:03:12-05:00"
+       },
+       {
+        "artifact_id": "msg_09c6aaa27d",
+        "field": "body",
+        "value": "I've removed it."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'Liz Dehner' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 2:04 PM on January 31, Liz Dehner sent: \"Here is a message that you can remove. Let me know when you do.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_df92298e3f",
+        "field": "ts_local",
+        "value": "2024-01-31T14:04:37-05:00"
+       },
+       {
+        "artifact_id": "msg_df92298e3f",
+        "field": "body",
+        "value": "Here is a message that you can remove. Let me know when you do."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'Liz Dehner' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    },
+    {
+     "claim": {
+      "text": "At 2:07 PM on January 31, ThisIs Dfir sent: \"I removed your message.\"",
+      "time_start": null,
+      "time_end": null,
+      "citations": [
+       {
+        "artifact_id": "msg_b97ce000ec",
+        "field": "ts_local",
+        "value": "2024-01-31T14:07:25-05:00"
+       },
+       {
+        "artifact_id": "msg_b97ce000ec",
+        "field": "body",
+        "value": "I removed your message."
+       }
+      ]
+     },
+     "reasons": [
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs DFIR' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'ThisIs Dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      },
+      {
+       "code": "UNGROUNDED_ENTITY:contact",
+       "detail": "contact 'thisis dfir' is not supported by the claim's cited values",
+       "citation_index": null
+      }
+     ]
+    }
+   ],
+   "expected_entities": 2,
+   "found_entities": 1,
+   "missing_entities": [
+    "Summit"
+   ],
+   "expected_artifacts": 5,
+   "found_artifacts": 4,
+   "missing_artifact_ids": [
+    "msg_e5c621133c"
+   ],
+   "fact_recall": 0.5,
+   "artifact_recall": 0.8,
+   "citation_precision": 0.3684210526315789,
+   "uncited_in_report": 0,
+   "latency_s": 61.291,
+   "tokens": 38496,
+   "est_cost_usd": 0.083763
+  },
+  {
+   "id": "q11",
+   "run_id": "20261103T193336Z-26addf",
+   "status": "ok",
+   "error": null,
+   "question": "List every WhatsApp call on January 30, 2024, with its direction and duration.",
+   "tags": [
+    "calls",
+    "completeness",
+    "est"
+   ],
+   "verified": [
+    {
+     "text": "Outgoing WhatsApp call at 2:38 PM on January 30 lasted 100 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_baede43610",
+       "field": "app",
+       "value": "WhatsApp"
+      },
+      {
+       "artifact_id": "call_baede43610",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_baede43610",
+       "field": "duration_s",
+       "value": "100"
+      },
+      {
+       "artifact_id": "call_baede43610",
+       "field": "ts_local",
+       "value": "2024-01-30T14:38:29-05:00"
+      }
+     ]
+    },
+    {
+     "text": "Incoming WhatsApp call at 2:58 PM on January 30 lasted 100 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_de6c5803bb",
+       "field": "app",
+       "value": "WhatsApp"
+      },
+      {
+       "artifact_id": "call_de6c5803bb",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "call_de6c5803bb",
+       "field": "duration_s",
+       "value": "100"
+      },
+      {
+       "artifact_id": "call_de6c5803bb",
+       "field": "ts_local",
+       "value": "2024-01-30T14:58:35-05:00"
+      }
+     ]
+    },
+    {
+     "text": "Outgoing WhatsApp call at 3:02 PM on January 30 lasted 85 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_8bd9f2ffd7",
+       "field": "app",
+       "value": "WhatsApp"
+      },
+      {
+       "artifact_id": "call_8bd9f2ffd7",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_8bd9f2ffd7",
+       "field": "duration_s",
+       "value": "85"
+      },
+      {
+       "artifact_id": "call_8bd9f2ffd7",
+       "field": "ts_local",
+       "value": "2024-01-30T15:02:28-05:00"
+      }
+     ]
+    },
+    {
+     "text": "Incoming WhatsApp call at 3:06 PM on January 30 lasted 102 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_238be03590",
+       "field": "app",
+       "value": "WhatsApp"
+      },
+      {
+       "artifact_id": "call_238be03590",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "call_238be03590",
+       "field": "duration_s",
+       "value": "102"
+      },
+      {
+       "artifact_id": "call_238be03590",
+       "field": "ts_local",
+       "value": "2024-01-30T15:06:02-05:00"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 1,
+   "found_entities": 0,
+   "missing_entities": [
+    "9195794674"
+   ],
+   "expected_artifacts": 4,
+   "found_artifacts": 4,
+   "missing_artifact_ids": [],
+   "fact_recall": 0.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 14.512,
+   "tokens": 10215,
+   "est_cost_usd": 0.020287
+  },
+  {
+   "id": "q12",
+   "run_id": "20261103T193351Z-4ed9f6",
+   "status": "ok",
+   "error": null,
+   "question": "Who did the phone call and text on Google Voice on February 27, 2024?",
+   "tags": [
+    "calls",
+    "messages",
+    "est"
+   ],
+   "verified": [
+    {
+     "text": "At 11:06 AM on February 27, the phone placed an outgoing Google Voice call to ThisIs DFIR at +19105576476 lasting 95 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_6469b838f7",
+       "field": "ts_local",
+       "value": "2024-02-27T11:06:11-05:00"
+      },
+      {
+       "artifact_id": "call_6469b838f7",
+       "field": "app",
+       "value": "Google Voice"
+      },
+      {
+       "artifact_id": "call_6469b838f7",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_6469b838f7",
+       "field": "number",
+       "value": "+19105576476"
+      },
+      {
+       "artifact_id": "call_6469b838f7",
+       "field": "contact_name",
+       "value": "ThisIs DFIR"
+      },
+      {
+       "artifact_id": "call_6469b838f7",
+       "field": "duration_s",
+       "value": "95"
+      }
+     ]
+    },
+    {
+     "text": "At 11:11 AM on February 27, the phone received an incoming Google Voice call from ThisIs DFIR at +19105576476 lasting 95 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_731ce53c82",
+       "field": "ts_local",
+       "value": "2024-02-27T11:11:07-05:00"
+      },
+      {
+       "artifact_id": "call_731ce53c82",
+       "field": "app",
+       "value": "Google Voice"
+      },
+      {
+       "artifact_id": "call_731ce53c82",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "call_731ce53c82",
+       "field": "number",
+       "value": "+19105576476"
+      },
+      {
+       "artifact_id": "call_731ce53c82",
+       "field": "contact_name",
+       "value": "ThisIs DFIR"
+      },
+      {
+       "artifact_id": "call_731ce53c82",
+       "field": "duration_s",
+       "value": "95"
+      }
+     ]
+    },
+    {
+     "text": "At 10:48 AM on February 27, the phone sent a Google Voice message to +19105576476 stating \"I wouldn't sweat it. We are in no rush. 😀\".",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_b6dceda993",
+       "field": "ts_local",
+       "value": "2024-02-27T10:48:17-05:00"
+      },
+      {
+       "artifact_id": "msg_b6dceda993",
+       "field": "app",
+       "value": "Google Voice"
+      },
+      {
+       "artifact_id": "msg_b6dceda993",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "msg_b6dceda993",
+       "field": "recipient_number",
+       "value": "+19105576476"
+      },
+      {
+       "artifact_id": "msg_b6dceda993",
+       "field": "body",
+       "value": "I wouldn't sweat it. We are in no rush. 😀"
+      }
+     ]
+    },
+    {
+     "text": "At 10:50 AM on February 27, the phone received a Google Voice message from +19105576476 stating \"Good point.  This one is super basic.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_e4dcef745a",
+       "field": "ts_local",
+       "value": "2024-02-27T10:50:33-05:00"
+      },
+      {
+       "artifact_id": "msg_e4dcef745a",
+       "field": "app",
+       "value": "Google Voice"
+      },
+      {
+       "artifact_id": "msg_e4dcef745a",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "msg_e4dcef745a",
+       "field": "sender_number",
+       "value": "+19105576476"
+      },
+      {
+       "artifact_id": "msg_e4dcef745a",
+       "field": "body",
+       "value": "Good point.  This one is super basic."
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 1,
+   "found_entities": 1,
+   "missing_entities": [],
+   "expected_artifacts": 2,
+   "found_artifacts": 2,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 21.811,
+   "tokens": 17228,
+   "est_cost_usd": 0.022553
+  },
+  {
+   "id": "q13",
+   "run_id": "20261103T193412Z-b4e1b9",
+   "status": "ok",
+   "error": null,
+   "question": "Who did the phone talk to between 3 and 4 PM on July 7, 2024, and where was it?",
+   "tags": [
+    "calls",
+    "locations",
+    "completeness"
+   ],
+   "verified": [
+    {
+     "text": "At 3:29 PM on July 7, the phone placed a 27-second outgoing call to +19192059852.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_9aa69249ea",
+       "field": "ts_local",
+       "value": "2024-07-07T15:29:52-04:00"
+      },
+      {
+       "artifact_id": "call_9aa69249ea",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_9aa69249ea",
+       "field": "number",
+       "value": "+19192059852"
+      },
+      {
+       "artifact_id": "call_9aa69249ea",
+       "field": "duration_s",
+       "value": "27"
+      }
+     ]
+    },
+    {
+     "text": "At 3:32 PM on July 7, the phone placed a 107-second outgoing call to +19192059852.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_a481501025",
+       "field": "ts_local",
+       "value": "2024-07-07T15:32:03-04:00"
+      },
+      {
+       "artifact_id": "call_a481501025",
+       "field": "direction",
+       "value": "outgoing"
+      },
+      {
+       "artifact_id": "call_a481501025",
+       "field": "number",
+       "value": "+19192059852"
+      },
+      {
+       "artifact_id": "call_a481501025",
+       "field": "duration_s",
+       "value": "107"
+      }
+     ]
+    },
+    {
+     "text": "At 3:36 PM on July 7, the phone received a 141-second incoming call from +19192059852.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_9466c7dc25",
+       "field": "ts_local",
+       "value": "2024-07-07T15:36:15-04:00"
+      },
+      {
+       "artifact_id": "call_9466c7dc25",
+       "field": "direction",
+       "value": "incoming"
+      },
+      {
+       "artifact_id": "call_9466c7dc25",
+       "field": "number",
+       "value": "+19192059852"
+      },
+      {
+       "artifact_id": "call_9466c7dc25",
+       "field": "duration_s",
+       "value": "141"
+      }
+     ]
+    },
+    {
+     "text": "At 3:31 PM on July 7, the device was at latitude 35.6595491 and longitude -78.8728101.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_cb3fa0e850",
+       "field": "ts_local",
+       "value": "2024-07-07T15:31:00-04:00"
+      },
+      {
+       "artifact_id": "loc_cb3fa0e850",
+       "field": "lat",
+       "value": "35.6595491"
+      },
+      {
+       "artifact_id": "loc_cb3fa0e850",
+       "field": "lon",
+       "value": "-78.8728101"
+      }
+     ]
+    },
+    {
+     "text": "At 3:36 PM on July 7, the device was at latitude 35.6595491 and longitude -78.8728101.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_34eb6348fc",
+       "field": "ts_local",
+       "value": "2024-07-07T15:36:00-04:00"
+      },
+      {
+       "artifact_id": "loc_34eb6348fc",
+       "field": "lat",
+       "value": "35.6595491"
+      },
+      {
+       "artifact_id": "loc_34eb6348fc",
+       "field": "lon",
+       "value": "-78.8728101"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 3,
+   "found_artifacts": 3,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 25.441,
+   "tokens": 16646,
+   "est_cost_usd": 0.025147
+  },
+  {
+   "id": "q14",
+   "run_id": "20261103T193438Z-989a8f",
+   "status": "ok",
+   "error": null,
+   "question": "Where was the phone between 8 and 11 PM on June 15, 2024?",
+   "tags": [
+    "locations",
+    "trap-tz-boundary"
+   ],
+   "verified": [
+    {
+     "text": "The phone was at latitude 34.6805119 and longitude -76.9267683 at 9:24 PM on June 15.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_446c5061bf",
+       "field": "ts_local",
+       "value": "2024-06-15T21:24:00-04:00"
+      },
+      {
+       "artifact_id": "loc_446c5061bf",
+       "field": "lat",
+       "value": "34.6805119"
+      },
+      {
+       "artifact_id": "loc_446c5061bf",
+       "field": "lon",
+       "value": "-76.9267683"
+      }
+     ]
+    },
+    {
+     "text": "The phone was at latitude 34.6805119 and longitude -76.9267683 at 9:43 PM on June 15.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_f0d4d09d8a",
+       "field": "ts_local",
+       "value": "2024-06-15T21:43:00-04:00"
+      },
+      {
+       "artifact_id": "loc_f0d4d09d8a",
+       "field": "lat",
+       "value": "34.6805119"
+      },
+      {
+       "artifact_id": "loc_f0d4d09d8a",
+       "field": "lon",
+       "value": "-76.9267683"
+      }
+     ]
+    },
+    {
+     "text": "The phone was at latitude 34.6805119 and longitude -76.9267683 at 10:02 PM on June 15.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_1296db2a39",
+       "field": "ts_local",
+       "value": "2024-06-15T22:02:00-04:00"
+      },
+      {
+       "artifact_id": "loc_1296db2a39",
+       "field": "lat",
+       "value": "34.6805119"
+      },
+      {
+       "artifact_id": "loc_1296db2a39",
+       "field": "lon",
+       "value": "-76.9267683"
+      }
+     ]
+    },
+    {
+     "text": "The phone was at latitude 34.6805119 and longitude -76.9267683 at 10:21 PM on June 15.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_2eba794360",
+       "field": "ts_local",
+       "value": "2024-06-15T22:21:00-04:00"
+      },
+      {
+       "artifact_id": "loc_2eba794360",
+       "field": "lat",
+       "value": "34.6805119"
+      },
+      {
+       "artifact_id": "loc_2eba794360",
+       "field": "lon",
+       "value": "-76.9267683"
+      }
+     ]
+    },
+    {
+     "text": "The phone was at latitude 34.6805119 and longitude -76.9267683 at 10:40 PM on June 15.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_1eef6b5641",
+       "field": "ts_local",
+       "value": "2024-06-15T22:40:00-04:00"
+      },
+      {
+       "artifact_id": "loc_1eef6b5641",
+       "field": "lat",
+       "value": "34.6805119"
+      },
+      {
+       "artifact_id": "loc_1eef6b5641",
+       "field": "lon",
+       "value": "-76.9267683"
+      }
+     ]
+    },
+    {
+     "text": "The phone was at latitude 34.6805119 and longitude -76.9267683 at 10:59 PM on June 15.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "loc_196ed25311",
+       "field": "ts_local",
+       "value": "2024-06-15T22:59:00-04:00"
+      },
+      {
+       "artifact_id": "loc_196ed25311",
+       "field": "lat",
+       "value": "34.6805119"
+      },
+      {
+       "artifact_id": "loc_196ed25311",
+       "field": "lon",
+       "value": "-76.9267683"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 1,
+   "found_entities": 1,
+   "missing_entities": [],
+   "expected_artifacts": 0,
+   "found_artifacts": 0,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": null,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 15.503,
+   "tokens": 8596,
+   "est_cost_usd": 0.016009
+  },
+  {
+   "id": "q15",
+   "run_id": "20261103T193453Z-c8f103",
+   "status": "ok",
+   "error": null,
+   "question": "Who tried to reach the phone on the morning of July 27, 2024, and what did any voicemail say?",
+   "tags": [
+    "calls",
+    "voicemail",
+    "completeness",
+    "trap-voicemail-vs-missed"
+   ],
+   "verified": [
+    {
+     "text": "The number +19195190323 placed two missed calls at 10:13 AM on July 27.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_b3b0c37e7d",
+       "field": "ts_local",
+       "value": "2024-07-27T10:13:05-04:00"
+      },
+      {
+       "artifact_id": "call_b3b0c37e7d",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_b3b0c37e7d",
+       "field": "direction",
+       "value": "missed"
+      },
+      {
+       "artifact_id": "call_9a5c3047ff",
+       "field": "ts_local",
+       "value": "2024-07-27T10:13:47-04:00"
+      },
+      {
+       "artifact_id": "call_9a5c3047ff",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_9a5c3047ff",
+       "field": "direction",
+       "value": "missed"
+      }
+     ]
+    },
+    {
+     "text": "The number +19195190323 left a voicemail at 10:13 AM on July 27 lasting 17 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "ts_local",
+       "value": "2024-07-27T10:13:53-04:00"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "duration_s",
+       "value": "17"
+      }
+     ]
+    },
+    {
+     "text": "The voicemail transcription from +19195190323 states \"Good morning, Cheryl. This your brother. Talked to him our mother and said she hadn't heard from you. So I'm trying to see if you're okay and give me a phone call back as soon as you can. All right, bye-bye.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "number",
+       "value": "+19195190323"
+      },
+      {
+       "artifact_id": "call_c79fb6cc23",
+       "field": "transcript",
+       "value": "Good morning, Cheryl. This your brother. Talked to him our mother and said she hadn't heard from you. So I'm trying to see if you're okay and give me a phone call back as soon as you can. All right, bye-bye."
+      }
+     ]
+    },
+    {
+     "text": "The number +19197523033 placed a missed call at 10:43 AM on July 27.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_735f6585a7",
+       "field": "ts_local",
+       "value": "2024-07-27T10:43:08-04:00"
+      },
+      {
+       "artifact_id": "call_735f6585a7",
+       "field": "number",
+       "value": "+19197523033"
+      },
+      {
+       "artifact_id": "call_735f6585a7",
+       "field": "direction",
+       "value": "missed"
+      }
+     ]
+    },
+    {
+     "text": "The number +19197523033 left a voicemail at 10:43 AM on July 27 lasting 2 seconds.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "ts_local",
+       "value": "2024-07-27T10:43:58-04:00"
+      },
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "number",
+       "value": "+19197523033"
+      },
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_07d9b33cc6",
+       "field": "duration_s",
+       "value": "2"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 5,
+   "found_artifacts": 5,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 31.537,
+   "tokens": 15236,
+   "est_cost_usd": 0.02988
+  },
+  {
+   "id": "q16",
+   "run_id": "20261103T193525Z-934806",
+   "status": "ok",
+   "error": null,
+   "question": "Which photos taken between July 15 and July 17, 2024 show a license plate, and when and where were they taken?",
+   "tags": [
+    "photos",
+    "sam",
+    "locations",
+    "completeness"
+   ],
+   "verified": [
+    {
+     "text": "Photo data/media/0/DCIM/Camera/PXL_20240715_225229429.jpg shows a license plate and was taken at 6:52 PM on July 15 at 38.9018556, -77.0396361.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_9db8a4205b",
+       "field": "source_path",
+       "value": "data/media/0/DCIM/Camera/PXL_20240715_225229429.jpg"
+      },
+      {
+       "artifact_id": "tag_840a3e778f",
+       "field": "label",
+       "value": "license plate"
+      },
+      {
+       "artifact_id": "med_9db8a4205b",
+       "field": "ts_local",
+       "value": "2024-07-15T18:52:29-04:00"
+      },
+      {
+       "artifact_id": "med_9db8a4205b",
+       "field": "lat",
+       "value": "38.9018556"
+      },
+      {
+       "artifact_id": "med_9db8a4205b",
+       "field": "lon",
+       "value": "-77.0396361"
+      }
+     ]
+    },
+    {
+     "text": "Photo data/media/0/DCIM/Camera/PXL_20240716_235952437.jpg shows a license plate and was taken at 7:59 PM on July 16 at 38.9024, -77.0340611.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_e157542e2d",
+       "field": "source_path",
+       "value": "data/media/0/DCIM/Camera/PXL_20240716_235952437.jpg"
+      },
+      {
+       "artifact_id": "tag_55a62a62a4",
+       "field": "label",
+       "value": "license plate"
+      },
+      {
+       "artifact_id": "med_e157542e2d",
+       "field": "ts_local",
+       "value": "2024-07-16T19:59:52-04:00"
+      },
+      {
+       "artifact_id": "med_e157542e2d",
+       "field": "lat",
+       "value": "38.9024"
+      },
+      {
+       "artifact_id": "med_e157542e2d",
+       "field": "lon",
+       "value": "-77.0340611"
+      }
+     ]
+    },
+    {
+     "text": "Photo data/media/0/DCIM/Camera/PXL_20240717_175030483.jpg shows a license plate and was taken at 1:50 PM on July 17 at 38.4675917, -77.4116833.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "med_8336555e52",
+       "field": "source_path",
+       "value": "data/media/0/DCIM/Camera/PXL_20240717_175030483.jpg"
+      },
+      {
+       "artifact_id": "tag_645f2615e9",
+       "field": "label",
+       "value": "license plate"
+      },
+      {
+       "artifact_id": "med_8336555e52",
+       "field": "ts_local",
+       "value": "2024-07-17T13:50:30-04:00"
+      },
+      {
+       "artifact_id": "med_8336555e52",
+       "field": "lat",
+       "value": "38.4675917"
+      },
+      {
+       "artifact_id": "med_8336555e52",
+       "field": "lon",
+       "value": "-77.4116833"
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 1,
+   "found_entities": 1,
+   "missing_entities": [],
+   "expected_artifacts": 3,
+   "found_artifacts": 3,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 34.921,
+   "tokens": 27708,
+   "est_cost_usd": 0.036604
+  },
+  {
+   "id": "q17",
+   "run_id": "20261103T193600Z-8e78c3",
+   "status": "ok",
+   "error": null,
+   "question": "What verification codes did the phone receive on the morning of July 26, 2024, and from which services?",
+   "tags": [
+    "messages",
+    "exact-digits"
+   ],
+   "verified": [
+    {
+     "text": "At 9:46 AM on July 26, the phone received verification code 865461 from Ding-OTP stating \"865461 is your verification code.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_42fd160c89",
+       "field": "ts_local",
+       "value": "2024-07-26T09:46:59-04:00"
+      },
+      {
+       "artifact_id": "msg_42fd160c89",
+       "field": "sender",
+       "value": "Ding-OTP"
+      },
+      {
+       "artifact_id": "msg_42fd160c89",
+       "field": "body",
+       "value": "865461 is your verification code."
+      }
+     ]
+    },
+    {
+     "text": "At 9:59 AM on July 26, the phone received WhatsApp verification code 432-632 stating \"Your WhatsApp code: 432-632\".",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_32e8636f45",
+       "field": "ts_local",
+       "value": "2024-07-26T09:59:20-04:00"
+      },
+      {
+       "artifact_id": "msg_32e8636f45",
+       "field": "body",
+       "value": "<#> Your WhatsApp account is being registered on a new device\n\nDo not share this code with anyone\n\nYour WhatsApp code: 432-632\n\n4sgLq1p5sV6"
+      }
+     ]
+    },
+    {
+     "text": "At 12:09 PM on July 26, the phone received Instagram code 139381 stating \"139381 is your Instagram code. Don't share it.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "msg_c86c9fe9ce",
+       "field": "ts_local",
+       "value": "2024-07-26T12:09:16-04:00"
+      },
+      {
+       "artifact_id": "msg_c86c9fe9ce",
+       "field": "body",
+       "value": "139381 is your Instagram code. Don't share it."
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 2,
+   "found_entities": 2,
+   "missing_entities": [],
+   "expected_artifacts": 2,
+   "found_artifacts": 2,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 23.361,
+   "tokens": 17904,
+   "est_cost_usd": 0.030159
+  },
+  {
+   "id": "q18",
+   "run_id": "20261103T193623Z-a28298",
+   "status": "ok",
+   "error": null,
+   "question": "How many voicemails did Coastal Federal Credit Union leave in February 2024, and when?",
+   "tags": [
+    "voicemail",
+    "completeness",
+    "est",
+    "trap-tz-boundary"
+   ],
+   "verified": [
+    {
+     "text": "Four voicemails from Coastal were identified.",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_ae7dc0d178",
+       "field": "transcript",
+       "value": "Have this message is for sure. This is Coastal Federal Credit Union. Please give us a call 1877-863-6164. We're here until 9:00 p.m. Monday through Friday to 12:00 on Saturdays."
+      },
+      {
+       "artifact_id": "call_da2b8fda15",
+       "field": "transcript",
+       "value": "It's very important message from Coastal Credit Union. If you could please return the call back. The number is 877-863-6164. We are here until 9:00 p.m. During the week or until 12:00 p.m. On Saturday. Again, the number is 877-863-6164."
+      },
+      {
+       "artifact_id": "call_37bccb7ba6",
+       "field": "transcript",
+       "value": "Hello, this is important message from Coastal Federal Credit Union for Cheryl Duval. Please give us a call back at 877-863-6164. We're here Monday through Friday 8:00 a.m. To 9:00 p.m. And on Saturdays 8:00 a.m. To 12:00. Noon. Again, our number is 877-863-6164. That's Coastal Federal Credit Union. Thank you."
+      },
+      {
+       "artifact_id": "call_57e2740f01",
+       "field": "transcript",
+       "value": "It's a very important message from Coastal Credit Union. If you could please return the call back. The number is 877-863-6164. We are here until 9:00 p.m. During the week and until 12:00 p.m. On Saturday. Again, the number is 877-863-6164."
+      }
+     ]
+    },
+    {
+     "text": "A voicemail at 7:55 PM on February 5 stated \"Have this message is for sure. This is Coastal Federal Credit Union. Please give us a call 1877-863-6164. We're here until 9:00 p.m. Monday through Friday to 12:00 on Saturdays.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_ae7dc0d178",
+       "field": "ts_local",
+       "value": "2024-02-05T19:55:01-05:00"
+      },
+      {
+       "artifact_id": "call_ae7dc0d178",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_ae7dc0d178",
+       "field": "transcript",
+       "value": "Have this message is for sure. This is Coastal Federal Credit Union. Please give us a call 1877-863-6164. We're here until 9:00 p.m. Monday through Friday to 12:00 on Saturdays."
+      }
+     ]
+    },
+    {
+     "text": "A voicemail at 8:31 PM on February 14 stated \"It's very important message from Coastal Credit Union. If you could please return the call back. The number is 877-863-6164. We are here until 9:00 p.m. During the week or until 12:00 p.m. On Saturday. Again, the number is 877-863-6164.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_da2b8fda15",
+       "field": "ts_local",
+       "value": "2024-02-14T20:31:46-05:00"
+      },
+      {
+       "artifact_id": "call_da2b8fda15",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_da2b8fda15",
+       "field": "transcript",
+       "value": "It's very important message from Coastal Credit Union. If you could please return the call back. The number is 877-863-6164. We are here until 9:00 p.m. During the week or until 12:00 p.m. On Saturday. Again, the number is 877-863-6164."
+      }
+     ]
+    },
+    {
+     "text": "A voicemail at 8:32 PM on February 20 stated \"Hello, this is important message from Coastal Federal Credit Union for Cheryl Duval. Please give us a call back at 877-863-6164. We're here Monday through Friday 8:00 a.m. To 9:00 p.m. And on Saturdays 8:00 a.m. To 12:00. Noon. Again, our number is 877-863-6164. That's Coastal Federal Credit Union. Thank you.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_37bccb7ba6",
+       "field": "ts_local",
+       "value": "2024-02-20T20:32:31-05:00"
+      },
+      {
+       "artifact_id": "call_37bccb7ba6",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_37bccb7ba6",
+       "field": "transcript",
+       "value": "Hello, this is important message from Coastal Federal Credit Union for Cheryl Duval. Please give us a call back at 877-863-6164. We're here Monday through Friday 8:00 a.m. To 9:00 p.m. And on Saturdays 8:00 a.m. To 12:00. Noon. Again, our number is 877-863-6164. That's Coastal Federal Credit Union. Thank you."
+      }
+     ]
+    },
+    {
+     "text": "A voicemail at 4:02 PM on February 28 stated \"It's a very important message from Coastal Credit Union. If you could please return the call back. The number is 877-863-6164. We are here until 9:00 p.m. During the week and until 12:00 p.m. On Saturday. Again, the number is 877-863-6164.\"",
+     "time_start": null,
+     "time_end": null,
+     "citations": [
+      {
+       "artifact_id": "call_57e2740f01",
+       "field": "ts_local",
+       "value": "2024-02-28T16:02:09-05:00"
+      },
+      {
+       "artifact_id": "call_57e2740f01",
+       "field": "direction",
+       "value": "voicemail"
+      },
+      {
+       "artifact_id": "call_57e2740f01",
+       "field": "transcript",
+       "value": "It's a very important message from Coastal Credit Union. If you could please return the call back. The number is 877-863-6164. We are here until 9:00 p.m. During the week and until 12:00 p.m. On Saturday. Again, the number is 877-863-6164."
+      }
+     ]
+    }
+   ],
+   "rejected": [],
+   "expected_entities": 1,
+   "found_entities": 1,
+   "missing_entities": [],
+   "expected_artifacts": 4,
+   "found_artifacts": 4,
+   "missing_artifact_ids": [],
+   "fact_recall": 1.0,
+   "artifact_recall": 1.0,
+   "citation_precision": 1.0,
+   "uncited_in_report": 0,
+   "latency_s": 74.465,
+   "tokens": 122751,
+   "est_cost_usd": 0.127745
+  },
+  {
+   "id": "q19",
+   "run_id": "20261103T193738Z-76fbc7",
+   "status": "ok",
+   "error": null,
+   "question": "Did the phone have any contact with the number 919-579-4675?",
+   "tags": [
+    "negative",
+    "trap-near-match-number"
+   ],
+   "verified": [],
+   "rejected": [],
+   "expected_entities": 0,
+   "found_entities": 0,
+   "missing_entities": [],
+   "expected_artifacts": 0,
+   "found_artifacts": 0,
+   "missing_artifact_ids": [],
+   "fact_recall": null,
+   "artifact_recall": null,
+   "citation_precision": null,
+   "uncited_in_report": 0,
+   "latency_s": 7.324,
+   "tokens": 9760,
+   "est_cost_usd": 0.006538
+  },
+  {
+   "id": "q20",
+   "run_id": "20261103T193745Z-5a8e89",
+   "status": "ok",
+   "error": null,
+   "question": "What messages or calls did the phone exchange with Marcus Webb?",
+   "tags": [
+    "negative",
+    "trap-nonexistent-contact"
+   ],
+   "verified": [],
+   "rejected": [],
+   "expected_entities": 0,
+   "found_entities": 0,
+   "missing_entities": [],
+   "expected_artifacts": 0,
+   "found_artifacts": 0,
+   "missing_artifact_ids": [],
+   "fact_recall": null,
+   "artifact_recall": null,
+   "citation_precision": null,
+   "uncited_in_report": 0,
+   "latency_s": 54.673,
+   "tokens": 439091,
+   "est_cost_usd": 0.307022
+  },
+  {
+   "id": "q21",
+   "run_id": "20261103T193840Z-e48c7d",
+   "status": "ok",
+   "error": null,
+   "question": "Where was the phone between 9 and 11 PM on July 15, 2024?",
+   "tags": [
+    "negative",
+    "locations",
+    "trap-empty-window"
+   ],
+   "verified": [],
+   "rejected": [],
+   "expected_entities": 0,
+   "found_entities": 0,
+   "missing_entities": [],
+   "expected_artifacts": 0,
+   "found_artifacts": 0,
+   "missing_artifact_ids": [],
+   "fact_recall": null,
+   "artifact_recall": null,
+   "citation_precision": null,
+   "uncited_in_report": 0,
+   "latency_s": 6.049,
+   "tokens": 5976,
+   "est_cost_usd": 0.009564
+  },
+  {
+   "id": "q22",
+   "run_id": "20261103T193846Z-b3aacf",
+   "status": "ok",
+   "error": null,
+   "question": "Who called or texted the phone between 2 and 5 AM on July 4, 2024?",
+   "tags": [
+    "negative",
+    "trap-empty-window"
+   ],
+   "verified": [],
+   "rejected": [],
+   "expected_entities": 0,
+   "found_entities": 0,
+   "missing_entities": [],
+   "expected_artifacts": 0,
+   "found_artifacts": 0,
+   "missing_artifact_ids": [],
+   "fact_recall": null,
+   "artifact_recall": null,
+   "citation_precision": null,
+   "uncited_in_report": 0,
+   "latency_s": 8.037,
+   "tokens": 5972,
+   "est_cost_usd": 0.006333
+  }
+ ],
+ "questions_file": "eval/questions.yaml"
+}
