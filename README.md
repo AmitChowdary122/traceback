@@ -126,20 +126,23 @@ run, and `tbx export-static` lists it on stderr. Runs recorded before v1.3 get t
 
 ## How we know the checker works
 
-- **Injected faults on real answers.** Every recorded answer in `deploy/runs/` (12 real runs; every claim
-  verifies) is broken in one controlled way at a time and re-checked against the store: a cited value altered (a
-  timestamp +1 minute, one phone digit, lat/lon +0.001, a quote cut to 5 characters, a label typo, a measure +2), a
-  near-miss artifact ID, a `raw_json` citation, a wrong clock time, day or invented phone number in the text, or a time
-  range on a day no cited row covers. Result: **508/508 injected faults rejected**, and every original still verifies
-  (`TBX_STRICT_TESTS=1 pytest tests/acceptance/test_acceptance_fault_injection.py -s`). These are injected faults,
-  labeled as such, not model errors. The testing session got the same 508/508 with a separate v1.4 reference checker.
-- **The live eval found 0 real hallucinations.** In Eval 1 (Nov 3: 26 live runs, Meta on 22 questions and open
-  weights on 4 traps, repair off), all 5 rejected claims (12 reasons) were the checker's own false positives:
-  word-for-word voicemail quotes whose times ("until 9:00 p.m.") were compared with the voicemail's timestamp.
-  Contract v1.4 (quoted evidence, above) fixed that; across every recorded answer and injected fault, the only verdicts
-  it changes are those 5 claims. So the eval shows correct answers getting through. It can't show the checker catching
-  a real model error, because none turned up; the injected faults show that. (One open-weights *note* did get a fact
-  wrong; notes are never findings, and the page labels them "not verified".)
+- **Injected faults on real answers.** Every recorded answer in `deploy/runs/` (13 real runs) is first re-checked
+  against the store, and every recorded verdict still holds: the claims it verified still verify, and the 12 real
+  rejections in q10 (below) are rejected again with the same reason codes. Then each verified claim is broken in one
+  controlled way at a time and re-checked: a cited value altered (a timestamp +1 minute, one phone digit, lat/lon
+  +0.001, a quote cut to 5 characters, a label typo, a measure +2), a near-miss artifact ID, a `raw_json` citation, a
+  wrong clock time, day or invented phone number in the text, or a time range on a day no cited row covers.
+  Result: **577/577 injected faults rejected** (`TBX_STRICT_TESTS=1 pytest
+  tests/acceptance/test_acceptance_fault_injection.py -s`). These are injected faults, labeled as such, not model
+  errors. The testing session measured the same 577/577; on the first 12 runs it also got 508/508 with a separate
+  v1.4 reference checker.
+- **The live evals.** Eval 2 (Nov 3, this build, Meta on all 22 questions, repair off): 0 errors, 92 claims verified,
+  12 rejected, and no rejection was a mistake. All 12 are from one answer (q10): the model wrote "Liz Dehner sent: …"
+  but cited only the message's time and body, never its sender field. The names were right, but a claim its cited
+  record doesn't back is rejected, true or not; that run is in the demo (`57a8b2`). Eval 1 (build `9e91df4`) had the
+  opposite problem: 5 correct voicemail quotes were rejected for the times inside them, which contract v1.4 (quoted
+  evidence) fixed; across every recorded answer and injected fault, v1.4 changes only those verdicts. (One
+  open-weights *note* in Eval 1 got a fact wrong; notes are never findings, and the page labels them "not verified".)
 - **The red-team suite** (`tests/redteam/`, 160 tests) pins every rule, with real model claims from the API spikes
   and from Eval 1 (case A24 is the q07 voicemail claim, verbatim).
 
@@ -170,7 +173,7 @@ the trace's tool calls, the verified timeline, the rejected panel, and the evide
 with its SAM boxes, or the video with its transcript. `tbx check answer.json --db data/tbx.db` re-runs the checker on
 any saved answer, and `TBX_STRICT_TESTS=1 pytest -q` runs all the suites offline.
 
-The 12 recorded runs in `deploy/runs/` are real, unedited traces (`docs/gates/` keeps the originals). Each one
+The 13 recorded runs in `deploy/runs/` are real, unedited traces (`docs/gates/` keeps the originals). Each one
 re-checks to the same result against the store built from the committed sample.
 
 | Run | Model | Question | Result |
@@ -185,6 +188,7 @@ re-checks to the same result against the store built from the committed sample.
 | `a269f0` | Meta | Which photos taken July 15–17 show a license plate? (SAM + location) | 3 verified |
 | `9b0b49` | Meta | Any contact with 919-579-4675? (a near-miss number exists) | 0 claims; the note explains |
 | `416044` | Meta | Where was the phone 9–11 PM on July 15? (no data in the window) | 0 claims |
+| `57a8b2` | Meta | What happened on Facebook Messenger between 1 and 2:30 PM on January 31, 2024? (Eval 2 q10) | 7 verified, 12 rejected: each named the sender without citing the sender field |
 
 ## Ask live
 
