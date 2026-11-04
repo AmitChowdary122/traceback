@@ -390,6 +390,11 @@ record: the archive's SHA-256, the extraction path inside it, the ALEAPP version
 | `src/tbx/evaluation.py`, `eval/` | the eval harness (`eval/run.py`) and the README table (`eval/report.py`) |
 | `data/sample/` | cut-down ALEAPP output from a public reference image (see `data/sample/SOURCE.md`) |
 
+## Contributors
+
+- Amit Chowdary
+- Devalla Ashvitha
+
 ## License
 
 Apache-2.0. See `LICENSE`.
