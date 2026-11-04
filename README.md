@@ -305,11 +305,21 @@ abstention accuracy, latency p50/p95, tokens, cost).
 ## Eval results
 
 <!-- eval-results:start -->
-No published results yet. Eval 1 ran on an earlier build: it lost 2 of 22 questions to an agent bug (a reply cut off at
-`max_tokens` was echoed back and Meta returned HTTP 400) and hit the 5 checker false positives above; both are fixed
-in this build. The eval is being re-run on it, and `python eval/report.py --write` then renders the table here from
-`eval/results/*.json`.
+| Provider | Model | Repair | Questions | Fact recall | Artifact recall | Citation precision | Abstention | Uncited | Rejected (top reasons) | p50 / p95 latency | Tokens | Cost |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| baseten | `meta-models/muse-spark-open` | no | 4 | 100% | 100% | 100% | 100% | 0 | 0 | 10.5 s / 22.7 s | 367,687 | $0.23 |
+| meta | `muse-spark-1.3` | no | 22 | 93% | 98% | 88% | 100% | 0 | 12 (UNGROUNDED_ENTITY:contact 22) | 24.4 s / 73.8 s | 1,037,161 | $1.14 |
+
+From `eval/results/baseten-meta-models_muse-spark-open-4traps.json`, `eval/results/meta-muse-spark-1.3.json`; questions: `eval/questions.yaml`. Rendered by `eval/report.py`.
 <!-- eval-results:end -->
+
+Meta ran all 22 questions on build `26fe454` (Nov 3, repair off). The open-weights row is a 4-question trap subset
+(q06, q08, q15, q21) from Eval 1 on build `9e91df4`, run that way to save credit; re-scored with this build's checker,
+its numbers don't change. All 12 rejected Meta claims come from q10: each named the right sender but didn't cite the
+sender field (see "How we know the checker works"). They count 22 reasons because the contact list spells one name
+three ways ("ThisIs DFIR", "ThisIs Dfir", "thisis dfir"), and each spelling gives a reason. q11's fact recall of 0 is
+our scoring mistake: it expected the caller's number, which the question didn't ask for; the answer listed all four
+calls correctly.
 
 ## Data provenance
 
